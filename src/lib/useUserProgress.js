@@ -1,39 +1,51 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 
-const MAX_AI_CREDITS = 150; // ~$1 limit with Gemini Flash
+export const MAX_AI_CREDITS = 150;
 
 export function useUserProgress() {
   const [progress, setProgress] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadProgress = async () => {
     setLoading(true);
-    const records = await base44.entities.UserProgress.list();
-    if (records.length > 0) {
-      setProgress(records[0]);
-    } else {
-      const newProgress = await base44.entities.UserProgress.create({
-        level: 'beginner',
-        xp_points: 0,
-        streak_days: 0,
-        lessons_completed: 0,
-        conversations_count: 0,
-        writing_exercises_count: 0,
-        vocab_learned: 0,
-        ai_credits_used: 0,
-        last_practice_date: new Date().toISOString().split('T')[0]
-      });
-      setProgress(newProgress);
+    setError(null);
+    try {
+      const records = await base44.entities.UserProgress.list();
+      if (records.length > 0) {
+        setProgress(records[0]);
+      } else {
+        const newProgress = await base44.entities.UserProgress.create({
+          level: 'beginner',
+          xp_points: 0,
+          streak_days: 0,
+          lessons_completed: 0,
+          conversations_count: 0,
+          writing_exercises_count: 0,
+          vocab_learned: 0,
+          ai_credits_used: 0,
+          last_practice_date: new Date().toISOString().split('T')[0],
+        });
+        setProgress(newProgress);
+      }
+    } catch (err) {
+      console.error('Erreur chargement progression:', err);
+      setError(err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updateProgress = async (updates) => {
     if (!progress) return;
-    const updated = await base44.entities.UserProgress.update(progress.id, updates);
-    setProgress(updated);
-    return updated;
+    try {
+      const updated = await base44.entities.UserProgress.update(progress.id, updates);
+      setProgress(updated);
+      return updated;
+    } catch (err) {
+      console.error('Erreur mise à jour progression:', err);
+    }
   };
 
   const addXP = async (xp) => {
@@ -49,8 +61,12 @@ export function useUserProgress() {
     if (!progress) return false;
     const current = progress.ai_credits_used || 0;
     if (current >= MAX_AI_CREDITS) return false;
-    await updateProgress({ ai_credits_used: current + 1 });
-    return true;
+    try {
+      await updateProgress({ ai_credits_used: current + 1 });
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const canUseAI = () => {
@@ -67,7 +83,15 @@ export function useUserProgress() {
     loadProgress();
   }, []);
 
-  return { progress, loading, updateProgress, addXP, incrementCredits, canUseAI, creditsRemaining, reload: loadProgress };
+  return {
+    progress,
+    loading,
+    error,
+    updateProgress,
+    addXP,
+    incrementCredits,
+    canUseAI,
+    creditsRemaining,
+    reload: loadProgress,
+  };
 }
-
-export { MAX_AI_CREDITS };

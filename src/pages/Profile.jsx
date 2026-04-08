@@ -10,7 +10,7 @@ import XPBar from '@/components/XPBar';
 const levelLabels = {
   beginner: 'Débutant',
   intermediate: 'Intermédiaire',
-  advanced: 'Avancé'
+  advanced: 'Avancé',
 };
 
 export default function Profile() {
@@ -19,8 +19,12 @@ export default function Profile() {
 
   useEffect(() => {
     const loadUser = async () => {
-      const me = await base44.auth.me();
-      setUser(me);
+      try {
+        const me = await base44.auth.me();
+        setUser(me);
+      } catch (err) {
+        console.error('Erreur chargement utilisateur:', err);
+      }
     };
     loadUser();
   }, []);
@@ -45,7 +49,7 @@ export default function Profile() {
         <h1 className="text-xl font-bold">Profil</h1>
       </div>
 
-      {/* User card */}
+      {/* Carte utilisateur */}
       <div className="p-6 rounded-2xl bg-card border border-border text-center space-y-3">
         <div className="w-16 h-16 rounded-full bg-primary/10 mx-auto flex items-center justify-center">
           <span className="font-arabic text-2xl font-bold text-primary">
@@ -67,7 +71,7 @@ export default function Profile() {
         <XPBar xp={progress?.xp_points || 0} level={progress?.level || 'beginner'} />
       </div>
 
-      {/* Stats */}
+      {/* Statistiques */}
       <div className="space-y-2">
         <h3 className="text-sm font-bold">Statistiques</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -78,26 +82,29 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* AI Credits */}
+      {/* Crédits IA */}
       <div className="p-5 rounded-2xl bg-card border border-border space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-bold">Crédits IA</h3>
           </div>
-          <span className="text-xs text-muted-foreground">{creditsUsed} / {MAX_AI_CREDITS}</span>
+          <span className="text-xs text-muted-foreground">
+            {creditsUsed} / {MAX_AI_CREDITS}
+          </span>
         </div>
         <Progress value={creditsPercent} className="h-2" />
         <p className="text-xs text-muted-foreground">
-          {MAX_AI_CREDITS - creditsUsed} crédits restants (~{((MAX_AI_CREDITS - creditsUsed) / MAX_AI_CREDITS * 100).toFixed(0)}%)
+          {MAX_AI_CREDITS - creditsUsed} crédits restants (
+          {((MAX_AI_CREDITS - creditsUsed) / MAX_AI_CREDITS * 100).toFixed(0)}%)
         </p>
       </div>
 
-      {/* Logout */}
+      {/* Déconnexion — passe l'URL courante pour redirection correcte */}
       <Button
         variant="outline"
         className="w-full h-12 rounded-2xl"
-        onClick={() => base44.auth.logout()}
+        onClick={() => base44.auth.logout(window.location.href)}
       >
         <LogOut className="w-4 h-4 mr-2" />
         Déconnexion

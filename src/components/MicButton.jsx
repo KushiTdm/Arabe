@@ -6,6 +6,11 @@ export default function MicButton({ onResult, lang = 'ar-SA', className }) {
   const [listening, setListening] = useState(false);
   const [supported, setSupported] = useState(true);
   const recognitionRef = useRef(null);
+  // Always call the latest version of onResult, avoids stale closure bug
+  const onResultRef = useRef(onResult);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -21,7 +26,7 @@ export default function MicButton({ onResult, lang = 'ar-SA', className }) {
 
     recognition.onresult = (event) => {
       const transcript = event.results[0]?.[0]?.transcript || '';
-      if (transcript) onResult(transcript);
+      if (transcript) onResultRef.current(transcript);
       setListening(false);
     };
 
@@ -29,22 +34,41 @@ export default function MicButton({ onResult, lang = 'ar-SA', className }) {
     recognition.onend = () => setListening(false);
 
     recognitionRef.current = recognition;
+
+    // Cleanup: stop recognition if component unmounts while listening
+    return () => {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try { recognition.abort(); } catch {}
+    };
   }, [lang]);
 
   const toggle = () => {
-    if (!supported) return;
+    if (!supported || !recognitionRef.current) return;
     if (listening) {
-      recognitionRef.current?.stop();
+      recognitionRef.current.stop();
       setListening(false);
     } else {
-      recognitionRef.current?.start();
-      setListening(true);
+      try {
+        recognitionRef.current.start();
+        setListening(true);
+      } catch (err) {
+        console.error('Erreur microphone:', err);
+        setListening(false);
+      }
     }
   };
 
   if (!supported) {
     return (
-      <div className={cn("w-14 h-14 rounded-full flex items-center justify-center bg-muted text-muted-foreground text-xs text-center", className)}>
+      <div
+        className={cn(
+          'w-14 h-14 rounded-full flex items-center justify-center bg-muted text-muted-foreground',
+          className,
+        )}
+        title="Reconnaissance vocale non supportée"
+      >
         <MicOff className="w-5 h-5" />
       </div>
     );
@@ -54,12 +78,13 @@ export default function MicButton({ onResult, lang = 'ar-SA', className }) {
     <button
       onClick={toggle}
       className={cn(
-        "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200",
+        'w-14 h-14 rounded-full flex items-center justify-center transition-all duration-200',
         listening
-          ? "bg-red-500 text-white shadow-lg shadow-red-500/40 scale-110 animate-pulse"
-          : "bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:scale-105 active:scale-95",
-        className
+          ? 'bg-red-500 text-white shadow-lg shadow-red-500/40 scale-110 animate-pulse'
+          : 'bg-primary text-primary-foreground shadow-lg shadow-primary/30 hover:scale-105 active:scale-95',
+        className,
       )}
+      title={listening ? 'Arrêter' : 'Parler en arabe'}
     >
       {listening ? <Square className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
     </button>
