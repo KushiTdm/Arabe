@@ -5,12 +5,9 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-import { AuthProvider } from './src/lib/AuthContextRN';
 import { colors } from './src/theme';
 
-// Import screens
 import HomeScreen from './src/screens/HomeScreen';
 import ConversationScreen from './src/screens/ConversationScreen';
 import WritingScreen from './src/screens/WritingScreen';
@@ -21,42 +18,20 @@ import ProfileScreen from './src/screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 function HomeTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
-
           switch (route.name) {
-            case 'Home':
-              iconName = focused ? 'home' : 'home-outline';
-              break;
-            case 'Conversation':
-              iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-              break;
-            case 'Writing':
-              iconName = focused ? 'pencil' : 'pencil-outline';
-              break;
-            case 'Vocabulary':
-              iconName = focused ? 'book' : 'book-outline';
-              break;
-            case 'Profile':
-              iconName = focused ? 'person' : 'person-outline';
-              break;
-            default:
-              iconName = 'help-outline';
+            case 'Home':        iconName = focused ? 'home'        : 'home-outline';        break;
+            case 'Conversation':iconName = focused ? 'chatbubbles' : 'chatbubbles-outline'; break;
+            case 'Writing':     iconName = focused ? 'pencil'      : 'pencil-outline';      break;
+            case 'Vocabulary':  iconName = focused ? 'book'        : 'book-outline';        break;
+            case 'Profile':     iconName = focused ? 'person'      : 'person-outline';      break;
+            default:            iconName = 'help-outline';
           }
-
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: colors.primary,
@@ -69,38 +44,15 @@ function HomeTabs() {
           paddingBottom: 8,
           height: 70,
         },
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '500',
-        },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '500' },
         headerShown: false,
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen}
-        options={{ tabBarLabel: 'Accueil' }}
-      />
-      <Tab.Screen 
-        name="Conversation" 
-        component={ConversationScreen}
-        options={{ tabBarLabel: 'Parler' }}
-      />
-      <Tab.Screen 
-        name="Writing" 
-        component={WritingScreen}
-        options={{ tabBarLabel: 'Écrire' }}
-      />
-      <Tab.Screen 
-        name="Vocabulary" 
-        component={VocabularyScreen}
-        options={{ tabBarLabel: 'Vocab' }}
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Profil' }}
-      />
+      <Tab.Screen name="Home"         component={HomeScreen}         options={{ tabBarLabel: 'Accueil' }} />
+      <Tab.Screen name="Conversation" component={ConversationScreen} options={{ tabBarLabel: 'Parler'  }} />
+      <Tab.Screen name="Writing"      component={WritingScreen}      options={{ tabBarLabel: 'Écrire'  }} />
+      <Tab.Screen name="Vocabulary"   component={VocabularyScreen}   options={{ tabBarLabel: 'Vocab'   }} />
+      <Tab.Screen name="Profile"      component={ProfileScreen}      options={{ tabBarLabel: 'Profil'  }} />
     </Tab.Navigator>
   );
 }
@@ -117,14 +69,10 @@ function RootStack() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <NavigationContainer>
-            <StatusBar style="dark" />
-            <RootStack />
-          </NavigationContainer>
-        </AuthProvider>
-      </QueryClientProvider>
+      <NavigationContainer>
+        <StatusBar style="dark" />
+        <RootStack />
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
