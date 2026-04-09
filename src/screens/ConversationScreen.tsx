@@ -17,7 +17,7 @@ import * as FileSystem from 'expo-file-system';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserProgress } from '../lib/useUserProgress';
 import { useErrorTracker } from '../lib/useErrorTracker';
-import { Card, Badge, LoadingSpinner } from '../components/RNComponents';
+import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI, invokeAIWithAudio } from '../api/aiClient';
 
@@ -77,7 +77,9 @@ export default function ConversationScreen() {
   }, [messages]);
 
   useEffect(() => {
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
   const speakArabic = (text: string) => {
@@ -92,7 +94,9 @@ export default function ConversationScreen() {
         return;
       }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY,
+      );
       recordingRef.current = recording;
       setIsRecording(true);
       setRecordingDuration(0);
@@ -104,7 +108,10 @@ export default function ConversationScreen() {
 
   const stopRecording = async () => {
     if (!recordingRef.current) return;
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsRecording(false);
     try {
       await recordingRef.current.stopAndUnloadAsync();
@@ -123,33 +130,61 @@ export default function ConversationScreen() {
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, { encoding: FileSystem.EncodingType.Base64 });
+      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
       const history = buildHistory();
       const errorsCtx = getErrorsForAIPrompt();
 
       const res = await invokeAIWithAudio<AIMessage>(
-        buildConversationPrompt(selectedTopic.fr, history, errorsCtx, '(message vocal de Fatima)'),
-        audioBase64, 'audio/m4a',
+        buildConversationPrompt(
+          selectedTopic.fr,
+          history,
+          errorsCtx,
+          '(message vocal de Fatima)',
+        ),
+        audioBase64,
+        'audio/m4a',
       );
 
       addAIMessage(res);
       await trackError(res);
       setTimeout(() => speakArabic(res.arabic_text), 300);
       await addXP(5);
-      await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
-      await addSession({ type: 'conversation', topic: selectedTopic.fr, duration_minutes: 1, errors_count: res.error_type ? 1 : 0, xp_earned: 5 });
+      await updateProgress({
+        conversations_count: (progress?.conversations_count || 0) + 1,
+      });
+      await addSession({
+        type: 'conversation',
+        topic: selectedTopic.fr,
+        duration_minutes: 1,
+        errors_count: res.error_type ? 1 : 0,
+        xp_earned: 5,
+      });
     } catch (err: any) {
-      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
+      setAiError(
+        err?.message || 'Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.',
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const buildHistory = () => messages
-    .map(m => m.role === 'user' ? `Fatima: ${m.text}` : `Prof: ${m.arabic} (${m.transliteration}) - ${m.french}`)
-    .join('\n');
+  const buildHistory = () =>
+    messages
+      .map(m =>
+        m.role === 'user'
+          ? `Fatima: ${m.text}`
+          : `Prof: ${m.arabic} (${m.transliteration}) - ${m.french}`,
+      )
+      .join('\n');
 
-  const buildConversationPrompt = (topic: string, history: string, errorsCtx: string, userMessage: string) =>
+  const buildConversationPrompt = (
+    topic: string,
+    history: string,
+    errorsCtx: string,
+    userMessage: string,
+  ) =>
     `Tu es un professeur d'arabe patient et bienveillant. Tu enseignes à Fatima (débutante).
 Thème: "${topic}".
 ${history ? `Historique:\n${history}\n` : ''}
@@ -164,23 +199,26 @@ Adresse-toi à elle directement: "Fatima, ..."
 JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "pronunciation_feedback": "...", "correction": "...", "suggestion": "...", "exercise": "...", "error_type": "pronunciation|grammar|vocabulary|null", "error_category": "...", "correct_form": "..." }`;
 
   const addAIMessage = (res: AIMessage) => {
-    setMessages(prev => [...prev, {
-      role: 'ai',
-      arabic: res.arabic_text,
-      transliteration: res.transliteration,
-      french: res.french_translation,
-      correction: res.correction,
-      pronunciation_feedback: res.pronunciation_feedback,
-      suggestion: res.suggestion,
-      exercise: res.exercise,
-    }]);
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'ai',
+        arabic: res.arabic_text,
+        transliteration: res.transliteration,
+        french: res.french_translation,
+        correction: res.correction,
+        pronunciation_feedback: res.pronunciation_feedback,
+        suggestion: res.suggestion,
+        exercise: res.exercise,
+      },
+    ]);
   };
 
   const trackError = async (res: AIMessage) => {
     if (res.error_type && res.correct_form) {
       await addError({
         type: res.error_type as any,
-        category: res.error_category || (selectedTopic?.fr || ''),
+        category: res.error_category || selectedTopic?.fr || '',
         description: res.correction || 'Erreur détectée',
         correct_form: res.correct_form,
         user_attempt: inputText || '(vocal)',
@@ -191,12 +229,22 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
 
   const startConversation = async (topic: (typeof TOPICS)[0]) => {
     setSelectedTopic(topic);
+    setMessages([]);
     setAiError(null);
-    if (!canUseAI()) return;
+
+    if (!canUseAI()) {
+      setAiError('Crédits IA épuisés. Vérifiez votre profil.');
+      return;
+    }
+
     setIsLoading(true);
     try {
       const ok = await incrementCredits();
-      if (!ok) return;
+      if (!ok) {
+        setAiError('Impossible d\'utiliser un crédit IA.');
+        setIsLoading(false);
+        return;
+      }
       const errorsCtx = getErrorsForAIPrompt();
       const isExercise = topic.id === 'exercise';
 
@@ -205,23 +253,33 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
 ${errorsCtx}
 Salue-la chaleureusement, puis propose un exercice ciblé sur ses erreurs. "Fatima, ..."
 JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`
-        : `Tu es un professeur d'arabe patient. Lance une conversation sur "${topic.fr}" avec Fatima (débutante).
+        : `Tu es un professeur d'arabe patient. Lance une conversation simple sur "${topic.fr}" avec Fatima (débutante).
 ${errorsCtx}
 Salue-la en arabe simple. Pose une question pour démarrer. "Fatima, ..."
-JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`;
+JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "" }`;
 
       const res = await invokeAI<AIMessage>(prompt);
-      setMessages([{
-        role: 'ai',
-        arabic: res.arabic_text,
-        transliteration: res.transliteration,
-        french: res.french_translation,
-        suggestion: res.suggestion,
-        exercise: res.exercise,
-      }]);
+
+      if (!res || !res.arabic_text) {
+        throw new Error('Réponse IA vide ou invalide.');
+      }
+
+      setMessages([
+        {
+          role: 'ai',
+          arabic: res.arabic_text,
+          transliteration: res.transliteration,
+          french: res.french_translation,
+          suggestion: res.suggestion,
+          exercise: res.exercise,
+        },
+      ]);
       setTimeout(() => speakArabic(res.arabic_text), 300);
     } catch (err: any) {
-      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
+      console.error('Erreur startConversation:', err);
+      setAiError(
+        err?.message || 'Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -239,15 +297,33 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
       if (!ok) return;
       const history = buildHistory();
       const errorsCtx = getErrorsForAIPrompt();
-      const res = await invokeAI<AIMessage>(buildConversationPrompt(selectedTopic.fr, history, errorsCtx, text));
+      const res = await invokeAI<AIMessage>(
+        buildConversationPrompt(selectedTopic.fr, history, errorsCtx, text),
+      );
+
+      if (!res || !res.arabic_text) {
+        throw new Error('Réponse IA vide.');
+      }
+
       addAIMessage(res);
       await trackError(res);
       setTimeout(() => speakArabic(res.arabic_text), 300);
       await addXP(5);
-      await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
-      await addSession({ type: 'conversation', topic: selectedTopic.fr, duration_minutes: 1, errors_count: res.error_type ? 1 : 0, xp_earned: 5 });
+      await updateProgress({
+        conversations_count: (progress?.conversations_count || 0) + 1,
+      });
+      await addSession({
+        type: 'conversation',
+        topic: selectedTopic.fr,
+        duration_minutes: 1,
+        errors_count: res.error_type ? 1 : 0,
+        xp_earned: 5,
+      });
     } catch (err: any) {
-      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
+      console.error('Erreur sendMessage:', err);
+      setAiError(
+        err?.message || 'Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -258,7 +334,10 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
     const errorSummary = getErrorSummary();
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.topicScrollContent}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={styles.topicScrollContent}
+        >
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.headerTitle}>Salut Fatima ! 👋</Text>
@@ -273,10 +352,19 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
           <Card style={styles.encourageCard}>
             <Text style={styles.encourageText}>
               {errorSummary.total_errors === 0
-                ? "Tu es prête ! Lance-toi dans une conversation et pratique ton arabe !"
-                : `Continue comme ça ! Travaille encore sur ${errorSummary.improvement_areas.join(' et ') || 'ta pratique'}.`}
+                ? 'Tu es prête ! Lance-toi dans une conversation et pratique ton arabe !'
+                : `Continue ! Travaille encore sur ${errorSummary.improvement_areas.join(' et ') || 'ta pratique'}.`}
             </Text>
           </Card>
+
+          {!canUseAI() && (
+            <Card style={styles.noCreditsCard}>
+              <Ionicons name="warning" size={18} color={colors.destructive} />
+              <Text style={styles.noCreditsText}>
+                Crédits IA épuisés. Configurez votre clé API dans Profil.
+              </Text>
+            </Card>
+          )}
 
           <View style={styles.topicsGrid}>
             {TOPICS.map(topic => (
@@ -296,19 +384,14 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
                 <Text style={styles.topicFrench}>{topic.fr}</Text>
                 {topic.id === 'exercise' && errorSummary.total_errors > 0 && (
                   <View style={styles.errorBadge}>
-                    <Text style={styles.errorBadgeText}>{errorSummary.total_errors} à corriger</Text>
+                    <Text style={styles.errorBadgeText}>
+                      {errorSummary.total_errors} à corriger
+                    </Text>
                   </View>
                 )}
               </TouchableOpacity>
             ))}
           </View>
-
-          {!canUseAI() && (
-            <Card style={styles.noCreditsCard}>
-              <Ionicons name="warning" size={18} color={colors.destructive} />
-              <Text style={styles.noCreditsText}>Crédits IA épuisés.</Text>
-            </Card>
-          )}
         </ScrollView>
       </SafeAreaView>
     );
@@ -325,13 +408,19 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
         {/* Header */}
         <View style={styles.chatHeader}>
           <TouchableOpacity
-            onPress={() => { setSelectedTopic(null); setMessages([]); setAiError(null); }}
+            onPress={() => {
+              setSelectedTopic(null);
+              setMessages([]);
+              setAiError(null);
+            }}
             style={styles.backBtn}
           >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.chatTitle}>{selectedTopic.emoji} {selectedTopic.fr}</Text>
+            <Text style={styles.chatTitle}>
+              {selectedTopic.emoji} {selectedTopic.fr}
+            </Text>
             <Text style={styles.chatSubtitle}>{selectedTopic.label}</Text>
           </View>
           <View style={styles.creditsTag}>
@@ -346,10 +435,16 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
           style={styles.messagesContainer}
           contentContainerStyle={styles.messagesContent}
         >
+          {messages.length === 0 && isLoading && (
+            <View style={styles.loadingRow}>
+              <LoadingSpinner size="sm" />
+              <Text style={styles.loadingText}>Démarrage de la conversation...</Text>
+            </View>
+          )}
           {messages.map((msg, i) => (
             <MessageBubble key={i} message={msg} onSpeak={speakArabic} />
           ))}
-          {isLoading && (
+          {messages.length > 0 && isLoading && (
             <View style={styles.loadingRow}>
               <LoadingSpinner size="sm" />
               <Text style={styles.loadingText}>Le professeur réfléchit...</Text>
@@ -367,9 +462,13 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
         <View style={styles.inputBar}>
           <TouchableOpacity
             style={styles.modeToggle}
-            onPress={() => setInputMode(m => m === 'text' ? 'voice' : 'text')}
+            onPress={() => setInputMode(m => (m === 'text' ? 'voice' : 'text'))}
           >
-            <Ionicons name={inputMode === 'text' ? 'mic-outline' : 'keypad-outline'} size={20} color={colors.primary} />
+            <Ionicons
+              name={inputMode === 'text' ? 'mic-outline' : 'keypad-outline'}
+              size={20}
+              color={colors.primary}
+            />
           </TouchableOpacity>
 
           {inputMode === 'text' ? (
@@ -387,7 +486,10 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
                 onSubmitEditing={sendMessage}
               />
               <TouchableOpacity
-                style={[styles.sendBtn, (!inputText.trim() || isLoading) && styles.sendBtnDisabled]}
+                style={[
+                  styles.sendBtn,
+                  (!inputText.trim() || isLoading) && styles.sendBtnDisabled,
+                ]}
                 onPress={sendMessage}
                 disabled={!inputText.trim() || isLoading}
               >
@@ -400,7 +502,9 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
                 <>
                   <View style={styles.recIndicator}>
                     <View style={styles.recDot} />
-                    <Text style={styles.recText}>Enregistrement... {recordingDuration}s</Text>
+                    <Text style={styles.recText}>
+                      Enregistrement... {recordingDuration}s
+                    </Text>
                   </View>
                   <TouchableOpacity style={styles.stopBtn} onPress={stopRecording}>
                     <Ionicons name="stop" size={22} color={colors.white} />
@@ -426,7 +530,13 @@ JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": ".
   );
 }
 
-function MessageBubble({ message, onSpeak }: { message: Message; onSpeak: (t: string) => void }) {
+function MessageBubble({
+  message,
+  onSpeak,
+}: {
+  message: Message;
+  onSpeak: (t: string) => void;
+}) {
   if (message.role === 'user') {
     return (
       <View style={styles.userBubble}>
@@ -479,76 +589,298 @@ function MessageBubble({ message, onSpeak }: { message: Message; onSpeak: (t: st
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1 },
-  topicScrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 120 },
+  topicScrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 120,
+  },
 
   header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   headerTitle: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
-  headerSubtitle: { fontSize: fontSize.xs, color: colors.textMuted },
-  creditsTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.primary}12`, paddingHorizontal: 10, paddingVertical: 5, borderRadius: borderRadius.full, gap: 4 },
+  headerSubtitle: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+  creditsTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${colors.primary}12`,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: borderRadius.full,
+    gap: 4,
+  },
   creditsTagText: { fontSize: fontSize.xs, fontWeight: '700', color: colors.primary },
 
-  encourageCard: { marginBottom: 14, backgroundColor: `${colors.accent}10` },
-  encourageText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 20, textAlign: 'center', fontStyle: 'italic' },
+  encourageCard: {
+    marginBottom: 14,
+    backgroundColor: `${colors.accent}10`,
+    borderRadius: borderRadius['2xl'],
+  },
+  encourageText: {
+    fontSize: fontSize.sm,
+    color: colors.text,
+    lineHeight: 20,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+
+  noCreditsCard: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+    marginBottom: 14,
+    backgroundColor: `${colors.destructive}08`,
+    padding: 12,
+    borderRadius: borderRadius.xl,
+    borderWidth: 1,
+    borderColor: `${colors.destructive}20`,
+  },
+  noCreditsText: { fontSize: fontSize.sm, color: colors.destructive, flex: 1, flexWrap: 'wrap' },
 
   topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  topicCard: { width: '47%', backgroundColor: colors.card, borderRadius: borderRadius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.xl, alignItems: 'center' },
-  exerciseCard: { width: '97%', backgroundColor: `${colors.secondary}10`, borderColor: `${colors.secondary}40` },
+  topicCard: {
+    width: '47%',
+    backgroundColor: colors.card,
+    borderRadius: borderRadius['2xl'],
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    alignItems: 'center',
+  },
+  exerciseCard: {
+    width: '97%',
+    backgroundColor: `${colors.secondary}10`,
+    borderColor: `${colors.secondary}40`,
+  },
   topicEmoji: { fontSize: 30, marginBottom: 6 },
   topicArabic: { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
   topicFrench: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 3 },
-  errorBadge: { marginTop: 6, backgroundColor: `${colors.secondary}20`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: borderRadius.full },
+  errorBadge: {
+    marginTop: 6,
+    backgroundColor: `${colors.secondary}20`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: borderRadius.full,
+  },
   errorBadgeText: { fontSize: 10, color: colors.secondary, fontWeight: '700' },
 
-  noCreditsCard: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 12, backgroundColor: `${colors.destructive}08` },
-  noCreditsText: { fontSize: fontSize.sm, color: colors.destructive, fontWeight: '600' },
-
   // Chat
-  chatHeader: { flexDirection: 'row', alignItems: 'center', paddingTop: 10, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  backBtn: { padding: 8, borderRadius: borderRadius.md, backgroundColor: `${colors.textMuted}12`, marginRight: 10 },
+  chatHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    backgroundColor: colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backBtn: {
+    padding: 8,
+    borderRadius: borderRadius.md,
+    backgroundColor: `${colors.textMuted}12`,
+    marginRight: 10,
+  },
   chatTitle: { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
-  chatSubtitle: { fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'right' },
+  chatSubtitle: { fontSize: fontSize.xs, color: colors.textMuted },
 
   messagesContainer: { flex: 1, backgroundColor: colors.background },
   messagesContent: { padding: 16, paddingBottom: 12 },
 
-  userBubble: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderRadius: borderRadius.xl, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '80%', marginBottom: 10 },
+  userBubble: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    maxWidth: '80%',
+    marginBottom: 10,
+  },
   userBubbleText: { color: colors.white, fontSize: fontSize.base },
 
-  aiBubbleWrap: { alignSelf: 'flex-start', maxWidth: '88%', marginBottom: 12, gap: 4 },
+  aiBubbleWrap: {
+    alignSelf: 'flex-start',
+    maxWidth: '88%',
+    marginBottom: 12,
+    gap: 4,
+  },
   aiBubble: { padding: 14 },
   aiBubbleContent: { flexDirection: 'row', alignItems: 'flex-start' },
-  arabicText: { fontSize: fontSize.xl, fontWeight: '600', color: colors.text, textAlign: 'right', writingDirection: 'rtl' },
-  translitText: { fontSize: fontSize.xs, color: colors.primary, fontStyle: 'italic', marginTop: 6 },
+  arabicText: {
+    fontSize: fontSize.xl,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+  },
+  translitText: {
+    fontSize: fontSize.xs,
+    color: colors.primary,
+    fontStyle: 'italic',
+    marginTop: 6,
+  },
   frenchText: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 3 },
-  speakBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: `${colors.primary}12`, justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+  speakBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: `${colors.primary}12`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
 
-  feedbackPill: { backgroundColor: `${colors.primary}12`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.primary}20` },
+  feedbackPill: {
+    backgroundColor: `${colors.primary}12`,
+    borderRadius: borderRadius.lg,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: `${colors.primary}20`,
+  },
   feedbackPillText: { fontSize: fontSize.xs, color: colors.primary, lineHeight: 18 },
-  correctionPill: { backgroundColor: `${colors.secondary}12`, borderRadius: borderRadius.lg, padding: 10 },
+  correctionPill: {
+    backgroundColor: `${colors.secondary}12`,
+    borderRadius: borderRadius.lg,
+    padding: 10,
+  },
   correctionPillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
-  suggestionPill: { backgroundColor: `${colors.accent}12`, borderRadius: borderRadius.lg, padding: 10 },
+  suggestionPill: {
+    backgroundColor: `${colors.accent}12`,
+    borderRadius: borderRadius.lg,
+    padding: 10,
+  },
   suggestionPillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
-  exercisePill: { backgroundColor: `${colors.secondary}10`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.secondary}25` },
-  exercisePillTitle: { fontSize: fontSize.xs, fontWeight: '700', color: colors.text, marginBottom: 3 },
+  exercisePill: {
+    backgroundColor: `${colors.secondary}10`,
+    borderRadius: borderRadius.lg,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: `${colors.secondary}25`,
+  },
+  exercisePillTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 3,
+  },
   exercisePillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
 
-  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+    padding: 12,
+    backgroundColor: `${colors.primary}08`,
+    borderRadius: borderRadius.lg,
+  },
   loadingText: { fontSize: fontSize.xs, color: colors.textMuted },
-  errorBubble: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: `${colors.destructive}10`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.destructive}25`, marginBottom: 10 },
-  errorBubbleText: { fontSize: fontSize.xs, color: colors.destructive, flex: 1, lineHeight: 18 },
+  errorBubble: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+    backgroundColor: `${colors.destructive}10`,
+    borderRadius: borderRadius.lg,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: `${colors.destructive}25`,
+    marginBottom: 10,
+  },
+  errorBubbleText: {
+    fontSize: fontSize.xs,
+    color: colors.destructive,
+    flex: 1,
+    lineHeight: 18,
+  },
 
   // Input bar
-  inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 24, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
-  modeToggle: { width: 38, height: 38, borderRadius: 19, backgroundColor: `${colors.primary}12`, justifyContent: 'center', alignItems: 'center' },
-  textInput: { flex: 1, backgroundColor: colors.background, borderRadius: borderRadius.xl, paddingHorizontal: 14, paddingVertical: 10, fontSize: fontSize.base, maxHeight: 90, borderWidth: 1, borderColor: colors.border, color: colors.text },
-  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    gap: 8,
+  },
+  modeToggle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: `${colors.primary}12`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  textInput: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: fontSize.base,
+    maxHeight: 90,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+  },
+  sendBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   sendBtnDisabled: { opacity: 0.4 },
 
-  voiceArea: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  voiceHint: { fontSize: fontSize.sm, color: colors.textMuted, fontStyle: 'italic', flex: 1 },
-  micBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
-  stopBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.destructive, justifyContent: 'center', alignItems: 'center' },
-  recIndicator: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.destructive },
-  recText: { fontSize: fontSize.sm, color: colors.destructive, fontWeight: '600' },
+  voiceArea: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  voiceHint: {
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
+    fontStyle: 'italic',
+    flex: 1,
+  },
+  micBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  stopBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: colors.destructive,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  recIndicator: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  recDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.destructive,
+  },
+  recText: {
+    fontSize: fontSize.sm,
+    color: colors.destructive,
+    fontWeight: '600',
+  },
 });
