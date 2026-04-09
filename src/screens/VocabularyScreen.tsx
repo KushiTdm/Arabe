@@ -111,7 +111,7 @@ export default function VocabularyScreen() {
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Vocabulaire</Text>
-            <Text style={styles.headerSubtitle}>Choisissez une catégorie</Text>
+            <Text style={styles.headerSubtitle}>Choisis une catégorie, Fatima !</Text>
           </View>
         </View>
         <View style={styles.categoriesGrid}>

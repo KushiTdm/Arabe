@@ -29,8 +29,8 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>مرحباً</Text>
-          <Text style={styles.subtitle}>Bienvenue dans votre cours d'arabe</Text>
+          <Text style={styles.greeting}>مرحباً فاطمة</Text>
+          <Text style={styles.subtitle}>Continue ton apprentissage, Fatima !</Text>
         </View>
         <Badge color="primary">{creditsRemaining()} crédits IA</Badge>
       </View>
@@ -51,10 +51,10 @@ export default function HomeScreen() {
       <View style={styles.lessonsSection}>
         <Text style={styles.sectionTitle}>Apprendre</Text>
 
-        <LessonCard title="Conversation IA"   subtitle="Pratiquez l'arabe parlé avec l'IA" icon="chatbubbles" onPress={() => navigation.navigate('Conversation')} color="primary"   />
-        <LessonCard title="Écriture arabe"    subtitle="Apprenez les 28 lettres"            icon="pencil"      onPress={() => navigation.navigate('Writing')}      color="secondary" />
-        <LessonCard title="Vocabulaire"       subtitle="Enrichissez votre vocabulaire"       icon="book"        onPress={() => navigation.navigate('Vocabulary')}   color="accent"    />
-        <LessonCard title="Alphabet arabe"    subtitle="Maîtrisez les lettres en détail"     icon="text"        onPress={() => navigation.navigate('Alphabet')}     color="primary"   />
+        <LessonCard title="Conversation IA"   subtitle="Parle en arabe avec l'IA, Fatima !"   icon="chatbubbles" onPress={() => navigation.navigate('Conversation')} color="primary"   />
+        <LessonCard title="Écriture arabe"    subtitle="Dessine les lettres avec ton doigt" icon="pencil"      onPress={() => navigation.navigate('Writing')}      color="secondary" />
+        <LessonCard title="Vocabulaire"       subtitle="Enrichis ton vocabulaire"            icon="book"        onPress={() => navigation.navigate('Vocabulary')}   color="accent"    />
+        <LessonCard title="Alphabet arabe"    subtitle="Maîtrise les lettres en détail"     icon="text"        onPress={() => navigation.navigate('Alphabet')}     color="primary"   />
       </View>
     </ScrollView>
   );

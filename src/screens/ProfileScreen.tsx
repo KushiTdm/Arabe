@@ -9,11 +9,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUserProgress, MAX_AI_CREDITS } from '../lib/useUserProgress';
+import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, Badge, LoadingSpinner, ProgressBar, Button } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function ProfileScreen() {
   const { progress, loading, creditsRemaining, reload } = useUserProgress();
+  const { getErrorSummary, clearErrors } = useErrorTracker();
 
   if (loading) {
     return (
@@ -35,10 +37,12 @@ export default function ProfileScreen() {
     100,
   );
 
+  const errorSummary = getErrorSummary();
+
   const handleReset = () => {
     Alert.alert(
       'Réinitialiser la progression',
-      'Êtes-vous sûr ? Toutes vos données seront supprimées.',
+      'Fatima, es-tu sûre ? Toutes tes données seront supprimées.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
@@ -49,6 +53,7 @@ export default function ProfileScreen() {
               '@maa_user_progress',
               '@maa_mastered_words',
             ]);
+            await clearErrors();
             reload();
           },
         },
@@ -59,8 +64,8 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mon Profil</Text>
-        <Text style={styles.headerSubtitle}>Votre progression</Text>
+        <Text style={styles.headerTitle}>Profil de Fatima</Text>
+        <Text style={styles.headerSubtitle}>Ta progression</Text>
       </View>
 
       {/* Level Card */}
@@ -101,12 +106,36 @@ export default function ProfileScreen() {
         <Text style={styles.creditsInfo}>Utilisés pour les conversations IA</Text>
       </Card>
 
+      {/* Error tracking */}
+      {errorSummary.total_errors > 0 && (
+        <Card style={styles.errorsCard}>
+          <Text style={styles.sectionTitle}>📊 Points à travailler</Text>
+          <Text style={styles.errorsIntro}>
+            Fatima, voici tes axes d'amélioration :
+          </Text>
+          {errorSummary.improvement_areas.map((area, i) => (
+            <View key={i} style={styles.errorArea}>
+              <Ionicons name="alert-circle" size={16} color={colors.secondary} />
+              <Text style={styles.errorAreaText}>{area}</Text>
+            </View>
+          ))}
+          {errorSummary.weak_categories.length > 0 && (
+            <Text style={styles.weakCategories}>
+              Catégories à revoir : {errorSummary.weak_categories.join(', ')}
+            </Text>
+          )}
+          <Text style={styles.encourageText}>
+            Tu fais des progrès chaque jour, continue comme ça !
+          </Text>
+        </Card>
+      )}
+
       {/* Achievements */}
       <Card style={styles.achievementsCard}>
         <Text style={styles.sectionTitle}>🏆 Succès</Text>
-        <Achievement title="Premier pas"         description="Complétez votre première leçon" completed={(progress?.lessons_completed    ?? 0) > 0}  />
-        <Achievement title="Élève assidu"        description="7 jours consécutifs"            completed={(progress?.streak_days          ?? 0) >= 7}  />
-        <Achievement title="Maître du vocab"     description="Apprendre 50 mots"              completed={(progress?.vocab_learned        ?? 0) >= 50} />
+        <Achievement title="Premier pas"         description="Termine ta première leçon"      completed={(progress?.lessons_completed    ?? 0) > 0}  />
+        <Achievement title="Élève assidue"       description="7 jours consécutifs"            completed={(progress?.streak_days          ?? 0) >= 7}  />
+        <Achievement title="Maîtresse du vocab"  description="Apprendre 50 mots"              completed={(progress?.vocab_learned        ?? 0) >= 50} />
         <Achievement title="Conversationniste"   description="10 conversations avec l'IA"    completed={(progress?.conversations_count  ?? 0) >= 10} />
       </Card>
 
@@ -175,4 +204,10 @@ const styles = StyleSheet.create({
   achievementItem:    { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
   achievementTitle:   { fontSize: fontSize.sm, fontWeight: '600', color: colors.text },
   achievementDesc:    { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+  errorsCard:         { marginBottom: spacing['2xl'], backgroundColor: `${colors.secondary}08` },
+  errorsIntro:        { fontSize: fontSize.sm, color: colors.text, marginBottom: spacing.sm },
+  errorArea:          { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  errorAreaText:      { fontSize: fontSize.sm, color: colors.text, textTransform: 'capitalize' },
+  weakCategories:     { fontSize: fontSize.xs, color: colors.textMuted, marginTop: spacing.sm },
+  encourageText:      { fontSize: fontSize.sm, color: colors.accent, fontStyle: 'italic', marginTop: spacing.md },
 });
