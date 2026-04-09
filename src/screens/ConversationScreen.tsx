@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserProgress } from '../lib/useUserProgress';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, Badge, LoadingSpinner } from '../components/RNComponents';
@@ -63,23 +64,20 @@ export default function ConversationScreen() {
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [inputMode, setInputMode] = useState<'text' | 'voice'>('voice');
+  const [inputMode, setInputMode] = useState<'text' | 'voice'>('text');
   const scrollViewRef = useRef<ScrollView>(null);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { progress, incrementCredits, canUseAI, creditsRemaining, addXP, updateProgress } =
-    useUserProgress();
-  const { addError, getErrorsForAIPrompt, getErrorSummary } = useErrorTracker();
+  const { progress, incrementCredits, canUseAI, creditsRemaining, addXP, updateProgress } = useUserProgress();
+  const { addError, addSession, getErrorsForAIPrompt, getErrorSummary } = useErrorTracker();
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
   useEffect(() => {
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
   const speakArabic = (text: string) => {
@@ -88,138 +86,106 @@ export default function ConversationScreen() {
 
   const startRecording = async () => {
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission requise', "Fatima, autorise l'accès au micro pour parler en arabe !");
+      const perm = await Audio.requestPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert('Permission', "Fatima, autorise l'accès au micro !");
         return;
       }
-
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
       recordingRef.current = recording;
       setIsRecording(true);
       setRecordingDuration(0);
-
-      timerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
+      timerRef.current = setInterval(() => setRecordingDuration(p => p + 1), 1000);
     } catch (err) {
-      console.error('Erreur démarrage enregistrement:', err);
       Alert.alert('Erreur', "Impossible de démarrer l'enregistrement.");
     }
   };
 
   const stopRecording = async () => {
     if (!recordingRef.current) return;
-
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
-
     try {
       await recordingRef.current.stopAndUnloadAsync();
       const uri = recordingRef.current.getURI();
       recordingRef.current = null;
-
-      if (!uri) {
-        Alert.alert('Erreur', 'Aucun enregistrement capturé.');
-        return;
-      }
-
-      await processVoiceInput(uri);
+      if (uri) await processVoiceInput(uri);
     } catch (err) {
-      console.error('Erreur arrêt enregistrement:', err);
       recordingRef.current = null;
     }
   };
 
   const processVoiceInput = async (audioUri: string) => {
     if (!canUseAI() || !selectedTopic) return;
-
     setIsLoading(true);
     setAiError(null);
-
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-
-      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, {
-        encoding: FileSystem.EncodingType.Base64,
-      });
-
-      const history = messages
-        .map(m =>
-          m.role === 'user'
-            ? `Élève Fatima: ${m.text}`
-            : `Prof: ${m.arabic} (${m.transliteration}) - ${m.french}`,
-        )
-        .join('\n');
-
-      const errorsContext = getErrorsForAIPrompt();
+      const audioBase64 = await FileSystem.readAsStringAsync(audioUri, { encoding: FileSystem.EncodingType.Base64 });
+      const history = buildHistory();
+      const errorsCtx = getErrorsForAIPrompt();
 
       const res = await invokeAIWithAudio<AIMessage>(
-        `Tu es un professeur d'arabe patient et bienveillant qui enseigne à Fatima.
-Conversation sur le thème "${selectedTopic.fr}".
-
-Historique:
-${history}
-
-${errorsContext}
-
-Fatima vient de t'envoyer un message vocal. Transcris ce qu'elle dit, puis réponds-lui.
-Corrige ses erreurs de prononciation et de grammaire avec bienveillance.
-Encourage-la et propose-lui un exercice adapté à ses difficultés si pertinent.
-Adresse-toi à elle directement : "Fatima, ..."
-
-JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "pronunciation_feedback": "...", "correction": "...", "suggestion": "...", "exercise": "...", "error_type": "pronunciation|grammar|vocabulary|null", "error_category": "...", "correct_form": "..." }`,
-        audioBase64,
-        'audio/m4a'
+        buildConversationPrompt(selectedTopic.fr, history, errorsCtx, '(message vocal de Fatima)'),
+        audioBase64, 'audio/m4a',
       );
 
-      setMessages(prev => [
-        ...prev,
-        { role: 'user', text: '(message vocal)' },
-        {
-          role: 'ai',
-          arabic: res.arabic_text,
-          transliteration: res.transliteration,
-          french: res.french_translation,
-          correction: res.correction,
-          pronunciation_feedback: res.pronunciation_feedback,
-          suggestion: res.suggestion,
-          exercise: res.exercise,
-        },
-      ]);
-
-      if (res.error_type && res.correct_form) {
-        await addError({
-          type: res.error_type as any,
-          category: res.error_category || selectedTopic.fr,
-          description: res.correction || 'Erreur détectée',
-          correct_form: res.correct_form,
-          user_attempt: '(vocal)',
-        });
-      }
-
+      addAIMessage(res);
+      await trackError(res);
       setTimeout(() => speakArabic(res.arabic_text), 300);
       await addXP(5);
-      await updateProgress({
-        conversations_count: (progress?.conversations_count || 0) + 1,
-      });
-    } catch (err) {
-      console.error('Erreur traitement vocal:', err);
-      setAiError("Erreur de traitement vocal. Essaie de reparler plus clairement, Fatima !");
+      await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
+      await addSession({ type: 'conversation', topic: selectedTopic.fr, duration_minutes: 1, errors_count: res.error_type ? 1 : 0, xp_earned: 5 });
+    } catch (err: any) {
+      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const buildHistory = () => messages
+    .map(m => m.role === 'user' ? `Fatima: ${m.text}` : `Prof: ${m.arabic} (${m.transliteration}) - ${m.french}`)
+    .join('\n');
+
+  const buildConversationPrompt = (topic: string, history: string, errorsCtx: string, userMessage: string) =>
+    `Tu es un professeur d'arabe patient et bienveillant. Tu enseignes à Fatima (débutante).
+Thème: "${topic}".
+${history ? `Historique:\n${history}\n` : ''}
+${errorsCtx}
+
+Message de Fatima: ${userMessage}
+
+Réponds en arabe, avec translitération et traduction française.
+Corrige gentiment ses erreurs. Encourage-la. Propose un exercice si nécessaire.
+Adresse-toi à elle directement: "Fatima, ..."
+
+JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "pronunciation_feedback": "...", "correction": "...", "suggestion": "...", "exercise": "...", "error_type": "pronunciation|grammar|vocabulary|null", "error_category": "...", "correct_form": "..." }`;
+
+  const addAIMessage = (res: AIMessage) => {
+    setMessages(prev => [...prev, {
+      role: 'ai',
+      arabic: res.arabic_text,
+      transliteration: res.transliteration,
+      french: res.french_translation,
+      correction: res.correction,
+      pronunciation_feedback: res.pronunciation_feedback,
+      suggestion: res.suggestion,
+      exercise: res.exercise,
+    }]);
+  };
+
+  const trackError = async (res: AIMessage) => {
+    if (res.error_type && res.correct_form) {
+      await addError({
+        type: res.error_type as any,
+        category: res.error_category || (selectedTopic?.fr || ''),
+        description: res.correction || 'Erreur détectée',
+        correct_form: res.correct_form,
+        user_attempt: inputText || '(vocal)',
+        source: 'conversation',
+      });
     }
   };
 
@@ -231,42 +197,31 @@ JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-
-      const errorsContext = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt();
       const isExercise = topic.id === 'exercise';
 
       const prompt = isExercise
-        ? `Tu es un professeur d'arabe bienveillant. Tu enseignes à Fatima.
-${errorsContext}
-
-En te basant sur le profil d'erreurs de Fatima ci-dessus, propose-lui un exercice adapté à ses faiblesses.
-L'exercice doit être encourageant et progressif. Commence par la saluer chaleureusement.
-Adresse-toi à elle : "Fatima, ..."
-JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`
-        : `Tu es un professeur d'arabe patient et encourageant qui enseigne à Fatima.
-Commence une conversation simple en arabe sur le thème "${topic.fr}".
-${errorsContext}
-Donne une phrase d'accueil en arabe, sa translitération, et sa traduction en français.
-Puis pose une question simple pour lancer la conversation. Utilise un arabe simple adapté aux débutants.
-Adresse-toi à Fatima directement de manière chaleureuse : "Fatima, ..."
-JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`;
+        ? `Tu es un professeur d'arabe expert. Génère un exercice oral ADAPTÉ aux difficultés de Fatima.
+${errorsCtx}
+Salue-la chaleureusement, puis propose un exercice ciblé sur ses erreurs. "Fatima, ..."
+JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`
+        : `Tu es un professeur d'arabe patient. Lance une conversation sur "${topic.fr}" avec Fatima (débutante).
+${errorsCtx}
+Salue-la en arabe simple. Pose une question pour démarrer. "Fatima, ..."
+JSON: { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "suggestion": "...", "exercise": "..." }`;
 
       const res = await invokeAI<AIMessage>(prompt);
-
-      setMessages([
-        {
-          role: 'ai',
-          arabic: res.arabic_text,
-          transliteration: res.transliteration,
-          french: res.french_translation,
-          suggestion: res.suggestion,
-          exercise: res.exercise,
-        },
-      ]);
+      setMessages([{
+        role: 'ai',
+        arabic: res.arabic_text,
+        transliteration: res.transliteration,
+        french: res.french_translation,
+        suggestion: res.suggestion,
+        exercise: res.exercise,
+      }]);
       setTimeout(() => speakArabic(res.arabic_text), 300);
-    } catch (err) {
-      console.error('Erreur IA conversation:', err);
-      setAiError("Une erreur s'est produite. Vérifie ta connexion, Fatima.");
+    } catch (err: any) {
+      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
     } finally {
       setIsLoading(false);
     }
@@ -274,297 +229,247 @@ JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "
 
   const sendMessage = async () => {
     if (!inputText.trim() || isLoading || !canUseAI() || !selectedTopic) return;
-
-    const spokenText = inputText.trim();
-    setMessages(prev => [...prev, { role: 'user', text: spokenText }]);
+    const text = inputText.trim();
+    setMessages(prev => [...prev, { role: 'user', text }]);
     setInputText('');
     setAiError(null);
     setIsLoading(true);
-
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-
-      const history = messages
-        .map(m =>
-          m.role === 'user'
-            ? `Élève Fatima: ${m.text}`
-            : `Prof: ${m.arabic} (${m.transliteration}) - ${m.french}`,
-        )
-        .join('\n');
-
-      const errorsContext = getErrorsForAIPrompt();
-
-      const res = await invokeAI<AIMessage>(
-        `Tu es un professeur d'arabe patient et bienveillant. Tu enseignes à Fatima.
-Conversation sur le thème "${selectedTopic.fr}":
-${history}
-Élève Fatima: ${spokenText}
-
-${errorsContext}
-
-Réponds en arabe avec translitération et traduction. Corrige les erreurs avec bienveillance.
-Propose un exercice si tu détectes une faiblesse récurrente.
-Adresse-toi à Fatima directement : "Fatima, ..."
-JSON : { "arabic_text": "...", "transliteration": "...", "french_translation": "...", "pronunciation_feedback": "...", "correction": "...", "suggestion": "...", "exercise": "...", "error_type": "pronunciation|grammar|vocabulary|null", "error_category": "...", "correct_form": "..." }`,
-      );
-
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'ai',
-          arabic: res.arabic_text,
-          transliteration: res.transliteration,
-          french: res.french_translation,
-          correction: res.correction,
-          pronunciation_feedback: res.pronunciation_feedback,
-          suggestion: res.suggestion,
-          exercise: res.exercise,
-        },
-      ]);
-
-      if (res.error_type && res.correct_form) {
-        await addError({
-          type: res.error_type as any,
-          category: res.error_category || selectedTopic.fr,
-          description: res.correction || 'Erreur détectée',
-          correct_form: res.correct_form,
-          user_attempt: spokenText,
-        });
-      }
-
+      const history = buildHistory();
+      const errorsCtx = getErrorsForAIPrompt();
+      const res = await invokeAI<AIMessage>(buildConversationPrompt(selectedTopic.fr, history, errorsCtx, text));
+      addAIMessage(res);
+      await trackError(res);
       setTimeout(() => speakArabic(res.arabic_text), 300);
       await addXP(5);
-      await updateProgress({
-        conversations_count: (progress?.conversations_count || 0) + 1,
-      });
-    } catch (err) {
-      console.error('Erreur IA réponse:', err);
-      setAiError("Une erreur s'est produite. Réessaie, Fatima !");
+      await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
+      await addSession({ type: 'conversation', topic: selectedTopic.fr, duration_minutes: 1, errors_count: res.error_type ? 1 : 0, xp_earned: 5 });
+    } catch (err: any) {
+      setAiError(err?.message || "Erreur IA. Vérifiez votre clé API dans Profil → Paramètres API.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ── Topic selection ────────────────────────────────────────────────────────
+  // ── Topic selection ────────────────────────────────────────────────────
   if (!selectedTopic) {
     const errorSummary = getErrorSummary();
-
     return (
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Salut Fatima !</Text>
-            <Text style={styles.headerSubtitle}>Choisis un thème de conversation</Text>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView style={styles.container} contentContainerStyle={styles.topicScrollContent}>
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>Salut Fatima ! 👋</Text>
+              <Text style={styles.headerSubtitle}>Choisis un thème de conversation</Text>
+            </View>
+            <View style={styles.creditsTag}>
+              <Ionicons name="flash" size={14} color={colors.primary} />
+              <Text style={styles.creditsTagText}>{creditsRemaining()}</Text>
+            </View>
           </View>
-          <Badge color="primary">{creditsRemaining()} crédits</Badge>
-        </View>
 
-        {/* Encouragement card */}
-        <Card style={styles.encourageCard}>
-          <Text style={styles.encourageText}>
-            {errorSummary.total_errors === 0
-              ? "Tu es prête pour ta prochaine conversation, Fatima ! Choisis un thème et lance-toi !"
-              : `Continue comme ça Fatima ! Tu progresses bien. Travaille un peu sur ${errorSummary.improvement_areas.join(' et ') || 'ta pratique'} pour t'améliorer encore !`}
-          </Text>
-        </Card>
-
-        <View style={styles.topicsGrid}>
-          {TOPICS.map(topic => (
-            <TouchableOpacity
-              key={topic.id}
-              style={[
-                styles.topicCard,
-                topic.id === 'exercise' && styles.exerciseCard,
-                (!canUseAI() || isLoading) && { opacity: 0.5 },
-              ]}
-              onPress={() => startConversation(topic)}
-              disabled={!canUseAI() || isLoading}
-            >
-              <Text style={styles.topicEmoji}>{topic.emoji}</Text>
-              <Text style={styles.topicArabic}>{topic.label}</Text>
-              <Text style={styles.topicFrench}>{topic.fr}</Text>
-              {topic.id === 'exercise' && errorSummary.total_errors > 0 && (
-                <Badge color="secondary" style={{ marginTop: 6 }}>
-                  {errorSummary.total_errors} à travailler
-                </Badge>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {!canUseAI() && (
-          <Card style={styles.errorCard}>
-            <Text style={styles.errorTitle}>Crédits IA épuisés</Text>
-            <Text style={styles.errorText}>Tu as utilisé tous tes crédits IA, Fatima.</Text>
+          <Card style={styles.encourageCard}>
+            <Text style={styles.encourageText}>
+              {errorSummary.total_errors === 0
+                ? "Tu es prête ! Lance-toi dans une conversation et pratique ton arabe !"
+                : `Continue comme ça ! Travaille encore sur ${errorSummary.improvement_areas.join(' et ') || 'ta pratique'}.`}
+            </Text>
           </Card>
-        )}
-      </ScrollView>
+
+          <View style={styles.topicsGrid}>
+            {TOPICS.map(topic => (
+              <TouchableOpacity
+                key={topic.id}
+                style={[
+                  styles.topicCard,
+                  topic.id === 'exercise' && styles.exerciseCard,
+                  (!canUseAI() || isLoading) && { opacity: 0.5 },
+                ]}
+                onPress={() => startConversation(topic)}
+                disabled={!canUseAI() || isLoading}
+                activeOpacity={0.75}
+              >
+                <Text style={styles.topicEmoji}>{topic.emoji}</Text>
+                <Text style={styles.topicArabic}>{topic.label}</Text>
+                <Text style={styles.topicFrench}>{topic.fr}</Text>
+                {topic.id === 'exercise' && errorSummary.total_errors > 0 && (
+                  <View style={styles.errorBadge}>
+                    <Text style={styles.errorBadgeText}>{errorSummary.total_errors} à corriger</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {!canUseAI() && (
+            <Card style={styles.noCreditsCard}>
+              <Ionicons name="warning" size={18} color={colors.destructive} />
+              <Text style={styles.noCreditsText}>Crédits IA épuisés.</Text>
+            </Card>
+          )}
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
-  // ── Chat view ──────────────────────────────────────────────────────────────
+  // ── Chat view ──────────────────────────────────────────────────────────
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
-      <View style={styles.chatHeader}>
-        <TouchableOpacity
-          onPress={() => { setSelectedTopic(null); setMessages([]); setAiError(null); }}
-          style={styles.backButton}
-        >
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.chatTitle}>{selectedTopic.emoji} {selectedTopic.fr}</Text>
-          <Text style={styles.chatSubtitle}>{selectedTopic.label}</Text>
-        </View>
-        <Badge color="primary">{creditsRemaining()}</Badge>
-      </View>
-
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
-        {messages.map((msg, i) => (
-          <MessageBubble key={i} message={msg} onSpeak={speakArabic} />
-        ))}
-        {isLoading && (
-          <View style={styles.loadingRow}>
-            <LoadingSpinner size="sm" />
-            <Text style={styles.loadingText}>Le professeur réfléchit...</Text>
+        {/* Header */}
+        <View style={styles.chatHeader}>
+          <TouchableOpacity
+            onPress={() => { setSelectedTopic(null); setMessages([]); setAiError(null); }}
+            style={styles.backBtn}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.chatTitle}>{selectedTopic.emoji} {selectedTopic.fr}</Text>
+            <Text style={styles.chatSubtitle}>{selectedTopic.label}</Text>
           </View>
-        )}
-        {aiError && (
-          <View style={styles.errorBubble}>
-            <Text style={styles.errorText}>{aiError}</Text>
+          <View style={styles.creditsTag}>
+            <Ionicons name="flash" size={12} color={colors.primary} />
+            <Text style={styles.creditsTagText}>{creditsRemaining()}</Text>
           </View>
-        )}
-      </ScrollView>
+        </View>
 
-      {/* Input area */}
-      <View style={styles.inputContainer}>
-        {/* Mode toggle */}
-        <TouchableOpacity
-          onPress={() => setInputMode(inputMode === 'voice' ? 'text' : 'voice')}
-          style={styles.modeToggle}
+        {/* Messages */}
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
         >
-          <Ionicons
-            name={inputMode === 'voice' ? 'keypad-outline' : 'mic-outline'}
-            size={22}
-            color={colors.primary}
-          />
-        </TouchableOpacity>
+          {messages.map((msg, i) => (
+            <MessageBubble key={i} message={msg} onSpeak={speakArabic} />
+          ))}
+          {isLoading && (
+            <View style={styles.loadingRow}>
+              <LoadingSpinner size="sm" />
+              <Text style={styles.loadingText}>Le professeur réfléchit...</Text>
+            </View>
+          )}
+          {aiError && (
+            <View style={styles.errorBubble}>
+              <Ionicons name="warning" size={14} color={colors.destructive} />
+              <Text style={styles.errorBubbleText}>{aiError}</Text>
+            </View>
+          )}
+        </ScrollView>
 
-        {inputMode === 'text' ? (
-          <>
-            <TextInput
-              style={styles.input}
-              value={inputText}
-              onChangeText={setInputText}
-              placeholder="Écris en arabe ou en français, Fatima..."
-              multiline
-              editable={!isLoading}
-              onSubmitEditing={sendMessage}
-            />
-            <TouchableOpacity
-              style={[styles.sendButton, (!inputText.trim() || isLoading) && { opacity: 0.5 }]}
-              onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
-            >
-              <Ionicons name="send" size={20} color={colors.white} />
-            </TouchableOpacity>
-          </>
-        ) : (
-          <View style={styles.voiceInputArea}>
-            {isRecording ? (
-              <>
-                <View style={styles.recordingIndicator}>
-                  <View style={styles.recordingDot} />
-                  <Text style={styles.recordingText}>
-                    Enregistrement... {recordingDuration}s
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.stopRecordButton}
-                  onPress={stopRecording}
-                >
-                  <Ionicons name="stop" size={24} color={colors.white} />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <Text style={styles.voiceHint}>
-                  Appuie sur le micro pour parler, Fatima !
-                </Text>
-                <TouchableOpacity
-                  style={[styles.micButton, isLoading && { opacity: 0.5 }]}
-                  onPress={startRecording}
-                  disabled={isLoading}
-                >
-                  <Ionicons name="mic" size={28} color={colors.white} />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        )}
-      </View>
-    </KeyboardAvoidingView>
+        {/* Input bar */}
+        <View style={styles.inputBar}>
+          <TouchableOpacity
+            style={styles.modeToggle}
+            onPress={() => setInputMode(m => m === 'text' ? 'voice' : 'text')}
+          >
+            <Ionicons name={inputMode === 'text' ? 'mic-outline' : 'keypad-outline'} size={20} color={colors.primary} />
+          </TouchableOpacity>
+
+          {inputMode === 'text' ? (
+            <>
+              <TextInput
+                style={styles.textInput}
+                value={inputText}
+                onChangeText={setInputText}
+                placeholder="Tapez en arabe ou en français..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                editable={!isLoading}
+                returnKeyType="send"
+                blurOnSubmit
+                onSubmitEditing={sendMessage}
+              />
+              <TouchableOpacity
+                style={[styles.sendBtn, (!inputText.trim() || isLoading) && styles.sendBtnDisabled]}
+                onPress={sendMessage}
+                disabled={!inputText.trim() || isLoading}
+              >
+                <Ionicons name="send" size={18} color={colors.white} />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.voiceArea}>
+              {isRecording ? (
+                <>
+                  <View style={styles.recIndicator}>
+                    <View style={styles.recDot} />
+                    <Text style={styles.recText}>Enregistrement... {recordingDuration}s</Text>
+                  </View>
+                  <TouchableOpacity style={styles.stopBtn} onPress={stopRecording}>
+                    <Ionicons name="stop" size={22} color={colors.white} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.voiceHint}>Appuie sur le micro pour parler</Text>
+                  <TouchableOpacity
+                    style={[styles.micBtn, isLoading && { opacity: 0.5 }]}
+                    onPress={startRecording}
+                    disabled={isLoading}
+                  >
+                    <Ionicons name="mic" size={26} color={colors.white} />
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
-function MessageBubble({
-  message,
-  onSpeak,
-}: {
-  message: Message;
-  onSpeak: (t: string) => void;
-}) {
+function MessageBubble({ message, onSpeak }: { message: Message; onSpeak: (t: string) => void }) {
   if (message.role === 'user') {
     return (
       <View style={styles.userBubble}>
-        <Text style={styles.userText}>{message.text}</Text>
+        <Text style={styles.userBubbleText}>{message.text}</Text>
       </View>
     );
   }
   return (
-    <View style={styles.aiBubbleContainer}>
+    <View style={styles.aiBubbleWrap}>
       <Card style={styles.aiBubble}>
         <View style={styles.aiBubbleContent}>
           <View style={{ flex: 1 }}>
             <Text style={styles.arabicText}>{message.arabic}</Text>
-            <Text style={styles.transliteration}>{message.transliteration}</Text>
+            <Text style={styles.translitText}>{message.transliteration}</Text>
             <Text style={styles.frenchText}>{message.french}</Text>
           </View>
           <TouchableOpacity
             onPress={() => message.arabic && onSpeak(message.arabic)}
-            style={styles.audioButton}
+            style={styles.speakBtn}
           >
-            <Ionicons name="volume-high" size={20} color={colors.primary} />
+            <Ionicons name="volume-high" size={18} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </Card>
       {!!message.pronunciation_feedback && (
-        <View style={styles.feedbackBubble}>
-          <Text style={styles.feedbackText}>🗣️ {message.pronunciation_feedback}</Text>
+        <View style={styles.feedbackPill}>
+          <Text style={styles.feedbackPillText}>🗣️ {message.pronunciation_feedback}</Text>
         </View>
       )}
       {!!message.correction && (
-        <View style={styles.correctionBubble}>
-          <Text style={styles.correctionText}>💡 {message.correction}</Text>
+        <View style={styles.correctionPill}>
+          <Text style={styles.correctionPillText}>💡 {message.correction}</Text>
         </View>
       )}
       {!!message.suggestion && (
-        <View style={styles.suggestionBubble}>
-          <Text style={styles.suggestionText}>✨ {message.suggestion}</Text>
+        <View style={styles.suggestionPill}>
+          <Text style={styles.suggestionPillText}>✨ {message.suggestion}</Text>
         </View>
       )}
       {!!message.exercise && (
-        <View style={styles.exerciseBubble}>
-          <Text style={styles.exerciseTitle}>🎯 Exercice pour toi, Fatima :</Text>
-          <Text style={styles.exerciseText}>{message.exercise}</Text>
+        <View style={styles.exercisePill}>
+          <Text style={styles.exercisePillTitle}>🎯 Exercice :</Text>
+          <Text style={styles.exercisePillText}>{message.exercise}</Text>
         </View>
       )}
     </View>
@@ -572,57 +477,78 @@ function MessageBubble({
 }
 
 const styles = StyleSheet.create({
-  container:           { flex: 1, backgroundColor: colors.background },
-  header:              { flexDirection: 'row', alignItems: 'center', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20 },
-  headerTitle:         { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
-  headerSubtitle:      { fontSize: fontSize.xs, color: colors.textMuted },
-  encourageCard:       { marginHorizontal: 20, marginBottom: spacing.lg, backgroundColor: `${colors.accent}15`, borderColor: `${colors.accent}30` },
-  encourageText:       { fontSize: fontSize.sm, color: colors.text, lineHeight: 20, textAlign: 'center', fontStyle: 'italic' },
-  topicsGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, paddingHorizontal: 20 },
-  topicCard:           { width: '47%', backgroundColor: colors.card, borderRadius: borderRadius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.xl, alignItems: 'center' },
-  exerciseCard:        { backgroundColor: `${colors.secondary}10`, borderColor: `${colors.secondary}40`, width: '97%' },
-  topicEmoji:          { fontSize: 32, marginBottom: spacing.sm },
-  topicArabic:         { fontSize: fontSize.lg, fontWeight: '600', color: colors.text, textAlign: 'right' },
-  topicFrench:         { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 4 },
-  errorCard:           { margin: 20, backgroundColor: colors.destructiveLight, borderColor: colors.destructive },
-  errorTitle:          { fontSize: fontSize.base, fontWeight: '600', color: colors.destructive },
-  errorText:           { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 4 },
-  chatHeader:          { flexDirection: 'row', alignItems: 'center', paddingTop: 56, paddingBottom: 12, paddingHorizontal: 20, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
-  backButton:          { padding: 8, marginRight: 12, borderRadius: borderRadius.lg, backgroundColor: `${colors.textMuted}15` },
-  chatTitle:           { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
-  chatSubtitle:        { fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'right' },
-  messagesContainer:   { flex: 1, backgroundColor: colors.background },
-  messagesContent:     { padding: 20, paddingBottom: 20 },
-  userBubble:          { alignSelf: 'flex-end', backgroundColor: colors.primary, borderRadius: borderRadius.xl, paddingHorizontal: 16, paddingVertical: 12, maxWidth: '80%', marginBottom: 12 },
-  userText:            { color: colors.white, fontSize: fontSize.base },
-  aiBubbleContainer:   { alignSelf: 'flex-start', maxWidth: '85%', marginBottom: 12 },
-  aiBubble:            { backgroundColor: colors.card, marginBottom: 4 },
-  aiBubbleContent:     { flexDirection: 'row', alignItems: 'flex-start' },
-  arabicText:          { fontSize: fontSize.xl, fontWeight: '600', color: colors.text, textAlign: 'right', writingDirection: 'rtl' },
-  transliteration:     { fontSize: fontSize.xs, color: colors.primary, fontStyle: 'italic', marginTop: 6 },
-  frenchText:          { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 },
-  audioButton:         { width: 36, height: 36, borderRadius: 18, backgroundColor: `${colors.primary}15`, justifyContent: 'center', alignItems: 'center', marginLeft: 12 },
-  feedbackBubble:      { backgroundColor: `${colors.primary}15`, borderRadius: borderRadius.lg, padding: 12, borderWidth: 1, borderColor: `${colors.primary}30` },
-  feedbackText:        { fontSize: fontSize.xs, color: colors.primary },
-  correctionBubble:    { backgroundColor: `${colors.secondary}15`, borderRadius: borderRadius.lg, padding: 12, borderWidth: 1, borderColor: `${colors.secondary}30`, marginTop: 4 },
-  correctionText:      { fontSize: fontSize.xs, color: colors.text },
-  suggestionBubble:    { backgroundColor: colors.accentLight, borderRadius: borderRadius.lg, padding: 12, marginTop: 4 },
-  suggestionText:      { fontSize: fontSize.xs, color: colors.text },
-  exerciseBubble:      { backgroundColor: `${colors.secondary}10`, borderRadius: borderRadius.lg, padding: 12, marginTop: 4, borderWidth: 1, borderColor: `${colors.secondary}30` },
-  exerciseTitle:       { fontSize: fontSize.xs, fontWeight: '700', color: colors.text, marginBottom: 4 },
-  exerciseText:        { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
-  loadingRow:          { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-  loadingText:         { fontSize: fontSize.xs, color: colors.textMuted },
-  errorBubble:         { backgroundColor: colors.destructiveLight, borderRadius: borderRadius.lg, padding: 12, borderWidth: 1, borderColor: colors.destructive, marginBottom: 12 },
-  inputContainer:      { flexDirection: 'row', alignItems: 'center', padding: 12, paddingBottom: 36, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border, gap: 10 },
-  modeToggle:          { width: 40, height: 40, borderRadius: 20, backgroundColor: `${colors.primary}10`, justifyContent: 'center', alignItems: 'center' },
-  input:               { flex: 1, backgroundColor: colors.background, borderRadius: borderRadius.xl, paddingHorizontal: 16, paddingVertical: 10, fontSize: fontSize.base, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
-  sendButton:          { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
-  voiceInputArea:      { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  voiceHint:           { flex: 1, fontSize: fontSize.sm, color: colors.textMuted, fontStyle: 'italic' },
-  micButton:           { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 },
-  stopRecordButton:    { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.destructive, justifyContent: 'center', alignItems: 'center' },
-  recordingIndicator:  { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
-  recordingDot:        { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.destructive },
-  recordingText:       { fontSize: fontSize.sm, color: colors.destructive, fontWeight: '600' },
+  safeArea: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1 },
+  topicScrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 120 },
+
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  headerTitle: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
+  headerSubtitle: { fontSize: fontSize.xs, color: colors.textMuted },
+  creditsTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: `${colors.primary}12`, paddingHorizontal: 10, paddingVertical: 5, borderRadius: borderRadius.full, gap: 4 },
+  creditsTagText: { fontSize: fontSize.xs, fontWeight: '700', color: colors.primary },
+
+  encourageCard: { marginBottom: 14, backgroundColor: `${colors.accent}10` },
+  encourageText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 20, textAlign: 'center', fontStyle: 'italic' },
+
+  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  topicCard: { width: '47%', backgroundColor: colors.card, borderRadius: borderRadius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.xl, alignItems: 'center' },
+  exerciseCard: { width: '97%', backgroundColor: `${colors.secondary}10`, borderColor: `${colors.secondary}40` },
+  topicEmoji: { fontSize: 30, marginBottom: 6 },
+  topicArabic: { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
+  topicFrench: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 3 },
+  errorBadge: { marginTop: 6, backgroundColor: `${colors.secondary}20`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: borderRadius.full },
+  errorBadgeText: { fontSize: 10, color: colors.secondary, fontWeight: '700' },
+
+  noCreditsCard: { flexDirection: 'row', gap: 8, alignItems: 'center', marginTop: 12, backgroundColor: `${colors.destructive}08` },
+  noCreditsText: { fontSize: fontSize.sm, color: colors.destructive, fontWeight: '600' },
+
+  // Chat
+  chatHeader: { flexDirection: 'row', alignItems: 'center', paddingTop: 10, paddingBottom: 12, paddingHorizontal: 16, backgroundColor: colors.card, borderBottomWidth: 1, borderBottomColor: colors.border },
+  backBtn: { padding: 8, borderRadius: borderRadius.md, backgroundColor: `${colors.textMuted}12`, marginRight: 10 },
+  chatTitle: { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
+  chatSubtitle: { fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'right' },
+
+  messagesContainer: { flex: 1, backgroundColor: colors.background },
+  messagesContent: { padding: 16, paddingBottom: 12 },
+
+  userBubble: { alignSelf: 'flex-end', backgroundColor: colors.primary, borderRadius: borderRadius.xl, paddingHorizontal: 14, paddingVertical: 10, maxWidth: '80%', marginBottom: 10 },
+  userBubbleText: { color: colors.white, fontSize: fontSize.base },
+
+  aiBubbleWrap: { alignSelf: 'flex-start', maxWidth: '88%', marginBottom: 12, gap: 4 },
+  aiBubble: { padding: 14 },
+  aiBubbleContent: { flexDirection: 'row', alignItems: 'flex-start' },
+  arabicText: { fontSize: fontSize.xl, fontWeight: '600', color: colors.text, textAlign: 'right', writingDirection: 'rtl' },
+  translitText: { fontSize: fontSize.xs, color: colors.primary, fontStyle: 'italic', marginTop: 6 },
+  frenchText: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 3 },
+  speakBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: `${colors.primary}12`, justifyContent: 'center', alignItems: 'center', marginLeft: 10 },
+
+  feedbackPill: { backgroundColor: `${colors.primary}12`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.primary}20` },
+  feedbackPillText: { fontSize: fontSize.xs, color: colors.primary, lineHeight: 18 },
+  correctionPill: { backgroundColor: `${colors.secondary}12`, borderRadius: borderRadius.lg, padding: 10 },
+  correctionPillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
+  suggestionPill: { backgroundColor: `${colors.accent}12`, borderRadius: borderRadius.lg, padding: 10 },
+  suggestionPillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
+  exercisePill: { backgroundColor: `${colors.secondary}10`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.secondary}25` },
+  exercisePillTitle: { fontSize: fontSize.xs, fontWeight: '700', color: colors.text, marginBottom: 3 },
+  exercisePillText: { fontSize: fontSize.xs, color: colors.text, lineHeight: 18 },
+
+  loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  loadingText: { fontSize: fontSize.xs, color: colors.textMuted },
+  errorBubble: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, backgroundColor: `${colors.destructive}10`, borderRadius: borderRadius.lg, padding: 10, borderWidth: 1, borderColor: `${colors.destructive}25`, marginBottom: 10 },
+  errorBubbleText: { fontSize: fontSize.xs, color: colors.destructive, flex: 1, lineHeight: 18 },
+
+  // Input bar
+  inputBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, paddingBottom: 24, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
+  modeToggle: { width: 38, height: 38, borderRadius: 19, backgroundColor: `${colors.primary}12`, justifyContent: 'center', alignItems: 'center' },
+  textInput: { flex: 1, backgroundColor: colors.background, borderRadius: borderRadius.xl, paddingHorizontal: 14, paddingVertical: 10, fontSize: fontSize.base, maxHeight: 90, borderWidth: 1, borderColor: colors.border, color: colors.text },
+  sendBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' },
+  sendBtnDisabled: { opacity: 0.4 },
+
+  voiceArea: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  voiceHint: { fontSize: fontSize.sm, color: colors.textMuted, fontStyle: 'italic', flex: 1 },
+  micBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
+  stopBtn: { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.destructive, justifyContent: 'center', alignItems: 'center' },
+  recIndicator: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.destructive },
+  recText: { fontSize: fontSize.sm, color: colors.destructive, fontWeight: '600' },
 });
