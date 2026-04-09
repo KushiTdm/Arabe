@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
@@ -13,9 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCourses, CourseLesson, CourseType } from '../lib/useCourses';
 import { Card } from '../components/RNComponents';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
-
-const { width: SW } = Dimensions.get('window');
+import { colors, borderRadius, fontSize } from '../theme';
 
 const TYPE_META: Record<CourseType, { label: string; emoji: string; color: string }> = {
   grammar:       { label: 'Grammaire',     emoji: '📐', color: '#6366f1' },
@@ -26,7 +23,7 @@ const TYPE_META: Record<CourseType, { label: string; emoji: string; color: strin
 };
 
 const SOURCE_LABEL: Record<string, string> = {
-  error:        'Détecté lors d\'une erreur',
+  error:        "Détecté lors d'une erreur",
   conversation: 'Depuis une conversation',
   manual:       'Ajouté manuellement',
 };
@@ -169,9 +166,9 @@ export default function CoursScreen() {
             </Card>
           )}
 
-          {/* Conseils */}
+          {/* Conseils — style fusionné pour éviter le tableau sur Card */}
           {selectedCourse.tips?.length > 0 && (
-            <Card style={[styles.tipsCard, { backgroundColor: `${meta.color}08` }]}>
+            <Card style={StyleSheet.flatten([styles.tipsCard, { backgroundColor: `${meta.color}08` }])}>
               <Text style={styles.sectionTitle}>✨ Conseils pour Fatima</Text>
               {selectedCourse.tips.map((tip, i) => (
                 <View key={i} style={styles.tipRow}>
@@ -296,11 +293,11 @@ export default function CoursScreen() {
             <Text style={styles.emptyTitle}>Aucun cours encore</Text>
             <Text style={styles.emptyBody}>
               {filter === 'all'
-                ? 'Pratique la conversation et l\'écriture. L\'IA créera des cours personnalisés basés sur tes erreurs, Fatima !'
-                : `Pas de cours de type "${filter}" pour l\'instant.`}
+                ? "Pratique la conversation et l'écriture. L'IA créera des cours personnalisés basés sur tes erreurs, Fatima !"
+                : `Pas de cours de type "${filter}" pour l'instant.`}
             </Text>
             <View style={styles.emptyHints}>
-              {['💬 Fais une conversation', '✍️ Pratique l\'écriture', '🎯 Pose des questions à l\'IA'].map((h, i) => (
+              {["💬 Fais une conversation", "✍️ Pratique l'écriture", '🎯 Pose des questions à l\'IA'].map((h, i) => (
                 <View key={i} style={styles.emptyHint}>
                   <Text style={styles.emptyHintText}>{h}</Text>
                 </View>
@@ -491,8 +488,7 @@ const styles = StyleSheet.create({
   },
   wordArabic: {
     fontSize: 28, fontWeight: '700', color: colors.text,
-    textAlign: 'right', width: 90,
-    marginRight: 14,
+    textAlign: 'right', width: 90, marginRight: 14,
   },
   wordRight: { flex: 1 },
   wordTranslit: { fontSize: fontSize.sm, color: colors.primary, fontStyle: 'italic' },
@@ -519,6 +515,7 @@ const styles = StyleSheet.create({
   exampleNote: { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 4, fontStyle: 'italic' },
   exampleSpeak: { marginLeft: 10, marginTop: 8, padding: 4 },
 
+  // tipsCard sans backgroundColor ici — il est injecté via StyleSheet.flatten dans le JSX
   tipsCard: { marginBottom: 10 },
   tipRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
   tipDot: { fontSize: 18, lineHeight: 22 },
@@ -548,12 +545,8 @@ const styles = StyleSheet.create({
   },
   optionText: { fontSize: fontSize.sm, color: colors.text },
   optionTextSelected: { color: colors.primary, fontWeight: '700' },
-  showAnswerBtn: {
-    paddingVertical: 8, alignItems: 'center',
-  },
-  showAnswerBtnText: {
-    fontSize: fontSize.xs, color: colors.primary, fontWeight: '600',
-  },
+  showAnswerBtn: { paddingVertical: 8, alignItems: 'center' },
+  showAnswerBtnText: { fontSize: fontSize.xs, color: colors.primary, fontWeight: '600' },
   answerBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: `${colors.primary}10`,
@@ -561,11 +554,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: `${colors.primary}20`,
   },
   answerLabel: { fontSize: fontSize.xs, color: colors.textMuted, fontWeight: '600' },
-  answerText: {
-    flex: 1, fontSize: fontSize.base, fontWeight: '700', color: colors.primary,
-  },
+  answerText: { flex: 1, fontSize: fontSize.base, fontWeight: '700', color: colors.primary },
 
-  sectionTitle: {
-    fontSize: fontSize.base, fontWeight: '700', color: colors.text, marginBottom: 12,
-  },
+  sectionTitle: { fontSize: fontSize.base, fontWeight: '700', color: colors.text, marginBottom: 12 },
 });

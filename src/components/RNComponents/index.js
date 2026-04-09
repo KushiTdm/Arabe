@@ -5,23 +5,10 @@ import {
   TouchableOpacity, 
   ActivityIndicator, 
   StyleSheet,
-  ViewStyle,
-  TextStyle,
 } from 'react-native';
 import { colors, borderRadius, spacing, fontSize } from '../../theme';
 
 // Button Component
-interface ButtonProps {
-  children: React.ReactNode;
-  onPress?: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  disabled?: boolean;
-  loading?: boolean;
-  style?: ViewStyle;
-  fullWidth?: boolean;
-}
-
 export function Button({ 
   children, 
   onPress, 
@@ -31,7 +18,7 @@ export function Button({
   loading = false,
   style,
   fullWidth = false,
-}: ButtonProps) {
+}) {
   const variantStyles = {
     primary: {
       container: { backgroundColor: colors.primary },
@@ -96,13 +83,7 @@ export function Button({
 }
 
 // Card Component
-interface CardProps {
-  children: React.ReactNode;
-  style?: ViewStyle;
-  padding?: 'none' | 'sm' | 'md' | 'lg';
-}
-
-export function Card({ children, style, padding = 'md' }: CardProps) {
+export function Card({ children, style, padding = 'md' }) {
   const paddingStyles = {
     none: 0,
     sm: spacing.sm,
@@ -124,19 +105,12 @@ export function Card({ children, style, padding = 'md' }: CardProps) {
 }
 
 // Progress Bar Component
-interface ProgressBarProps {
-  progress: number;
-  color?: string;
-  height?: number;
-  style?: ViewStyle;
-}
-
 export function ProgressBar({ 
   progress, 
   color = colors.primary, 
   height = 10,
   style 
-}: ProgressBarProps) {
+}) {
   return (
     <View style={[styles.progressContainer, { height }, style]}>
       <View 
@@ -154,13 +128,7 @@ export function ProgressBar({
 }
 
 // Badge Component
-interface BadgeProps {
-  children: React.ReactNode;
-  color?: 'primary' | 'secondary' | 'success' | 'destructive';
-  style?: ViewStyle;
-}
-
-export function Badge({ children, color = 'primary', style }: BadgeProps) {
+export function Badge({ children, color = 'primary', style }) {
   const colorStyles = {
     primary: { bg: `${colors.primary}15`, text: colors.primary },
     secondary: { bg: `${colors.secondary}20`, text: colors.secondary },
@@ -178,12 +146,7 @@ export function Badge({ children, color = 'primary', style }: BadgeProps) {
 }
 
 // Loading Spinner
-interface LoadingSpinnerProps {
-  size?: 'sm' | 'md' | 'lg';
-  color?: string;
-}
-
-export function LoadingSpinner({ size = 'md', color = colors.primary }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = 'md', color = colors.primary }) {
   const sizeMap = {
     sm: 20,
     md: 32,
@@ -196,14 +159,7 @@ export function LoadingSpinner({ size = 'md', color = colors.primary }: LoadingS
 }
 
 // Header Component
-interface HeaderProps {
-  title: string;
-  subtitle?: string;
-  onBack?: () => void;
-  rightElement?: React.ReactNode;
-}
-
-export function Header({ title, subtitle, onBack, rightElement }: HeaderProps) {
+export function Header({ title, subtitle, onBack, rightElement }) {
   return (
     <View style={styles.header}>
       {onBack && (
@@ -221,13 +177,7 @@ export function Header({ title, subtitle, onBack, rightElement }: HeaderProps) {
 }
 
 // Arabic Text Component
-interface ArabicTextProps {
-  children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
-  style?: TextStyle;
-}
-
-export function ArabicText({ children, size = 'lg', style }: ArabicTextProps) {
+export function ArabicText({ children, size = 'lg', style }) {
   const sizeMap = {
     sm: fontSize.base,
     md: fontSize.lg,
@@ -296,7 +246,7 @@ const styles = StyleSheet.create({
   backButton: {
     padding: 8,
     marginRight: 12,
-    borderRadius: borderRadius.l,
+    borderRadius: borderRadius.lg,
     backgroundColor: `${colors.textMuted}10`,
   },
   backIcon: {

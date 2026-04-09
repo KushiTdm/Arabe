@@ -154,6 +154,10 @@ JSON: {
           source: 'conversation' as const,
           trigger_topic: topicFr,
           type: (res.course.type as any) || 'vocabulary',
+          exercises: (res.course.exercises || []).map(ex => ({
+            ...ex,
+            type: ex.type as 'fill' | 'translate' | 'choose' | 'pronounce',
+          })),
         };
         await addCourse(courseData);
         courseAdded = true;

@@ -34,8 +34,8 @@ export const STATIC_VOCAB: VocabMap = {
     { arabic_word: 'إلى اللقاء',    transliteration: "ila al-liqa'",      french_translation: 'À bientôt',                   category: 'greetings' },
     { arabic_word: 'تصبح على خير',  transliteration: 'tusbih ala khayr',  french_translation: 'Bonne nuit',                  category: 'greetings' },
     { arabic_word: 'يسعد مساءك',    transliteration: "yis'id masa'k",     french_translation: 'Bonne soirée',                category: 'greetings' },
-    { arabic_word: 'أسمك ايه',      transliteration: 'ismak ayh',         french_translation: 'Comment tu t'appelles ?',     category: 'greetings' },
-    { arabic_word: 'اسمي',          transliteration: 'ismi',              french_translation: 'Je m'appelle',                category: 'greetings' },
+    { arabic_word: 'أسمك ايه',      transliteration: 'ismak ayh',         french_translation: "Comment tu t'appelles ?",     category: 'greetings' },
+    { arabic_word: 'اسمي',          transliteration: 'ismi',              french_translation: "Je m'appelle",            category: 'greetings' },
     { arabic_word: 'تشرفنا',        transliteration: 'tasharrafna',       french_translation: 'Enchanté(e)',                  category: 'greetings' },
   ],
   numbers: [
