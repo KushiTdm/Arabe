@@ -1,255 +1,307 @@
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
-import { useUserProgress } from '../lib/useUserProgress';
-import { Card, Badge, Button, ProgressBar } from '../components/RNComponents';
-import { colors, spacing, borderRadius, fontSize } from '../theme';
-import { getWordsForCategory, VocabWord } from '../data/vocabulary';
-
-const CATEGORIES = [
-  { id: 'greetings',  label: 'Salutations',     emoji: '👋', arabic: 'التحيات' },
-  { id: 'numbers',    label: 'Nombres',          emoji: '🔢', arabic: 'الأرقام' },
-  { id: 'family',     label: 'Famille',          emoji: '👨‍👩‍👧', arabic: 'العائلة' },
-  { id: 'food',       label: 'Nourriture',       emoji: '🍕', arabic: 'الطعام' },
-  { id: 'travel',     label: 'Voyage',           emoji: '✈️', arabic: 'السفر' },
-  { id: 'daily_life', label: 'Vie quotidienne',  emoji: '☀️', arabic: 'الحياة اليومية' },
-  { id: 'colors',     label: 'Couleurs',         emoji: '🎨', arabic: 'الألوان' },
-  { id: 'animals',    label: 'Animaux',          emoji: '🐱', arabic: 'الحيوانات' },
-];
-
-const MASTERED_KEY = '@maa_mastered_words';
-
-async function loadMastered(): Promise<Record<string, boolean>> {
-  try {
-    const raw = await AsyncStorage.getItem(MASTERED_KEY);
-    return raw ? JSON.parse(raw) : {};
-  } catch {
-    return {};
-  }
+export interface VocabWord {
+  id: string;
+  arabic_word: string;
+  transliteration: string;
+  french_translation: string;
+  category: string;
+  mastered: boolean;
+  practice_count: number;
 }
 
-async function saveMastered(map: Record<string, boolean>) {
-  await AsyncStorage.setItem(MASTERED_KEY, JSON.stringify(map));
+type VocabMap = Record<string, Omit<VocabWord, 'id' | 'mastered' | 'practice_count'>[]>;
+
+export const STATIC_VOCAB: VocabMap = {
+  greetings: [
+    { arabic_word: 'مرحبا',         transliteration: 'marhaba',           french_translation: 'Bonjour',                  category: 'greetings' },
+    { arabic_word: 'السلام عليكم',  transliteration: 'as-salamu alaykum', french_translation: 'Que la paix soit sur vous', category: 'greetings' },
+    { arabic_word: 'وعليكم السلام', transliteration: 'wa alaykum as-salam',french_translation: 'Et sur vous la paix',      category: 'greetings' },
+    { arabic_word: 'أهلا',          transliteration: 'ahlan',             french_translation: 'Bienvenue / Salut',          category: 'greetings' },
+    { arabic_word: 'أهلاً وسهلاً',  transliteration: 'ahlan wa sahlan',   french_translation: 'Soyez le bienvenu',          category: 'greetings' },
+    { arabic_word: 'صباح الخير',    transliteration: 'sabah al-khayr',    french_translation: 'Bonjour (matin)',             category: 'greetings' },
+    { arabic_word: 'صباح النور',    transliteration: 'sabah an-nur',      french_translation: 'Bonjour (réponse matin)',     category: 'greetings' },
+    { arabic_word: 'مساء الخير',    transliteration: 'masa al-khayr',     french_translation: 'Bonsoir',                    category: 'greetings' },
+    { arabic_word: 'مساء النور',    transliteration: 'masa an-nur',       french_translation: 'Bonsoir (réponse)',           category: 'greetings' },
+    { arabic_word: 'كيف حالك',      transliteration: 'kayfa halak',       french_translation: 'Comment vas-tu ?',            category: 'greetings' },
+    { arabic_word: 'كيف الحال',     transliteration: 'kayfa al-hal',      french_translation: 'Comment ça va ?',             category: 'greetings' },
+    { arabic_word: 'بخير شكرا',     transliteration: 'bikhayr shukran',   french_translation: 'Bien, merci',                 category: 'greetings' },
+    { arabic_word: 'الحمد لله',     transliteration: 'al-hamdu lillah',   french_translation: 'Dieu merci / Grâce à Dieu',  category: 'greetings' },
+    { arabic_word: 'شكرا',          transliteration: 'shukran',           french_translation: 'Merci',                       category: 'greetings' },
+    { arabic_word: 'شكرا جزيلا',    transliteration: 'shukran jazilan',   french_translation: 'Merci beaucoup',              category: 'greetings' },
+    { arabic_word: 'عفواً',         transliteration: "'afwan",            french_translation: 'De rien / Pardon',            category: 'greetings' },
+    { arabic_word: 'من فضلك',       transliteration: 'min fadlak',        french_translation: "S'il vous plaît",             category: 'greetings' },
+    { arabic_word: 'لو سمحت',       transliteration: 'law samaht',        french_translation: "S'il te plaît (plus doux)",   category: 'greetings' },
+    { arabic_word: 'مع السلامة',    transliteration: "ma' as-salama",     french_translation: 'Au revoir',                   category: 'greetings' },
+    { arabic_word: 'إلى اللقاء',    transliteration: "ila al-liqa'",      french_translation: 'À bientôt',                   category: 'greetings' },
+    { arabic_word: 'تصبح على خير',  transliteration: 'tusbih ala khayr',  french_translation: 'Bonne nuit',                  category: 'greetings' },
+    { arabic_word: 'يسعد مساءك',    transliteration: "yis'id masa'k",     french_translation: 'Bonne soirée',                category: 'greetings' },
+    { arabic_word: 'أسمك ايه',      transliteration: 'ismak ayh',         french_translation: 'Comment tu t'appelles ?',     category: 'greetings' },
+    { arabic_word: 'اسمي',          transliteration: 'ismi',              french_translation: 'Je m'appelle',                category: 'greetings' },
+    { arabic_word: 'تشرفنا',        transliteration: 'tasharrafna',       french_translation: 'Enchanté(e)',                  category: 'greetings' },
+  ],
+  numbers: [
+    { arabic_word: 'صفر',    transliteration: 'sifr',      french_translation: 'Zéro',     category: 'numbers' },
+    { arabic_word: 'واحد',   transliteration: 'wahid',     french_translation: 'Un',        category: 'numbers' },
+    { arabic_word: 'اثنان',  transliteration: 'ithnan',    french_translation: 'Deux',      category: 'numbers' },
+    { arabic_word: 'ثلاثة',  transliteration: 'thalatha',  french_translation: 'Trois',     category: 'numbers' },
+    { arabic_word: 'أربعة',  transliteration: "arba'a",    french_translation: 'Quatre',    category: 'numbers' },
+    { arabic_word: 'خمسة',   transliteration: 'khamsa',    french_translation: 'Cinq',      category: 'numbers' },
+    { arabic_word: 'ستة',    transliteration: 'sitta',     french_translation: 'Six',       category: 'numbers' },
+    { arabic_word: 'سبعة',   transliteration: "sab'a",     french_translation: 'Sept',      category: 'numbers' },
+    { arabic_word: 'ثمانية', transliteration: 'thamaniya', french_translation: 'Huit',      category: 'numbers' },
+    { arabic_word: 'تسعة',   transliteration: "tis'a",     french_translation: 'Neuf',      category: 'numbers' },
+    { arabic_word: 'عشرة',   transliteration: "'ashara",   french_translation: 'Dix',       category: 'numbers' },
+    { arabic_word: 'أحد عشر',transliteration: "ahad 'ashar",french_translation: 'Onze',    category: 'numbers' },
+    { arabic_word: 'اثنا عشر',transliteration: "ithna 'ashar",french_translation: 'Douze', category: 'numbers' },
+    { arabic_word: 'عشرون',  transliteration: "'ishrun",   french_translation: 'Vingt',     category: 'numbers' },
+    { arabic_word: 'ثلاثون', transliteration: 'thalathun', french_translation: 'Trente',    category: 'numbers' },
+    { arabic_word: 'أربعون', transliteration: "arba'un",   french_translation: 'Quarante',  category: 'numbers' },
+    { arabic_word: 'خمسون',  transliteration: 'khamsun',   french_translation: 'Cinquante', category: 'numbers' },
+    { arabic_word: 'ستون',   transliteration: 'sittun',    french_translation: 'Soixante',  category: 'numbers' },
+    { arabic_word: 'سبعون',  transliteration: "sab'un",    french_translation: 'Soixante-dix', category: 'numbers' },
+    { arabic_word: 'ثمانون', transliteration: 'thamanun',  french_translation: 'Quatre-vingt',  category: 'numbers' },
+    { arabic_word: 'تسعون',  transliteration: "tis'un",    french_translation: 'Quatre-vingt-dix', category: 'numbers' },
+    { arabic_word: 'مئة',    transliteration: "mi'a",      french_translation: 'Cent',      category: 'numbers' },
+    { arabic_word: 'ألف',    transliteration: 'alf',       french_translation: 'Mille',     category: 'numbers' },
+    { arabic_word: 'أول',    transliteration: 'awwal',     french_translation: 'Premier',   category: 'numbers' },
+    { arabic_word: 'آخر',    transliteration: 'akhir',     french_translation: 'Dernier',   category: 'numbers' },
+  ],
+  family: [
+    { arabic_word: 'أب',       transliteration: 'ab',         french_translation: 'Père',            category: 'family' },
+    { arabic_word: 'أم',       transliteration: 'umm',        french_translation: 'Mère',            category: 'family' },
+    { arabic_word: 'والد',     transliteration: 'walid',      french_translation: 'Père (formel)',   category: 'family' },
+    { arabic_word: 'والدة',    transliteration: 'walida',     french_translation: 'Mère (formelle)', category: 'family' },
+    { arabic_word: 'أخ',       transliteration: 'akh',        french_translation: 'Frère',           category: 'family' },
+    { arabic_word: 'أخت',      transliteration: 'ukht',       french_translation: 'Sœur',            category: 'family' },
+    { arabic_word: 'ابن',      transliteration: 'ibn',        french_translation: 'Fils',            category: 'family' },
+    { arabic_word: 'بنت',      transliteration: 'bint',       french_translation: 'Fille',           category: 'family' },
+    { arabic_word: 'جد',       transliteration: 'jadd',       french_translation: 'Grand-père',      category: 'family' },
+    { arabic_word: 'جدة',      transliteration: 'jadda',      french_translation: 'Grand-mère',      category: 'family' },
+    { arabic_word: 'عم',       transliteration: "'amm",       french_translation: 'Oncle (paternel)',category: 'family' },
+    { arabic_word: 'عمة',      transliteration: "'amma",      french_translation: 'Tante (paternelle)',category: 'family' },
+    { arabic_word: 'خال',      transliteration: 'khal',       french_translation: 'Oncle (maternel)',category: 'family' },
+    { arabic_word: 'خالة',     transliteration: 'khala',      french_translation: 'Tante (maternelle)',category: 'family' },
+    { arabic_word: 'ابن عم',   transliteration: "ibn 'amm",   french_translation: 'Cousin',          category: 'family' },
+    { arabic_word: 'بنت عم',   transliteration: "bint 'amm",  french_translation: 'Cousine',         category: 'family' },
+    { arabic_word: 'زوج',      transliteration: 'zawj',       french_translation: 'Mari',            category: 'family' },
+    { arabic_word: 'زوجة',     transliteration: 'zawja',      french_translation: 'Femme (épouse)',  category: 'family' },
+    { arabic_word: 'حفيد',     transliteration: 'hafid',      french_translation: 'Petit-fils',      category: 'family' },
+    { arabic_word: 'حفيدة',    transliteration: 'hafida',     french_translation: 'Petite-fille',    category: 'family' },
+    { arabic_word: 'عائلة',    transliteration: "'a'ila",     french_translation: 'Famille',         category: 'family' },
+    { arabic_word: 'أقارب',    transliteration: 'aqarib',     french_translation: 'Proches / Parents',category: 'family' },
+    { arabic_word: 'طفل',      transliteration: 'tifl',       french_translation: 'Enfant (garçon)', category: 'family' },
+    { arabic_word: 'طفلة',     transliteration: 'tifla',      french_translation: 'Enfant (fille)',  category: 'family' },
+    { arabic_word: 'توأم',     transliteration: "taw'am",     french_translation: 'Jumeau/Jumelle',  category: 'family' },
+  ],
+  food: [
+    { arabic_word: 'خبز',      transliteration: 'khubz',     french_translation: 'Pain',            category: 'food' },
+    { arabic_word: 'ماء',      transliteration: "ma'",       french_translation: 'Eau',             category: 'food' },
+    { arabic_word: 'حليب',     transliteration: 'halib',     french_translation: 'Lait',            category: 'food' },
+    { arabic_word: 'أرز',      transliteration: 'arruz',     french_translation: 'Riz',             category: 'food' },
+    { arabic_word: 'لحم',      transliteration: 'lahm',      french_translation: 'Viande',          category: 'food' },
+    { arabic_word: 'سمك',      transliteration: 'samak',     french_translation: 'Poisson',         category: 'food' },
+    { arabic_word: 'دجاج',     transliteration: 'dajaj',     french_translation: 'Poulet',          category: 'food' },
+    { arabic_word: 'فاكهة',    transliteration: 'fakiha',    french_translation: 'Fruit',           category: 'food' },
+    { arabic_word: 'خضار',     transliteration: 'khudar',    french_translation: 'Légumes',         category: 'food' },
+    { arabic_word: 'قهوة',     transliteration: 'qahwa',     french_translation: 'Café',            category: 'food' },
+    { arabic_word: 'شاي',      transliteration: 'shay',      french_translation: 'Thé',             category: 'food' },
+    { arabic_word: 'عصير',     transliteration: "'asir",     french_translation: 'Jus',             category: 'food' },
+    { arabic_word: 'زيت',      transliteration: 'zayt',      french_translation: 'Huile',           category: 'food' },
+    { arabic_word: 'سكر',      transliteration: 'sukkar',    french_translation: 'Sucre',           category: 'food' },
+    { arabic_word: 'ملح',      transliteration: 'milh',      french_translation: 'Sel',             category: 'food' },
+    { arabic_word: 'بيض',      transliteration: 'bayd',      french_translation: 'Œufs',            category: 'food' },
+    { arabic_word: 'جبن',      transliteration: 'jubn',      french_translation: 'Fromage',         category: 'food' },
+    { arabic_word: 'زبدة',     transliteration: 'zubda',     french_translation: 'Beurre',          category: 'food' },
+    { arabic_word: 'تفاح',     transliteration: 'tuffah',    french_translation: 'Pomme',           category: 'food' },
+    { arabic_word: 'موز',      transliteration: 'mawz',      french_translation: 'Banane',          category: 'food' },
+    { arabic_word: 'برتقال',   transliteration: 'burtuqal',  french_translation: 'Orange',          category: 'food' },
+    { arabic_word: 'عنب',      transliteration: "'inab",     french_translation: 'Raisin',          category: 'food' },
+    { arabic_word: 'طماطم',    transliteration: 'tamatim',   french_translation: 'Tomate',          category: 'food' },
+    { arabic_word: 'بطاطا',    transliteration: 'batata',    french_translation: 'Pomme de terre',  category: 'food' },
+    { arabic_word: 'حلوى',     transliteration: 'halwa',     french_translation: 'Gâteau / Dessert',category: 'food' },
+  ],
+  travel: [
+    { arabic_word: 'مطار',      transliteration: 'matar',       french_translation: 'Aéroport',    category: 'travel' },
+    { arabic_word: 'فندق',      transliteration: 'funduq',      french_translation: 'Hôtel',       category: 'travel' },
+    { arabic_word: 'طريق',      transliteration: 'tariq',       french_translation: 'Route',       category: 'travel' },
+    { arabic_word: 'قطار',      transliteration: 'qitar',       french_translation: 'Train',       category: 'travel' },
+    { arabic_word: 'سيارة',     transliteration: 'sayyara',     french_translation: 'Voiture',     category: 'travel' },
+    { arabic_word: 'تذكرة',     transliteration: 'tadhkira',    french_translation: 'Billet',      category: 'travel' },
+    { arabic_word: 'جواز سفر',  transliteration: 'jawaz safar', french_translation: 'Passeport',   category: 'travel' },
+    { arabic_word: 'خريطة',     transliteration: 'kharita',     french_translation: 'Carte',       category: 'travel' },
+    { arabic_word: 'محطة',      transliteration: 'mahatta',     french_translation: 'Gare',        category: 'travel' },
+    { arabic_word: 'مدينة',     transliteration: 'madina',      french_translation: 'Ville',       category: 'travel' },
+    { arabic_word: 'طائرة',     transliteration: "ta'ira",      french_translation: 'Avion',       category: 'travel' },
+    { arabic_word: 'حافلة',     transliteration: 'hafila',      french_translation: 'Bus',         category: 'travel' },
+    { arabic_word: 'تاكسي',     transliteration: 'taksi',       french_translation: 'Taxi',        category: 'travel' },
+    { arabic_word: 'ميناء',     transliteration: 'mina',        french_translation: 'Port',        category: 'travel' },
+    { arabic_word: 'بحر',       transliteration: 'bahr',        french_translation: 'Mer',         category: 'travel' },
+    { arabic_word: 'شاطئ',      transliteration: 'shati',       french_translation: 'Plage',       category: 'travel' },
+    { arabic_word: 'جبل',       transliteration: 'jabal',       french_translation: 'Montagne',    category: 'travel' },
+    { arabic_word: 'صحراء',     transliteration: 'sahra',       french_translation: 'Désert',      category: 'travel' },
+    { arabic_word: 'سياحة',     transliteration: 'siyaha',      french_translation: 'Tourisme',    category: 'travel' },
+    { arabic_word: 'متحف',      transliteration: 'mathaf',      french_translation: 'Musée',       category: 'travel' },
+    { arabic_word: 'مسجد',      transliteration: 'masjid',      french_translation: 'Mosquée',     category: 'travel' },
+    { arabic_word: 'سوق',       transliteration: 'suq',         french_translation: 'Marché / Souk',category: 'travel' },
+    { arabic_word: 'شارع',      transliteration: 'sharia',      french_translation: 'Rue / Avenue',category: 'travel' },
+    { arabic_word: 'يسار',      transliteration: 'yasar',       french_translation: 'Gauche',      category: 'travel' },
+    { arabic_word: 'يمين',      transliteration: 'yamin',       french_translation: 'Droite',      category: 'travel' },
+  ],
+  daily_life: [
+    { arabic_word: 'بيت',      transliteration: 'bayt',       french_translation: 'Maison',       category: 'daily_life' },
+    { arabic_word: 'مدرسة',    transliteration: 'madrasa',    french_translation: 'École',        category: 'daily_life' },
+    { arabic_word: 'عمل',      transliteration: "'amal",      french_translation: 'Travail',      category: 'daily_life' },
+    { arabic_word: 'كتاب',     transliteration: 'kitab',      french_translation: 'Livre',        category: 'daily_life' },
+    { arabic_word: 'قلم',      transliteration: 'qalam',      french_translation: 'Stylo',        category: 'daily_life' },
+    { arabic_word: 'هاتف',     transliteration: 'hatif',      french_translation: 'Téléphone',    category: 'daily_life' },
+    { arabic_word: 'صديق',     transliteration: 'sadiq',      french_translation: 'Ami',          category: 'daily_life' },
+    { arabic_word: 'وقت',      transliteration: 'waqt',       french_translation: 'Temps',        category: 'daily_life' },
+    { arabic_word: 'يوم',      transliteration: 'yawm',       french_translation: 'Jour',         category: 'daily_life' },
+    { arabic_word: 'ليل',      transliteration: 'layl',       french_translation: 'Nuit',         category: 'daily_life' },
+    { arabic_word: 'صباح',     transliteration: 'sabah',      french_translation: 'Matin',        category: 'daily_life' },
+    { arabic_word: 'مساء',     transliteration: 'masa',       french_translation: 'Soir',         category: 'daily_life' },
+    { arabic_word: 'أسبوع',    transliteration: "usbu'",      french_translation: 'Semaine',      category: 'daily_life' },
+    { arabic_word: 'شهر',      transliteration: 'shahr',      french_translation: 'Mois',         category: 'daily_life' },
+    { arabic_word: 'سنة',      transliteration: 'sana',       french_translation: 'Année',        category: 'daily_life' },
+    { arabic_word: 'الآن',     transliteration: 'al-an',      french_translation: 'Maintenant',   category: 'daily_life' },
+    { arabic_word: 'اليوم',    transliteration: 'al-yawm',    french_translation: "Aujourd'hui",  category: 'daily_life' },
+    { arabic_word: 'غدا',      transliteration: 'ghadan',     french_translation: 'Demain',       category: 'daily_life' },
+    { arabic_word: 'أمس',      transliteration: 'ams',        french_translation: 'Hier',         category: 'daily_life' },
+    { arabic_word: 'نوم',      transliteration: 'nawm',       french_translation: 'Sommeil / Dormir',category: 'daily_life' },
+    { arabic_word: 'أكل',      transliteration: 'akl',        french_translation: 'Manger / Nourriture',category: 'daily_life' },
+    { arabic_word: 'شرب',      transliteration: 'shurb',      french_translation: 'Boire',        category: 'daily_life' },
+    { arabic_word: 'درس',      transliteration: 'darasa',     french_translation: 'Étudier',      category: 'daily_life' },
+    { arabic_word: 'لعب',      transliteration: 'la\'ib',     french_translation: 'Jouer',        category: 'daily_life' },
+    { arabic_word: 'مشى',      transliteration: 'masha',      french_translation: 'Marcher',      category: 'daily_life' },
+  ],
+  colors: [
+    { arabic_word: 'أحمر',    transliteration: 'ahmar',     french_translation: 'Rouge',    category: 'colors' },
+    { arabic_word: 'أزرق',    transliteration: 'azraq',     french_translation: 'Bleu',     category: 'colors' },
+    { arabic_word: 'أخضر',    transliteration: 'akhdar',    french_translation: 'Vert',     category: 'colors' },
+    { arabic_word: 'أصفر',    transliteration: 'asfar',     french_translation: 'Jaune',    category: 'colors' },
+    { arabic_word: 'أبيض',    transliteration: 'abyad',     french_translation: 'Blanc',    category: 'colors' },
+    { arabic_word: 'أسود',    transliteration: 'aswad',     french_translation: 'Noir',     category: 'colors' },
+    { arabic_word: 'بني',     transliteration: 'bunni',     french_translation: 'Marron',   category: 'colors' },
+    { arabic_word: 'برتقالي', transliteration: 'burtuqali', french_translation: 'Orange',   category: 'colors' },
+    { arabic_word: 'وردي',    transliteration: 'wardi',     french_translation: 'Rose',     category: 'colors' },
+    { arabic_word: 'رمادي',   transliteration: 'ramadi',    french_translation: 'Gris',     category: 'colors' },
+    { arabic_word: 'بنفسجي',  transliteration: 'banafsaji', french_translation: 'Violet',   category: 'colors' },
+    { arabic_word: 'زهري',    transliteration: 'zahri',     french_translation: 'Rose clair',category: 'colors' },
+    { arabic_word: 'سماوي',   transliteration: 'samawi',    french_translation: 'Bleu ciel',category: 'colors' },
+    { arabic_word: 'ذهبي',    transliteration: 'dhahabi',   french_translation: 'Doré',     category: 'colors' },
+    { arabic_word: 'فضي',     transliteration: 'fiddi',     french_translation: 'Argenté',  category: 'colors' },
+    { arabic_word: 'بيج',     transliteration: 'beige',     french_translation: 'Beige',    category: 'colors' },
+    { arabic_word: 'كحلي',    transliteration: 'kuhli',     french_translation: 'Bleu marine',category: 'colors' },
+    { arabic_word: 'زيتوني',  transliteration: 'zaytuni',   french_translation: 'Vert olive',category: 'colors' },
+    { arabic_word: 'داكن',    transliteration: 'dakin',     french_translation: 'Foncé',    category: 'colors' },
+    { arabic_word: 'فاتح',    transliteration: 'fatih',     french_translation: 'Clair',    category: 'colors' },
+  ],
+  animals: [
+    { arabic_word: 'كلب',     transliteration: 'kalb',      french_translation: 'Chien',    category: 'animals' },
+    { arabic_word: 'قطة',     transliteration: 'qitta',     french_translation: 'Chat',     category: 'animals' },
+    { arabic_word: 'حصان',    transliteration: 'hisan',     french_translation: 'Cheval',   category: 'animals' },
+    { arabic_word: 'بقرة',    transliteration: 'baqara',    french_translation: 'Vache',    category: 'animals' },
+    { arabic_word: 'أسد',     transliteration: 'asad',      french_translation: 'Lion',     category: 'animals' },
+    { arabic_word: 'فيل',     transliteration: 'fil',       french_translation: 'Éléphant', category: 'animals' },
+    { arabic_word: 'طائر',    transliteration: "ta'ir",     french_translation: 'Oiseau',   category: 'animals' },
+    { arabic_word: 'سمكة',    transliteration: 'samaka',    french_translation: 'Poisson',  category: 'animals' },
+    { arabic_word: 'أرنب',    transliteration: 'arnab',     french_translation: 'Lapin',    category: 'animals' },
+    { arabic_word: 'دجاجة',   transliteration: 'dajaja',    french_translation: 'Poule',    category: 'animals' },
+    { arabic_word: 'خروف',    transliteration: 'kharuf',    french_translation: 'Mouton',   category: 'animals' },
+    { arabic_word: 'جمل',     transliteration: 'jamal',     french_translation: 'Chameau',  category: 'animals' },
+    { arabic_word: 'نمر',     transliteration: 'namir',     french_translation: 'Tigre',    category: 'animals' },
+    { arabic_word: 'دب',      transliteration: 'dubb',      french_translation: 'Ours',     category: 'animals' },
+    { arabic_word: 'ثعلب',    transliteration: "tha'lab",   french_translation: 'Renard',   category: 'animals' },
+    { arabic_word: 'ذئب',     transliteration: "dhi'b",     french_translation: 'Loup',     category: 'animals' },
+    { arabic_word: 'غزال',    transliteration: 'ghazal',    french_translation: 'Gazelle',  category: 'animals' },
+    { arabic_word: 'قرد',     transliteration: 'qird',      french_translation: 'Singe',    category: 'animals' },
+    { arabic_word: 'نسر',     transliteration: 'nasr',      french_translation: 'Aigle',    category: 'animals' },
+    { arabic_word: 'ثعبان',   transliteration: "thu'ban",   french_translation: 'Serpent',  category: 'animals' },
+  ],
+  body: [
+    { arabic_word: 'رأس',     transliteration: "ra's",      french_translation: 'Tête',         category: 'body' },
+    { arabic_word: 'وجه',     transliteration: 'wajh',      french_translation: 'Visage',       category: 'body' },
+    { arabic_word: 'عين',     transliteration: "'ayn",      french_translation: 'Œil',          category: 'body' },
+    { arabic_word: 'أذن',     transliteration: 'udhun',     french_translation: 'Oreille',      category: 'body' },
+    { arabic_word: 'أنف',     transliteration: 'anf',       french_translation: 'Nez',          category: 'body' },
+    { arabic_word: 'فم',      transliteration: 'famm',      french_translation: 'Bouche',       category: 'body' },
+    { arabic_word: 'سن',      transliteration: 'sinn',      french_translation: 'Dent',         category: 'body' },
+    { arabic_word: 'شعر',     transliteration: "sha'r",     french_translation: 'Cheveux',      category: 'body' },
+    { arabic_word: 'رقبة',    transliteration: 'raqaba',    french_translation: 'Cou',          category: 'body' },
+    { arabic_word: 'كتف',     transliteration: 'katif',     french_translation: 'Épaule',       category: 'body' },
+    { arabic_word: 'ذراع',    transliteration: 'dhira',     french_translation: 'Bras',         category: 'body' },
+    { arabic_word: 'يد',      transliteration: 'yad',       french_translation: 'Main',         category: 'body' },
+    { arabic_word: 'إصبع',    transliteration: 'isba',      french_translation: 'Doigt',        category: 'body' },
+    { arabic_word: 'صدر',     transliteration: 'sadr',      french_translation: 'Poitrine',     category: 'body' },
+    { arabic_word: 'بطن',     transliteration: 'batn',      french_translation: 'Ventre',       category: 'body' },
+    { arabic_word: 'ظهر',     transliteration: 'dahr',      french_translation: 'Dos',          category: 'body' },
+    { arabic_word: 'رجل',     transliteration: 'rijl',      french_translation: 'Jambe',        category: 'body' },
+    { arabic_word: 'ركبة',    transliteration: 'rukba',     french_translation: 'Genou',        category: 'body' },
+    { arabic_word: 'قدم',     transliteration: 'qadam',     french_translation: 'Pied',         category: 'body' },
+    { arabic_word: 'قلب',     transliteration: 'qalb',      french_translation: 'Cœur',         category: 'body' },
+  ],
+  work: [
+    { arabic_word: 'مدرس',     transliteration: 'mudarris',   french_translation: 'Professeur',   category: 'work' },
+    { arabic_word: 'طبيب',     transliteration: 'tabib',      french_translation: 'Médecin',      category: 'work' },
+    { arabic_word: 'ممرض',     transliteration: 'mumarrid',   french_translation: 'Infirmier',    category: 'work' },
+    { arabic_word: 'مهندس',    transliteration: 'muhandis',   french_translation: 'Ingénieur',    category: 'work' },
+    { arabic_word: 'محامي',    transliteration: 'muhami',     french_translation: 'Avocat',       category: 'work' },
+    { arabic_word: 'موظف',     transliteration: 'muwazzaf',   french_translation: 'Employé',      category: 'work' },
+    { arabic_word: 'مدير',     transliteration: 'mudir',      french_translation: 'Directeur',    category: 'work' },
+    { arabic_word: 'تاجر',     transliteration: 'tajir',      french_translation: 'Commerçant',   category: 'work' },
+    { arabic_word: 'فلاح',     transliteration: 'fallah',     french_translation: 'Agriculteur',  category: 'work' },
+    { arabic_word: 'شرطي',     transliteration: 'shurtiyy',   french_translation: 'Policier',     category: 'work' },
+    { arabic_word: 'راتب',     transliteration: 'ratib',      french_translation: 'Salaire',      category: 'work' },
+    { arabic_word: 'مكتب',     transliteration: 'maktab',     french_translation: 'Bureau',       category: 'work' },
+    { arabic_word: 'شركة',     transliteration: 'sharika',    french_translation: 'Entreprise',   category: 'work' },
+    { arabic_word: 'اجتماع',   transliteration: 'ijtima',     french_translation: 'Réunion',      category: 'work' },
+    { arabic_word: 'مشروع',    transliteration: 'mashrua',    french_translation: 'Projet',       category: 'work' },
+  ],
+  religion: [
+    { arabic_word: 'الله',         transliteration: 'Allah',          french_translation: 'Dieu (Allah)',         category: 'religion' },
+    { arabic_word: 'إسلام',        transliteration: 'islam',          french_translation: 'Islam',                category: 'religion' },
+    { arabic_word: 'قرآن',         transliteration: "qur'an",         french_translation: 'Coran',                category: 'religion' },
+    { arabic_word: 'صلاة',         transliteration: 'salat',          french_translation: 'Prière',               category: 'religion' },
+    { arabic_word: 'رمضان',        transliteration: 'ramadan',        french_translation: 'Ramadan',              category: 'religion' },
+    { arabic_word: 'عيد',          transliteration: "'eid",           french_translation: 'Fête religieuse',       category: 'religion' },
+    { arabic_word: 'بسم الله',     transliteration: 'bismillah',      french_translation: 'Au nom de Dieu',       category: 'religion' },
+    { arabic_word: 'إن شاء الله',  transliteration: 'insha Allah',    french_translation: 'Si Dieu le veut',      category: 'religion' },
+    { arabic_word: 'ماشاء الله',   transliteration: 'ma sha Allah',   french_translation: 'Ce que Dieu a voulu', category: 'religion' },
+    { arabic_word: 'الحمد لله',    transliteration: 'alhamdu lillah', french_translation: 'Louange à Dieu',       category: 'religion' },
+    { arabic_word: 'سبحان الله',   transliteration: 'subhan Allah',   french_translation: 'Gloire à Dieu',        category: 'religion' },
+    { arabic_word: 'الله أكبر',    transliteration: 'Allahu akbar',   french_translation: 'Dieu est Grand',       category: 'religion' },
+    { arabic_word: 'يا الله',      transliteration: 'ya Allah',       french_translation: 'Ô Dieu',               category: 'religion' },
+    { arabic_word: 'دعاء',         transliteration: "du'a",           french_translation: 'Supplication',         category: 'religion' },
+    { arabic_word: 'جنة',          transliteration: 'janna',          french_translation: 'Paradis',              category: 'religion' },
+  ],
+  home: [
+    { arabic_word: 'غرفة',    transliteration: 'ghurfa',     french_translation: 'Chambre / Pièce',category: 'home' },
+    { arabic_word: 'مطبخ',    transliteration: 'matbakh',    french_translation: 'Cuisine',        category: 'home' },
+    { arabic_word: 'حمام',    transliteration: 'hammam',     french_translation: 'Salle de bain',  category: 'home' },
+    { arabic_word: 'صالة',    transliteration: 'sala',       french_translation: 'Salon',          category: 'home' },
+    { arabic_word: 'باب',     transliteration: 'bab',        french_translation: 'Porte',          category: 'home' },
+    { arabic_word: 'نافذة',   transliteration: 'nafidha',    french_translation: 'Fenêtre',        category: 'home' },
+    { arabic_word: 'سرير',    transliteration: 'sarir',      french_translation: 'Lit',            category: 'home' },
+    { arabic_word: 'كرسي',    transliteration: 'kursi',      french_translation: 'Chaise',         category: 'home' },
+    { arabic_word: 'طاولة',   transliteration: 'tawila',     french_translation: 'Table',          category: 'home' },
+    { arabic_word: 'تلفاز',   transliteration: 'tilfaz',     french_translation: 'Télévision',     category: 'home' },
+    { arabic_word: 'مصباح',   transliteration: 'misbah',     french_translation: 'Lampe',          category: 'home' },
+    { arabic_word: 'ثلاجة',   transliteration: 'thallaja',   french_translation: 'Réfrigérateur',  category: 'home' },
+    { arabic_word: 'غسالة',   transliteration: 'ghassala',   french_translation: 'Machine à laver',category: 'home' },
+    { arabic_word: 'مكنسة',   transliteration: 'miknasa',    french_translation: 'Aspirateur',     category: 'home' },
+    { arabic_word: 'مفتاح',   transliteration: 'miftah',     french_translation: 'Clé',            category: 'home' },
+  ],
+};
+
+/** Retourne les mots d'une catégorie enrichis d'un id unique */
+export function getWordsForCategory(category: string): VocabWord[] {
+  const words = STATIC_VOCAB[category] ?? [];
+  return words.map((w, i) => ({
+    ...w,
+    id: `${category}_${i}`,
+    mastered: false,
+    practice_count: 0,
+  }));
 }
 
-export default function VocabularyScreen() {
-  const [selectedCategory, setSelectedCategory] = useState<(typeof CATEGORIES)[0] | null>(null);
-  const [words, setWords] = useState<VocabWord[]>([]);
-  const [masteredMap, setMasteredMap] = useState<Record<string, boolean>>({});
-  const [flashcardIndex, setFlashcardIndex] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [mode, setMode] = useState<'browse' | 'flashcard'>('browse');
-
-  const { addXP, updateProgress, progress } = useUserProgress();
-
-  // Reload mastered state whenever screen gains focus
-  useFocusEffect(
-    useCallback(() => {
-      loadMastered().then(setMasteredMap);
-    }, []),
-  );
-
-  const selectCategory = async (cat: (typeof CATEGORIES)[0]) => {
-    const raw = getWordsForCategory(cat.id);
-    const mastered = await loadMastered();
-    setMasteredMap(mastered);
-    const enriched = raw.map(w => ({ ...w, mastered: mastered[w.id] ?? false }));
-    setWords(enriched);
-    setSelectedCategory(cat);
-    setMode('browse');
-    setFlashcardIndex(0);
-    setShowAnswer(false);
-  };
-
-  const startFlashcards = () => {
-    setMode('flashcard');
-    setFlashcardIndex(0);
-    setShowAnswer(false);
-  };
-
-  const speakArabic = (text: string) => {
-    Speech.speak(text, { language: 'ar-SA', rate: 0.85 });
-  };
-
-  const nextFlashcard = async (mastered: boolean) => {
-    const word = words[flashcardIndex];
-    if (mastered && word) {
-      const updated = { ...masteredMap, [word.id]: true };
-      setMasteredMap(updated);
-      await saveMastered(updated);
-      setWords(prev => prev.map(w => (w.id === word.id ? { ...w, mastered: true } : w)));
-      await addXP(3);
-    }
-
-    if (flashcardIndex < words.length - 1) {
-      setFlashcardIndex(i => i + 1);
-      setShowAnswer(false);
-    } else {
-      // Session terminée
-      const newLearned = words.filter(w => !masteredMap[w.id]).length;
-      await updateProgress({
-        vocab_learned: (progress?.vocab_learned || 0) + newLearned,
-      });
-      setMode('browse');
-      setFlashcardIndex(0);
-    }
-  };
-
-  // ── Category selection ─────────────────────────────────────────────────────
-  if (!selectedCategory) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Vocabulaire</Text>
-            <Text style={styles.headerSubtitle}>Choisis une catégorie, Fatima !</Text>
-          </View>
-        </View>
-        <View style={styles.categoriesGrid}>
-          {CATEGORIES.map(cat => (
-            <TouchableOpacity
-              key={cat.id}
-              style={styles.categoryCard}
-              onPress={() => selectCategory(cat)}
-            >
-              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
-              <Text style={styles.categoryLabel}>{cat.label}</Text>
-              <Text style={styles.categoryArabic}>{cat.arabic}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  // ── Flashcard mode ─────────────────────────────────────────────────────────
-  if (mode === 'flashcard' && words.length > 0) {
-    const word = words[flashcardIndex];
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => setMode('browse')} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.progressText}>{flashcardIndex + 1} / {words.length}</Text>
-        </View>
-
-        <ProgressBar progress={((flashcardIndex + 1) / words.length) * 100} height={4} />
-
-        <TouchableOpacity
-          style={styles.flashcard}
-          onPress={() => setShowAnswer(true)}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.flashcardArabic}>{word.arabic_word}</Text>
-          {!showAnswer ? (
-            <Text style={styles.flashcardHint}>Touchez pour voir la réponse</Text>
-          ) : (
-            <>
-              <Text style={styles.flashcardTransliteration}>{word.transliteration}</Text>
-              <Text style={styles.flashcardFrench}>{word.french_translation}</Text>
-              <TouchableOpacity
-                onPress={() => speakArabic(word.arabic_word)}
-                style={styles.speakBtn}
-              >
-                <Ionicons name="volume-high" size={20} color={colors.primary} />
-              </TouchableOpacity>
-            </>
-          )}
-          {word.mastered && <Text style={styles.masteredBadge}>✅ Déjà maîtrisé</Text>}
-        </TouchableOpacity>
-
-        {showAnswer && (
-          <View style={styles.flashcardButtons}>
-            <Button variant="outline" onPress={() => nextFlashcard(false)} style={{ flex: 1, marginRight: 8 }}>
-              Revoir
-            </Button>
-            <Button onPress={() => nextFlashcard(true)} style={{ flex: 1, marginLeft: 8 }}>
-              Maîtrisé ✓
-            </Button>
-          </View>
-        )}
-      </View>
-    );
-  }
-
-  // ── Browse mode ────────────────────────────────────────────────────────────
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setSelectedCategory(null)} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>{selectedCategory.emoji} {selectedCategory.label}</Text>
-          <Text style={styles.headerSubtitle}>{words.length} mots</Text>
-        </View>
-      </View>
-
-      <Button onPress={startFlashcards} fullWidth style={{ marginHorizontal: 20, marginBottom: 16 }}>
-        <Ionicons name="sparkles" size={16} color={colors.white} /> Mode Flashcards
-      </Button>
-
-      <View style={styles.wordsList}>
-        {words.map(word => (
-          <Card key={word.id} style={styles.wordCard}>
-            <View style={styles.wordContent}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.wordArabic}>{word.arabic_word}</Text>
-                <Text style={styles.wordTransliteration}>{word.transliteration}</Text>
-              </View>
-              <View style={styles.wordRight}>
-                <Text style={styles.wordFrench}>{word.french_translation}</Text>
-                {(masteredMap[word.id]) && <Text style={styles.wordMastered}>✅ Maîtrisé</Text>}
-              </View>
-              <TouchableOpacity onPress={() => speakArabic(word.arabic_word)} style={styles.audioButton}>
-                <Ionicons name="volume-high" size={18} color={colors.primary} />
-              </TouchableOpacity>
-            </View>
-          </Card>
-        ))}
-      </View>
-    </ScrollView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container:              { flex: 1, backgroundColor: colors.background },
-  content:                { paddingBottom: 100 },
-  header:                 { flexDirection: 'row', alignItems: 'center', paddingTop: 56, paddingBottom: 16, paddingHorizontal: 20 },
-  headerTitle:            { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
-  headerSubtitle:         { fontSize: fontSize.xs, color: colors.textMuted },
-  backButton:             { padding: 8, marginRight: 12, borderRadius: borderRadius.lg, backgroundColor: `${colors.textMuted}15` },
-  progressText:           { fontSize: fontSize.xs, color: colors.textMuted, flex: 1, textAlign: 'right' },
-  categoriesGrid:         { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, paddingHorizontal: 20 },
-  categoryCard:           { width: '47%', backgroundColor: colors.card, borderRadius: borderRadius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.lg, alignItems: 'center' },
-  categoryEmoji:          { fontSize: 24, marginBottom: spacing.sm },
-  categoryLabel:          { fontSize: fontSize.sm, fontWeight: '600', color: colors.text },
-  categoryArabic:         { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 4 },
-  flashcard:              { flex: 1, margin: 20, backgroundColor: colors.card, borderRadius: borderRadius['3xl'], borderWidth: 1, borderColor: colors.border, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  flashcardArabic:        { fontSize: 48, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  flashcardHint:          { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 16 },
-  flashcardTransliteration:{ fontSize: fontSize.lg, color: colors.primary, fontStyle: 'italic', marginTop: 12 },
-  flashcardFrench:        { fontSize: fontSize.xl, fontWeight: '600', color: colors.text, marginTop: 8 },
-  masteredBadge:          { fontSize: fontSize.xs, color: colors.primary, marginTop: 12 },
-  speakBtn:               { marginTop: 16, padding: 12, borderRadius: borderRadius.full, backgroundColor: `${colors.primary}15` },
-  flashcardButtons:       { flexDirection: 'row', paddingHorizontal: 20, paddingBottom: 60 },
-  wordsList:              { paddingHorizontal: 20, gap: 8 },
-  wordCard:               {},
-  wordContent:            { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  wordArabic:             { fontSize: fontSize.lg, fontWeight: '600', color: colors.text, textAlign: 'right' },
-  wordTransliteration:    { fontSize: fontSize.xs, color: colors.primary, fontStyle: 'italic' },
-  wordRight:              { alignItems: 'flex-end', marginRight: 8 },
-  wordFrench:             { fontSize: fontSize.sm, color: colors.text },
-  wordMastered:           { fontSize: fontSize.xs, color: colors.primary },
-  audioButton:            { width: 32, height: 32, borderRadius: 16, backgroundColor: `${colors.primary}15`, justifyContent: 'center', alignItems: 'center' },
-});
+export const ALL_CATEGORIES = Object.keys(STATIC_VOCAB);
+export const TOTAL_WORDS = Object.values(STATIC_VOCAB).reduce((acc, words) => acc + words.length, 0);

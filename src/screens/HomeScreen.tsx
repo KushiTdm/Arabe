@@ -1,19 +1,17 @@
 import React from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useUserProgress } from '../lib/useUserProgress';
+import { useCourses } from '../lib/useCourses';
 import { Card, Badge, LoadingSpinner, ProgressBar } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function HomeScreen() {
   const { progress, loading, creditsRemaining } = useUserProgress();
+  const { unreadCount } = useCourses();
   const navigation = useNavigation<any>();
 
   if (loading) {
@@ -29,10 +27,11 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
+          {/* *** GRAND TEXTE ARABE DE BIENVENUE *** */}
           <Text style={styles.greeting}>مرحباً فاطمة</Text>
-          <Text style={styles.subtitle}>Continue ton apprentissage, Fatima !</Text>
+          <Text style={styles.subtitle}>Continue ton apprentissage !</Text>
         </View>
-        <Badge color="primary">{creditsRemaining()} crédits IA</Badge>
+        <Badge color="primary">{creditsRemaining()} crédits</Badge>
       </View>
 
       {/* XP Progress */}
@@ -51,10 +50,42 @@ export default function HomeScreen() {
       <View style={styles.lessonsSection}>
         <Text style={styles.sectionTitle}>Apprendre</Text>
 
-        <LessonCard title="Conversation IA"   subtitle="Parle en arabe avec l'IA, Fatima !"   icon="chatbubbles" onPress={() => navigation.navigate('Conversation')} color="primary"   />
-        <LessonCard title="Écriture arabe"    subtitle="Dessine les lettres avec ton doigt" icon="pencil"      onPress={() => navigation.navigate('Writing')}      color="secondary" />
-        <LessonCard title="Vocabulaire"       subtitle="Enrichis ton vocabulaire"            icon="book"        onPress={() => navigation.navigate('Vocabulary')}   color="accent"    />
-        <LessonCard title="Alphabet arabe"    subtitle="Maîtrise les lettres en détail"     icon="text"        onPress={() => navigation.navigate('Alphabet')}     color="primary"   />
+        <LessonCard
+          title="Conversation IA"
+          subtitle="Parle en arabe avec l'IA — elle crée des cours !"
+          icon="chatbubbles"
+          onPress={() => navigation.navigate('Conversation')}
+          color="primary"
+        />
+        <LessonCard
+          title="Écriture arabe"
+          subtitle="Dessine les lettres avec ton doigt"
+          icon="pencil"
+          onPress={() => navigation.navigate('Writing')}
+          color="secondary"
+        />
+        <LessonCard
+          title="Vocabulaire"
+          subtitle="240+ mots · Catégories progressives"
+          icon="book"
+          onPress={() => navigation.navigate('Vocabulary')}
+          color="accent"
+        />
+        <LessonCard
+          title="Mes Cours"
+          subtitle={unreadCount > 0 ? `${unreadCount} nouveau${unreadCount > 1 ? 'x' : ''} cours créé${unreadCount > 1 ? 's' : ''} par l'IA !` : "Leçons personnalisées par l'IA"}
+          icon="school"
+          onPress={() => navigation.navigate('Cours')}
+          color="primary"
+          badge={unreadCount > 0 ? String(unreadCount) : undefined}
+        />
+        <LessonCard
+          title="Alphabet arabe"
+          subtitle="Maîtrise les 28 lettres en détail"
+          icon="text"
+          onPress={() => navigation.navigate('Alphabet')}
+          color="secondary"
+        />
       </View>
     </ScrollView>
   );
@@ -70,8 +101,10 @@ function StatCard({ icon, value, label, color }: { icon: string; value: number; 
   );
 }
 
-function LessonCard({ title, subtitle, icon, onPress, color }: {
-  title: string; subtitle: string; icon: string; onPress: () => void; color: 'primary' | 'secondary' | 'accent';
+function LessonCard({ title, subtitle, icon, onPress, color, badge }: {
+  title: string; subtitle: string; icon: string;
+  onPress: () => void; color: 'primary' | 'secondary' | 'accent';
+  badge?: string;
 }) {
   const colorMap = {
     primary:   { bg: `${colors.primary}15`,   border: `${colors.primary}30`   },
@@ -91,16 +124,22 @@ function LessonCard({ title, subtitle, icon, onPress, color }: {
         <Text style={styles.lessonTitle}>{title}</Text>
         <Text style={styles.lessonSubtitle}>{subtitle}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      {badge ? (
+        <View style={styles.lessonBadge}>
+          <Text style={styles.lessonBadgeText}>{badge}</Text>
+        </View>
+      ) : (
+        <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
+      )}
     </TouchableOpacity>
   );
 }
 
 function XPBar({ xp = 0, level = 'beginner' }: { xp?: number; level?: string }) {
   const levelThresholds: Record<string, { min: number; max: number; label: string }> = {
-    beginner:     { min: 0,    max: 300,  label: 'Débutant'      },
+    beginner:     { min: 0,    max: 300,  label: 'Débutante'     },
     intermediate: { min: 300,  max: 1000, label: 'Intermédiaire' },
-    advanced:     { min: 1000, max: 2000, label: 'Avancé'        },
+    advanced:     { min: 1000, max: 2000, label: 'Avancée'       },
   };
   const threshold = levelThresholds[level] ?? levelThresholds.beginner;
   const pct = Math.min(((xp - threshold.min) / (threshold.max - threshold.min)) * 100, 100);
@@ -119,22 +158,29 @@ const styles = StyleSheet.create({
   container:          { flex: 1, backgroundColor: colors.background },
   content:            { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 100 },
   loadingContainer:   { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
+
   header:             { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing['2xl'] },
-  greeting:           { fontSize: fontSize['2xl'], fontWeight: '700', color: colors.text },
+  // *** GRAND TEXTE ARABE D'ACCUEIL ***
+  greeting:           { fontSize: 36, fontWeight: '800', color: colors.text, letterSpacing: 0.5 },
   subtitle:           { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 },
+
   xpCard:             { marginBottom: spacing['2xl'] },
   xpHeader:           { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
   xpLevel:            { fontSize: fontSize.sm, fontWeight: '600', color: colors.primary },
   xpValue:            { fontSize: fontSize.xs, color: colors.textMuted },
+
   statsGrid:          { flexDirection: 'row', gap: spacing.md, marginBottom: spacing['2xl'] },
   statCard:           { flex: 1, backgroundColor: colors.card, borderRadius: borderRadius['2xl'], borderWidth: 1, borderColor: colors.border, padding: spacing.lg, alignItems: 'center' },
   statValue:          { fontSize: fontSize.xl, fontWeight: '700', color: colors.text, marginTop: spacing.xs },
   statLabel:          { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+
   lessonsSection:     { gap: spacing.md },
   sectionTitle:       { fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   lessonCard:         { flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderRadius: borderRadius['2xl'], borderWidth: 1 },
   lessonIconContainer:{ width: 48, height: 48, borderRadius: borderRadius.lg, backgroundColor: colors.card, justifyContent: 'center', alignItems: 'center', marginRight: spacing.lg },
   lessonContent:      { flex: 1 },
-  lessonTitle:        { fontSize: fontSize.base, fontWeight: '600', color: colors.text },
+  lessonTitle:        { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
   lessonSubtitle:     { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
+  lessonBadge:        { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: colors.destructive, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6 },
+  lessonBadgeText:    { color: colors.white, fontSize: 10, fontWeight: '800' },
 });
