@@ -8,12 +8,10 @@ function getApiUrl(apiKey: string) {
 }
 
 export async function getApiKey(): Promise<string> {
-  // 1. Try user-stored key from settings
   try {
     const stored = await AsyncStorage.getItem(API_KEY_STORAGE);
     if (stored && stored.trim().length > 0) return stored.trim();
   } catch {}
-  // 2. Fall back to env variable
   const envKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
   return envKey;
 }
@@ -28,6 +26,7 @@ export async function clearApiKey(): Promise<void> {
 
 export async function invokeAI<T = Record<string, unknown>>(
   prompt: string,
+  maxTokens: number = 2048,
 ): Promise<T> {
   const apiKey = await getApiKey();
 
@@ -47,13 +46,13 @@ export async function invokeAI<T = Record<string, unknown>>(
             {
               text:
                 prompt +
-                '\n\nRéponds UNIQUEMENT avec un objet JSON valide, sans balises markdown, sans explication.',
+                '\n\nRéponds UNIQUEMENT avec un objet JSON valide et COMPLET. Pas de balises markdown, pas de texte avant ou après le JSON. Le JSON doit être bien fermé avec toutes les accolades et crochets.',
             },
           ],
         },
       ],
       generationConfig: {
-        maxOutputTokens: 1024,
+        maxOutputTokens: maxTokens,
         temperature: 0.7,
       },
     }),
@@ -80,15 +79,28 @@ export async function invokeAI<T = Record<string, unknown>>(
   const data = await response.json();
   const text: string =
     data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
-  const clean = text.replace(/```json|```/g, '').trim();
+  const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
 
   try {
     return JSON.parse(clean) as T;
   } catch {
     // Try to extract JSON from the text
     const match = clean.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]) as T;
-    throw new Error('Réponse IA invalide (JSON malformé)');
+    if (match) {
+      try {
+        return JSON.parse(match[0]) as T;
+      } catch {
+        // Try to fix truncated JSON by finding last complete object
+        const lastBrace = match[0].lastIndexOf('}');
+        if (lastBrace > 0) {
+          const truncated = match[0].substring(0, lastBrace + 1);
+          try {
+            return JSON.parse(truncated) as T;
+          } catch {}
+        }
+      }
+    }
+    throw new Error('Réponse IA invalide (JSON malformé). Réessayez.');
   }
 }
 
@@ -115,12 +127,12 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
             {
               text:
                 prompt +
-                '\n\nRéponds UNIQUEMENT avec un objet JSON valide, sans balises markdown, sans explication.',
+                '\n\nRéponds UNIQUEMENT avec un objet JSON valide et COMPLET. Pas de balises markdown.',
             },
           ],
         },
       ],
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+      generationConfig: { maxOutputTokens: 2048, temperature: 0.7 },
     }),
   });
 
@@ -132,12 +144,14 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
   const data = await response.json();
   const text: string =
     data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}';
-  const clean = text.replace(/```json|```/g, '').trim();
+  const clean = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   try {
     return JSON.parse(clean) as T;
   } catch {
     const match = clean.match(/\{[\s\S]*\}/);
-    if (match) return JSON.parse(match[0]) as T;
+    if (match) {
+      try { return JSON.parse(match[0]) as T; } catch {}
+    }
     throw new Error('Réponse IA invalide');
   }
 }
