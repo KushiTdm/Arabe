@@ -1,10 +1,42 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const MODEL = 'gemini-2.0-flash';
 export const API_KEY_STORAGE = '@maa_gemini_api_key';
+export const MODEL_STORAGE = '@maa_gemini_model';
 
-function getApiUrl(apiKey: string) {
-  return `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+export const DEFAULT_MODEL = 'gemini-1.5-flash';
+
+export const GEMINI_FREE_MODELS = [
+  {
+    id: 'gemini-1.5-flash',
+    label: 'Gemini 1.5 Flash',
+    description: '1500 req/jour · Recommandé ✅',
+  },
+  {
+    id: 'gemini-1.5-flash-8b',
+    label: 'Gemini 1.5 Flash-8B',
+    description: '1500 req/jour · Plus léger & rapide',
+  },
+  {
+    id: 'gemini-2.0-flash-lite',
+    label: 'Gemini 2.0 Flash Lite',
+    description: '1500 req/jour · Plus récent',
+  },
+];
+
+export async function getModel(): Promise<string> {
+  try {
+    const stored = await AsyncStorage.getItem(MODEL_STORAGE);
+    if (stored && stored.trim().length > 0) return stored.trim();
+  } catch {}
+  return DEFAULT_MODEL;
+}
+
+export async function saveModel(modelId: string): Promise<void> {
+  await AsyncStorage.setItem(MODEL_STORAGE, modelId);
+}
+
+function getApiUrl(apiKey: string, model: string) {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 }
 
 export async function getApiKey(): Promise<string> {
@@ -36,7 +68,9 @@ export async function invokeAI<T = Record<string, unknown>>(
     );
   }
 
-  const response = await fetch(getApiUrl(apiKey), {
+  const model = await getModel();
+
+  const response = await fetch(getApiUrl(apiKey, model), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -71,7 +105,9 @@ export async function invokeAI<T = Record<string, unknown>>(
       );
     }
     if (response.status === 429) {
-      throw new Error('Trop de requêtes. Réessayez dans quelques secondes.');
+      throw new Error(
+        `Quota dépassé pour le modèle "${model}". Essayez un autre modèle dans Profil → ⚙️ ou attendez quelques secondes.`,
+      );
     }
     throw new Error(`Erreur Gemini (${response.status}): ${err}`);
   }
@@ -84,13 +120,11 @@ export async function invokeAI<T = Record<string, unknown>>(
   try {
     return JSON.parse(clean) as T;
   } catch {
-    // Try to extract JSON from the text
     const match = clean.match(/\{[\s\S]*\}/);
     if (match) {
       try {
         return JSON.parse(match[0]) as T;
       } catch {
-        // Try to fix truncated JSON by finding last complete object
         const lastBrace = match[0].lastIndexOf('}');
         if (lastBrace > 0) {
           const truncated = match[0].substring(0, lastBrace + 1);
@@ -116,7 +150,9 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
     );
   }
 
-  const response = await fetch(getApiUrl(apiKey), {
+  const model = await getModel();
+
+  const response = await fetch(getApiUrl(apiKey, model), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -138,6 +174,11 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
 
   if (!response.ok) {
     const err = await response.text();
+    if (response.status === 429) {
+      throw new Error(
+        `Quota dépassé pour le modèle "${model}". Essayez un autre modèle dans Profil → ⚙️.`,
+      );
+    }
     throw new Error(`Erreur Gemini audio (${response.status}): ${err}`);
   }
 
