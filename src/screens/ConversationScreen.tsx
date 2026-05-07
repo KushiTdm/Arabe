@@ -15,20 +15,19 @@ import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI, invokeAIWithAudio } from '../api/aiClient';
 
-const TOPICS = [
-  { id: 'greetings',  label: 'التَّحِيَّات',        fr: 'Salutations',     emoji: '👋' },
-  { id: 'restaurant', label: 'المَطْعَم',            fr: 'Au restaurant',   emoji: '🍽️' },
-  { id: 'shopping',   label: 'التَّسَوُّق',          fr: 'Shopping',        emoji: '🛍️' },
-  { id: 'travel',     label: 'السَّفَر',             fr: 'Voyage',          emoji: '✈️' },
-  { id: 'family',     label: 'العَائِلَة',           fr: 'Famille',         emoji: '👨‍👩‍👧‍👦' },
-  { id: 'daily',      label: 'الحَيَاة اليَوْمِيَّة', fr: 'Vie quotidienne', emoji: '☀️' },
-  { id: 'exercise',   label: 'تَمَارِين مُخَصَّصَة',  fr: 'Exercice adapté', emoji: '🎯' },
-];
+// Topics are built dynamically from language.categories (see ConversationScreen component)
+
+interface Topic {
+  id: string;
+  label: string;    // in target language
+  fr: string;       // in French
+  emoji: string;
+}
 
 interface Message {
   role: 'ai' | 'user';
   text?: string;
-  arabic?: string;
+  native?: string;       // text in target language
   transliteration?: string;
   french?: string;
   correction?: string;
@@ -39,10 +38,8 @@ interface Message {
   course_topic?: string;
 }
 
-// ── Prompt SIMPLIFIÉ pour éviter la troncature JSON ────────────────────────
-// On demande UNE SEULE réponse simple, et on génère le cours EN SECOND APPEL si nécessaire
 interface AIMessage {
-  arabic_text: string;
+  native_text: string;
   transliteration: string;
   french_translation: string;
   suggestion?: string;
@@ -62,8 +59,8 @@ interface AICourse {
   type: string;
   summary: string;
   explanation: string;
-  arabic_words: { arabic: string; transliteration: string; meaning: string }[];
-  examples: { arabic: string; transliteration: string; french: string; note?: string }[];
+  native_words: { native: string; transliteration: string; meaning: string }[];
+  examples: { native: string; transliteration: string; french: string; note?: string }[];
   tips: string[];
   exercises: { instruction: string; type: string; question: string; answer: string; options?: string[] }[];
 }
@@ -72,7 +69,7 @@ export default function ConversationScreen() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [selectedTopic, setSelectedTopic] = useState<typeof TOPICS[0] | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [inputText, setInputText] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -103,14 +100,24 @@ export default function ConversationScreen() {
     Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
   };
 
+  // Build topics dynamically from language categories + an exercise topic
+  const TOPICS: Topic[] = [
+    ...language.categories.map(cat => ({
+      id: cat.id,
+      label: cat.nativeLabel ?? cat.label,
+      fr: cat.label,
+      emoji: cat.emoji,
+    })),
+    { id: 'exercise', label: language.greetingWord, fr: 'Exercice adapté', emoji: '🎯' },
+  ];
+
   const buildHistory = () =>
-    messages.slice(-6) // Limit history to avoid token overflow
+    messages.slice(-6)
       .map(m => m.role === 'user'
         ? `${userName}: ${m.text}`
-        : `Prof: ${m.arabic} - ${m.french}`)
+        : `Prof: ${m.native} - ${m.french}`)
       .join('\n');
 
-  // ── PROMPT SIMPLIFIÉ — JSON léger sans cours imbriqué ─────────────────
   const buildSimplePrompt = (topic: string, history: string, errorsCtx: string, userMessage: string) =>
     `${language.aiSeedPrompt}
 Thème: "${topic}". Élève: ${userName}.
@@ -124,9 +131,8 @@ RÈGLES IMPORTANTES:
 ${errorsCtx ? errorsCtx.substring(0, 300) : ''}
 
 Réponds avec ce JSON (COMPACT, sans espaces inutiles):
-{"arabic_text":"","transliteration":"","french_translation":"","pronunciation_feedback":"","correction":"","suggestion":"","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
+{"native_text":"","transliteration":"","french_translation":"","pronunciation_feedback":"","correction":"","suggestion":"","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
 
-  // ── SECOND APPEL pour générer le cours complet ─────────────────────────
   const generateCourseContent = async (title: string, type: string, topic: string): Promise<AICourse | null> => {
     try {
       const ok = await incrementCredits();
@@ -134,11 +140,11 @@ Réponds avec ce JSON (COMPACT, sans espaces inutiles):
 
       const res = await invokeAI<AICourse>(
         `${language.aiSeedPrompt}
-Génère un mini-cours sur: "${title}" pour ${userName}.
+Génère un mini-cours sur: "${title}" pour ${userName} qui apprend le ${language.familiarName}.
 Type: ${type}. Contexte: conversation sur "${topic}".
 
 JSON:
-{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Explication claire en 3-4 phrases","arabic_words":[{"arabic":"exemple","transliteration":"exemple","meaning":"exemple"}],"examples":[{"arabic":"phrase","transliteration":"translittération","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Instruction","type":"translate","question":"question","answer":"réponse","options":["réponse","option2","option3","option4"]}]}`,
+{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Explication claire en 3-4 phrases","native_words":[{"native":"exemple","transliteration":"","meaning":"exemple"}],"examples":[{"native":"phrase","transliteration":"","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Instruction","type":"translate","question":"question","answer":"réponse","options":["réponse","option2","option3","option4"]}]}`,
         2048,
       );
       return res;
@@ -189,7 +195,7 @@ JSON:
       ...prev,
       {
         role: 'ai',
-        arabic: res.arabic_text,
+        native: res.native_text,
         transliteration: res.transliteration,
         french: res.french_translation,
         correction: res.correction,
@@ -213,10 +219,10 @@ JSON:
       });
     }
 
-    setTimeout(() => speakArabic(res.arabic_text), 300);
+    setTimeout(() => speakArabic(res.native_text), 300);
   };
 
-  const startConversation = async (topic: typeof TOPICS[0]) => {
+  const startConversation = async (topic: Topic) => {
     setSelectedTopic(topic);
     setMessages([]);
     setAiError(null);
@@ -229,26 +235,26 @@ JSON:
       const isExercise = topic.id === 'exercise';
 
       const prompt = isExercise
-        ? `Professeur d'arabe pour Fatima. Lance un exercice adapté.
+        ? `${language.aiSeedPrompt}
+Lance un exercice adapté pour ${userName} (débutant en ${language.familiarName}).
 ${errorsCtx ? errorsCtx.substring(0, 300) : ''}
-RÈGLE: Arabe avec voyelles (harakat). Ex: "مَرْحَباً" pas "مرحبا"
-JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"Exercice: ...","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`
-        : `Professeur d'arabe pour Fatima (débutante). Lance conversation sur "${topic.fr}".
-RÈGLE: Arabe avec voyelles (harakat). Ex: "مَرْحَباً يا فَاطِمَة!" pas "مرحبا"
-JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
+JSON: {"native_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"Exercice: ...","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`
+        : `${language.aiSeedPrompt}
+Lance une conversation sur le thème "${topic.fr}" avec ${userName} (débutant en ${language.familiarName}).
+JSON: {"native_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
 
       const res = await invokeAI<AIMessage>(prompt, 1024);
-      if (!res?.arabic_text) throw new Error('Réponse IA vide.');
+      if (!res?.native_text) throw new Error('Réponse IA vide.');
 
       setMessages([{
         role: 'ai',
-        arabic: res.arabic_text,
+        native: res.native_text,
         transliteration: res.transliteration,
         french: res.french_translation,
         suggestion: res.suggestion,
         exercise: res.exercise,
       }]);
-      setTimeout(() => speakArabic(res.arabic_text), 300);
+      setTimeout(() => speakArabic(res.native_text), 300);
     } catch (err: any) {
       setAiError(err?.message || 'Erreur IA. Vérifiez votre clé API dans Profil.');
     } finally {
@@ -270,7 +276,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
         buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(), text),
         1024,
       );
-      if (!res?.arabic_text) throw new Error('Réponse IA vide.');
+      if (!res?.native_text) throw new Error('Réponse IA vide.');
       await handleAIResponse(res, selectedTopic.fr);
       await addXP(5);
       await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
@@ -315,10 +321,10 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
       if (!ok) return;
       const audioBase64 = await FileSystem.readAsStringAsync(audioUri, { encoding: FileSystem.EncodingType.Base64 });
       const res = await invokeAIWithAudio<AIMessage>(
-        buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(), '(message vocal de Fatima)'),
+        buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(), `(message vocal de ${userName})`),
         audioBase64, 'audio/m4a',
       );
-      if (!res?.arabic_text) throw new Error('Réponse IA vide.');
+      if (!res?.native_text) throw new Error('Réponse IA vide.');
       await handleAIResponse(res, selectedTopic.fr);
       await addXP(5);
       await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
@@ -336,8 +342,8 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
         <ScrollView style={styles.container} contentContainerStyle={styles.topicContent}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>Salut Fatima ! 👋</Text>
-              <Text style={styles.headerSubtitle}>Choisis un thème de conversation</Text>
+              <Text style={styles.headerTitle}>{language.flag} Conversation {language.familiarName}</Text>
+              <Text style={styles.headerSubtitle}>Choisis un thème — Bonjour {userName} !</Text>
             </View>
             <View style={styles.creditsTag}>
               <Ionicons name="flash" size={14} color={colors.primary} />
@@ -347,7 +353,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
 
           <Card style={styles.tipCard}>
             <Text style={styles.tipText}>
-              💡 Pose des questions sur une règle ou un mot — un cours sera créé automatiquement dans "Cours" 📚
+              💡 Pose des questions sur une règle ou un mot en {language.familiarName} — un cours sera créé automatiquement dans "Cours" 📚
             </Text>
           </Card>
 
@@ -372,7 +378,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
                 activeOpacity={0.75}
               >
                 <Text style={styles.topicEmoji}>{topic.emoji}</Text>
-                <Text style={styles.topicArabic}>{topic.label}</Text>
+                <Text style={[styles.topicNative, language.rtl && { writingDirection: 'rtl' }]}>{topic.label}</Text>
                 <Text style={styles.topicFrench}>{topic.fr}</Text>
               </TouchableOpacity>
             ))}
@@ -431,7 +437,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
             </View>
           )}
           {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} onSpeak={speakArabic} />
+            <MessageBubble key={i} message={msg} onSpeak={speakArabic} rtl={language.rtl} />
           ))}
           {messages.length > 0 && isLoading && (
             <View style={styles.loadingRow}>
@@ -466,7 +472,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
                 style={styles.textInput}
                 value={inputText}
                 onChangeText={setInputText}
-                placeholder="Écris en arabe ou en français..."
+                placeholder={`Écris en ${language.familiarName} ou en français...`}
                 placeholderTextColor={colors.textMuted}
                 multiline
                 editable={!isLoading}
@@ -514,7 +520,7 @@ JSON: {"arabic_text":"...","transliteration":"...","french_translation":"...","s
 }
 
 // ── Message Bubble ─────────────────────────────────────────────────────────
-function MessageBubble({ message, onSpeak }: { message: Message; onSpeak: (t: string) => void }) {
+function MessageBubble({ message, onSpeak, rtl }: { message: Message; onSpeak: (t: string) => void; rtl: boolean }) {
   if (message.role === 'user') {
     return (
       <View style={styles.userBubble}>
@@ -528,14 +534,13 @@ function MessageBubble({ message, onSpeak }: { message: Message; onSpeak: (t: st
       <Card style={styles.aiBubble}>
         {/* Speak button on top right */}
         <TouchableOpacity
-          onPress={() => message.arabic && onSpeak(message.arabic)}
+          onPress={() => message.native && onSpeak(message.native)}
           style={styles.speakBtnTop}
         >
           <Ionicons name="volume-high" size={18} color={colors.primary} />
         </TouchableOpacity>
 
-        {/* Arabic — full width, no flex squeezing */}
-        <Text style={styles.arabicText}>{message.arabic}</Text>
+        <Text style={[styles.nativeText, rtl && styles.rtlText]}>{message.native}</Text>
 
         {/* Transliteration */}
         {!!message.transliteration && (
@@ -618,7 +623,7 @@ const styles = StyleSheet.create({
     borderColor: `${colors.secondary}40`,
   },
   topicEmoji: { fontSize: 30, marginBottom: 6 },
-  topicArabic: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  topicNative: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' },
   topicFrench: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
 
   chatHeader: {
@@ -663,18 +668,18 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-  // *** ARABIC TEXT — full width, no flex conflict ***
-  arabicText: {
-    fontSize: 30,
+  nativeText: {
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
-    textAlign: 'right',
-    lineHeight: 44,
+    lineHeight: 40,
     marginBottom: 8,
-    paddingRight: 36, // space for speak button
+    paddingRight: 36,
+  },
+  rtlText: {
+    textAlign: 'right',
     writingDirection: 'rtl',
   },
-  // *** TRANSLITERATION — bigger font ***
   translitText: {
     fontSize: 15,
     color: colors.primary,

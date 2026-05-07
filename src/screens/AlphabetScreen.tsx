@@ -1,111 +1,103 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { Card, Button } from '../components/RNComponents';
+import { useProfile } from '../lib/ProfileContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
-const ALPHABET = [
-  { letter: 'ا', name: 'Alif', sound: 'a', example: 'أب (ab - père)' },
-  { letter: 'ب', name: 'Ba', sound: 'b', example: 'باب (bab - porte)' },
-  { letter: 'ت', name: 'Ta', sound: 't', example: 'تين (tīn - figue)' },
-  { letter: 'ث', name: 'Tha', sound: 'th', example: 'ثعلب (tha\'lab - renard)' },
-  { letter: 'ج', name: 'Jim', sound: 'j', example: 'جمل (jamal - chameau)' },
-  { letter: 'ح', name: 'Ha', sound: 'ḥ', example: 'حصان (ḥiṣān - cheval)' },
-  { letter: 'خ', name: 'Kha', sound: 'kh', example: 'خبز (khubz - pain)' },
-  { letter: 'د', name: 'Dal', sound: 'd', example: 'دجاجة (dajāja - poule)' },
-  { letter: 'ذ', name: 'Dhal', sound: 'dh', example: 'ذهب (dhahab - or)' },
-  { letter: 'ر', name: 'Ra', sound: 'r', example: 'رأس (ra\'s - tête)' },
-  { letter: 'ز', name: 'Zay', sound: 'z', example: 'زهرة (zahra - fleur)' },
-  { letter: 'س', name: 'Sin', sound: 's', example: 'سمك (samak - poisson)' },
-  { letter: 'ش', name: 'Shin', sound: 'sh', example: 'شمس (shams - soleil)' },
-  { letter: 'ص', name: 'Sad', sound: 'ṣ', example: 'صقر (ṣaqr - faucon)' },
-  { letter: 'ض', name: 'Dad', sound: 'ḍ', example: 'ضفدع (ḍifdi\' - grenouille)' },
-  { letter: 'ط', name: 'Ta', sound: 'ṭ', example: 'طائر (ṭā\'ir - oiseau)' },
-  { letter: 'ظ', name: 'Dha', sound: 'ẓ', example: 'ظفر (ẓufr - ongle)' },
-  { letter: 'ع', name: 'Ayn', sound: 'ʿ', example: 'عين (ʿayn - œil)' },
-  { letter: 'غ', name: 'Ghayn', sound: 'gh', example: 'غراب (ghurāb - corbeau)' },
-  { letter: 'ف', name: 'Fa', sound: 'f', example: 'فيل (fīl - éléphant)' },
-  { letter: 'ق', name: 'Qaf', sound: 'q', example: 'قمر (qamar - lune)' },
-  { letter: 'ك', name: 'Kaf', sound: 'k', example: 'كتاب (kitāb - livre)' },
-  { letter: 'ل', name: 'Lam', sound: 'l', example: 'ليمون (laymūn - citron)' },
-  { letter: 'م', name: 'Mim', sound: 'm', example: 'ماء (mā\' - eau)' },
-  { letter: 'ن', name: 'Nun', sound: 'n', example: 'نجم (najm - étoile)' },
-  { letter: 'ه', name: 'Ha', sound: 'h', example: 'هلال (hilāl - croissant)' },
-  { letter: 'و', name: 'Waw', sound: 'w', example: 'ورد (ward - rose)' },
-  { letter: 'ي', name: 'Ya', sound: 'y', example: 'يد (yad - main)' },
-];
-
 export default function AlphabetScreen() {
+  const { language } = useProfile();
+  const alphabet = language.alphabet;
   const [selectedLetter, setSelectedLetter] = useState<any>(null);
 
-  const speakArabic = (text: string) => {
+  const speakLetter = (text: string) => {
     Speech.speak(text, {
-      language: 'ar-SA',
+      language: language.ttsLang,
       rate: 0.85,
     });
   };
 
   if (selectedLetter) {
+    const idx = alphabet.findIndex(l => l.letter === selectedLetter.letter);
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => setSelectedLetter(null)} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Alphabet arabe</Text>
+          <Text style={styles.headerTitle}>{language.flag} {language.familiarName}</Text>
         </View>
 
         <Card style={styles.detailCard}>
-          <TouchableOpacity 
-            onPress={() => speakArabic(selectedLetter.letter)}
+          <TouchableOpacity
+            onPress={() => speakLetter(selectedLetter.letter)}
             style={styles.letterContainer}
           >
             <Text style={styles.letterText}>{selectedLetter.letter}</Text>
           </TouchableOpacity>
-          
+
           <View style={styles.letterInfo}>
             <Text style={styles.letterName}>{selectedLetter.name}</Text>
             <Text style={styles.letterSound}>Prononciation: {selectedLetter.sound}</Text>
           </View>
 
-          <View style={styles.exampleContainer}>
-            <Text style={styles.exampleLabel}>Exemple:</Text>
-            <TouchableOpacity onPress={() => speakArabic(selectedLetter.example.split(' ')[0])}>
-              <Text style={styles.exampleText}>{selectedLetter.example}</Text>
-            </TouchableOpacity>
-          </View>
+          {!!selectedLetter.example && (
+            <View style={styles.exampleContainer}>
+              <Text style={styles.exampleLabel}>Exemple:</Text>
+              <TouchableOpacity onPress={() => speakLetter(selectedLetter.example.split(' ')[0])}>
+                <Text style={styles.exampleText}>{selectedLetter.example}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-          <Button 
-            onPress={() => speakArabic(selectedLetter.letter)}
+          {/* Positional forms — Arabic only */}
+          {!!selectedLetter.isolated && (
+            <View style={styles.formsRow}>
+              {[
+                { label: 'Isolée', val: selectedLetter.isolated },
+                { label: 'Début',  val: selectedLetter.initial },
+                { label: 'Milieu', val: selectedLetter.medial },
+                { label: 'Fin',    val: selectedLetter.final },
+              ].filter(f => !!f.val).map(f => (
+                <View key={f.label} style={styles.formItem}>
+                  <Text style={styles.formLetter}>{f.val}</Text>
+                  <Text style={styles.formLabel}>{f.label}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {!!selectedLetter.tips && (
+            <View style={styles.tipsBox}>
+              <Text style={styles.tipsText}>💡 {selectedLetter.tips}</Text>
+            </View>
+          )}
+
+          <Button
+            onPress={() => speakLetter(selectedLetter.letter)}
             fullWidth
           >
-            <Ionicons name="volume-high" size={16} color={colors.white} /> Écouter la lettre
+            <Ionicons name="volume-high" size={16} color={colors.white} /> Écouter
           </Button>
         </Card>
 
         <View style={styles.navigation}>
-          <Button 
-            variant="outline" 
-            onPress={() => {
-              const idx = ALPHABET.findIndex(l => l.letter === selectedLetter.letter);
-              if (idx > 0) setSelectedLetter(ALPHABET[idx - 1]);
-            }}
+          <Button
+            variant="outline"
+            onPress={() => { if (idx > 0) setSelectedLetter(alphabet[idx - 1]); }}
             style={{ flex: 1, marginRight: 8 }}
           >
             ← Précédent
           </Button>
-          <Button 
-            onPress={() => {
-              const idx = ALPHABET.findIndex(l => l.letter === selectedLetter.letter);
-              if (idx < ALPHABET.length - 1) setSelectedLetter(ALPHABET[idx + 1]);
-            }}
+          <Button
+            onPress={() => { if (idx < alphabet.length - 1) setSelectedLetter(alphabet[idx + 1]); }}
             style={{ flex: 1, marginLeft: 8 }}
           >
             Suivant →
@@ -118,14 +110,14 @@ export default function AlphabetScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Alphabet arabe</Text>
-        <Text style={styles.headerSubtitle}>28 lettres à découvrir</Text>
+        <Text style={styles.headerTitle}>{language.flag} {language.script}</Text>
+        <Text style={styles.headerSubtitle}>{alphabet.length} lettres / sons à découvrir</Text>
       </View>
 
       <View style={styles.alphabetGrid}>
-        {ALPHABET.map(item => (
+        {alphabet.map((item, i) => (
           <TouchableOpacity
-            key={item.letter}
+            key={`${item.letter}-${i}`}
             style={styles.letterCard}
             onPress={() => setSelectedLetter(item)}
           >
@@ -183,7 +175,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gridLetter: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '700',
     color: colors.text,
   },
@@ -191,6 +183,7 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: colors.textMuted,
     marginTop: 4,
+    textAlign: 'center',
   },
   detailCard: {
     margin: 20,
@@ -207,7 +200,7 @@ const styles = StyleSheet.create({
   },
   letterInfo: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   letterName: {
     fontSize: fontSize.xl,
@@ -224,7 +217,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: `${colors.primary}10`,
     borderRadius: borderRadius.lg,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   exampleLabel: {
     fontSize: fontSize.xs,
@@ -236,6 +229,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.text,
     textAlign: 'center',
+  },
+  formsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 16,
+  },
+  formItem: {
+    alignItems: 'center',
+    flex: 1,
+    padding: 8,
+    backgroundColor: `${colors.primary}08`,
+    borderRadius: borderRadius.md,
+    marginHorizontal: 3,
+  },
+  formLetter: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  formLabel: {
+    fontSize: 9,
+    color: colors.textMuted,
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  tipsBox: {
+    width: '100%',
+    padding: 12,
+    backgroundColor: `${colors.accent}10`,
+    borderRadius: borderRadius.lg,
+    marginBottom: 16,
+  },
+  tipsText: {
+    fontSize: fontSize.sm,
+    color: colors.text,
+    lineHeight: 20,
   },
   navigation: {
     flexDirection: 'row',
