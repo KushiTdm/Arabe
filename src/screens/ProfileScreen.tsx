@@ -59,7 +59,6 @@ export default function ProfileScreen() {
     currentProgress: progress, loading, creditsRemaining,
     activeProfile, profiles, language,
     switchLanguage, createProfile, switchProfile, deleteProfile,
-    reload: reloadProgress,
   } = useProfile();
 
   const {
@@ -104,8 +103,9 @@ export default function ProfileScreen() {
     loadModel();
     loadCachedReport();
     loadCachedExercises();
-    reloadProgress();
     reloadErrors?.();
+    // Ne pas appeler reloadProgress() ici — il remet loading=true dans le contexte global
+    // et fait disparaître la navigation. La progression est déjà réactive via le contexte.
   }, [profileKey, activeProfile?.activeLanguageCode]));
 
   const loadApiKey = async () => {
@@ -278,7 +278,6 @@ JSON: {
           await clearErrors();
           setAiReport(null);
           setAiExercises([]);
-          reloadProgress();
         }},
       ],
     );

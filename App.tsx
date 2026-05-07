@@ -88,7 +88,8 @@ function HomeTabs() {
 function RootStack() {
   const { loading, profiles } = useProfile();
 
-  if (loading) {
+  // Splash seulement au démarrage à froid (pas encore de profils en mémoire)
+  if (loading && profiles.length === 0) {
     return (
       <View style={styles.splash}>
         <Text style={styles.splashLogo}>🌍</Text>
