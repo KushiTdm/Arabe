@@ -127,6 +127,7 @@ export async function invokeAI<T = Record<string, unknown>>(
       generationConfig: {
         maxOutputTokens: maxTokens,
         temperature: 0.7,
+        responseMimeType: 'application/json',
       },
     }),
   });
@@ -162,7 +163,7 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
           { text: prompt + JSON_INSTRUCTION },
         ],
       }],
-      generationConfig: { maxOutputTokens: 1024, temperature: 0.7 },
+      generationConfig: { maxOutputTokens: 1024, temperature: 0.7, responseMimeType: 'application/json' },
     }),
   });
 

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
@@ -14,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
 import { Card } from '../components/RNComponents';
 import { useProfile } from '../lib/ProfileContext';
+import { invokeAI } from '../api/aiClient';
 import {
   getWordsForCategory,
   getAvailableCategories,
@@ -41,7 +43,7 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function VocabularyScreen() {
-  const { language } = useProfile();
+  const { language, canUseAI, incrementCredits } = useProfile();
   const langCode = language.code;
 
   const availableCategories = getAvailableCategories(langCode);
@@ -54,6 +56,9 @@ export default function VocabularyScreen() {
   const [showAnswer, setShowAnswer] = useState(false);
   const [masteredIds, setMasteredIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState('');
+  const [aiWords, setAiWords] = useState<VocabWord[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
 
   const masteredKey = `@maa_mastered_${langCode}`;
 
@@ -63,11 +68,21 @@ export default function VocabularyScreen() {
     setFlashcardIndex(0);
     setShowAnswer(false);
     setSearch('');
+    setAiWords([]);
+    setGenError(null);
     AsyncStorage.getItem(`@maa_mastered_${langCode}`).then(raw => {
       if (raw) setMasteredIds(new Set(JSON.parse(raw)));
       else setMasteredIds(new Set());
     });
   }, [langCode]);
+
+  React.useEffect(() => {
+    if (!selectedCategory) { setAiWords([]); setGenError(null); return; }
+    AsyncStorage.getItem(`@maa_aivocab_${langCode}_${selectedCategory}`).then(raw => {
+      setAiWords(raw ? JSON.parse(raw) : []);
+    });
+    setGenError(null);
+  }, [langCode, selectedCategory]);
 
   const speakWord = (text: string) => {
     Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
@@ -79,6 +94,49 @@ export default function VocabularyScreen() {
     else updated.add(id);
     setMasteredIds(updated);
     await AsyncStorage.setItem(masteredKey, JSON.stringify([...updated]));
+  };
+
+  const generateMoreWords = async () => {
+    if (!selectedCategory || isGenerating || !canUseAI()) return;
+    setIsGenerating(true);
+    setGenError(null);
+    try {
+      const ok = await incrementCredits();
+      if (!ok) return;
+      const meta = CATEGORY_META[selectedCategory];
+      const staticWords = getWordsForCategory(langCode, selectedCategory);
+      const existingNative = [...staticWords, ...aiWords].map(w => w.native_word).slice(0, 20).join(', ');
+
+      const result = await invokeAI<{ words: Array<{ native_word: string; transliteration: string; french_translation: string }> }>(
+        `${language.aiSeedPrompt}
+Génère 10 mots de vocabulaire pour la catégorie "${meta?.label || selectedCategory}" en ${language.familiarName}.
+Exclus ces mots: ${existingNative}
+JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation":"..."}]}`,
+        1024,
+      );
+
+      if (result?.words?.length) {
+        const newWords: VocabWord[] = result.words
+          .filter(w => w.native_word)
+          .map((w, i) => ({
+            id: `ai_${langCode}_${selectedCategory}_${Date.now()}_${i}`,
+            native_word: w.native_word,
+            transliteration: w.transliteration || '',
+            french_translation: w.french_translation || '',
+            category: selectedCategory,
+            mastered: false,
+            practice_count: 0,
+          }));
+
+        const updated = [...aiWords, ...newWords];
+        setAiWords(updated);
+        await AsyncStorage.setItem(`@maa_aivocab_${langCode}_${selectedCategory}`, JSON.stringify(updated));
+      }
+    } catch (err: any) {
+      setGenError(err?.message || 'Erreur lors de la génération.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // ── No static vocab for this language ────────────────────────────────
@@ -104,7 +162,7 @@ export default function VocabularyScreen() {
 
   // ── FLASHCARD MODE ────────────────────────────────────────────────────
   if (selectedCategory && mode === 'flashcard') {
-    const words = getWordsForCategory(langCode, selectedCategory);
+    const words = [...getWordsForCategory(langCode, selectedCategory), ...aiWords];
     const word = words[flashcardIndex];
     if (!word) return null;
 
@@ -182,7 +240,7 @@ export default function VocabularyScreen() {
 
   // ── BROWSE MODE (category selected) ──────────────────────────────────
   if (selectedCategory) {
-    const allWords = getWordsForCategory(langCode, selectedCategory);
+    const allWords = [...getWordsForCategory(langCode, selectedCategory), ...aiWords];
     const filtered = search.trim()
       ? allWords.filter(w =>
           w.native_word.includes(search) ||
@@ -233,12 +291,20 @@ export default function VocabularyScreen() {
           <ScrollView contentContainerStyle={styles.wordList} showsVerticalScrollIndicator={false}>
             {filtered.map(word => {
               const isMastered = masteredIds.has(word.id);
+              const isAI = word.id.startsWith('ai_');
               return (
                 <View key={word.id} style={[styles.wordRow, isMastered && styles.wordRowMastered]}>
                   <View style={styles.wordLeft}>
-                    <Text style={[styles.wordNative, language.rtl && styles.rtlText]}>
-                      {word.native_word}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={[styles.wordNative, language.rtl && styles.rtlText]}>
+                        {word.native_word}
+                      </Text>
+                      {isAI && (
+                        <View style={styles.aiTag}>
+                          <Text style={styles.aiTagText}>IA</Text>
+                        </View>
+                      )}
+                    </View>
                     {!!word.transliteration && (
                       <Text style={styles.wordTranslit}>{word.transliteration}</Text>
                     )}
@@ -259,6 +325,27 @@ export default function VocabularyScreen() {
                 </View>
               );
             })}
+
+            <View style={styles.generateSection}>
+              {genError && (
+                <Text style={styles.genErrorText}>{genError}</Text>
+              )}
+              <TouchableOpacity
+                style={[styles.generateBtn, (isGenerating || !canUseAI()) && { opacity: 0.5 }]}
+                onPress={generateMoreWords}
+                disabled={isGenerating || !canUseAI()}
+              >
+                {isGenerating ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Ionicons name="sparkles" size={16} color={colors.white} />
+                )}
+                <Text style={styles.generateBtnText}>
+                  {isGenerating ? 'Génération...' : 'Générer plus de mots'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={{ height: 80 }} />
           </ScrollView>
         </View>
@@ -424,6 +511,25 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}12`,
     justifyContent: 'center', alignItems: 'center',
   },
+
+  aiTag: {
+    backgroundColor: `${colors.secondary}25`,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: 5, paddingVertical: 1,
+  },
+  aiTagText: { fontSize: 9, fontWeight: '700', color: colors.secondary },
+
+  generateSection: {
+    marginTop: 16, marginHorizontal: 0, gap: 8, alignItems: 'center',
+  },
+  genErrorText: { fontSize: fontSize.xs, color: colors.destructive, textAlign: 'center' },
+  generateBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: colors.secondary,
+    paddingHorizontal: 20, paddingVertical: 12,
+    borderRadius: borderRadius.full,
+  },
+  generateBtnText: { color: colors.white, fontSize: fontSize.base, fontWeight: '700' },
 
   flashActions: { flexDirection: 'row', gap: 12, marginHorizontal: 16, marginTop: 20 },
   flashBtnRetry: {
