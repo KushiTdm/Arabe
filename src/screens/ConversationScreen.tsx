@@ -8,7 +8,7 @@ import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserProgress } from '../lib/useUserProgress';
+import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { useCourses } from '../lib/useCourses';
 import { Card, LoadingSpinner } from '../components/RNComponents';
@@ -83,9 +83,13 @@ export default function ConversationScreen() {
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { progress, incrementCredits, canUseAI, creditsRemaining, addXP, updateProgress } = useUserProgress();
+  const { currentProgress: progress, incrementCredits, canUseAI, creditsRemaining, addXP, updateProgress, activeProfile, language } = useProfile();
+  const userName = activeProfile?.name ?? 'Apprenant';
+  const coursKey = activeProfile
+    ? `@maa_courses_${activeProfile.id}_${activeProfile.activeLanguageCode}`
+    : '@maa_courses_v1';
   const { addError, addSession, getErrorsForAIPrompt } = useErrorTracker();
-  const { addCourse } = useCourses();
+  const { addCourse } = useCourses(coursKey);
 
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
@@ -96,33 +100,31 @@ export default function ConversationScreen() {
   }, []);
 
   const speakArabic = (text: string) => {
-    Speech.speak(text, { language: 'ar-SA', rate: 0.85 });
+    Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
   };
 
   const buildHistory = () =>
     messages.slice(-6) // Limit history to avoid token overflow
       .map(m => m.role === 'user'
-        ? `Fatima: ${m.text}`
+        ? `${userName}: ${m.text}`
         : `Prof: ${m.arabic} - ${m.french}`)
       .join('\n');
 
   // ── PROMPT SIMPLIFIÉ — JSON léger sans cours imbriqué ─────────────────
   const buildSimplePrompt = (topic: string, history: string, errorsCtx: string, userMessage: string) =>
-    `Professeur d'arabe pour Fatima (débutante francophone). Thème: "${topic}".
+    `${language.aiSeedPrompt}
+Thème: "${topic}". Élève: ${userName}.
 ${history ? `Historique récent:\n${history}\n` : ''}
-Message de Fatima: ${userMessage}
+Message de ${userName}: ${userMessage}
 
 RÈGLES IMPORTANTES:
-- Écris TOUJOURS l'arabe AVEC les voyelles (harakat/tashkil): fatha, kasra, damma, shadda, sukun
-- Exemple correct: "مَرْحَباً" pas "مرحبا"
-- Translitération en français (pas anglais)
 - Réponds chaleureusement, corrige gentiment
-- Si Fatima pose une question de grammaire/règle, mets should_create_course=true
+- Si ${userName} pose une question de grammaire/règle, mets should_create_course=true
 
 ${errorsCtx ? errorsCtx.substring(0, 300) : ''}
 
 Réponds avec ce JSON (COMPACT, sans espaces inutiles):
-{"arabic_text":"مَرْحَباً يا فَاطِمَة!","transliteration":"Marhaban ya Fatima!","french_translation":"Bonjour Fatima!","pronunciation_feedback":"","correction":"","suggestion":"Essaie de dire...","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
+{"arabic_text":"","transliteration":"","french_translation":"","pronunciation_feedback":"","correction":"","suggestion":"","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
 
   // ── SECOND APPEL pour générer le cours complet ─────────────────────────
   const generateCourseContent = async (title: string, type: string, topic: string): Promise<AICourse | null> => {
@@ -131,14 +133,12 @@ Réponds avec ce JSON (COMPACT, sans espaces inutiles):
       if (!ok) return null;
 
       const res = await invokeAI<AICourse>(
-        `Génère un mini-cours d'arabe pour Fatima (débutante) sur: "${title}".
+        `${language.aiSeedPrompt}
+Génère un mini-cours sur: "${title}" pour ${userName}.
 Type: ${type}. Contexte: conversation sur "${topic}".
 
-RÈGLES: Tous les mots arabes DOIVENT avoir les voyelles (harakat).
-Exemple: "مَرْحَباً" pas "مرحبا", "كَيْفَ حَالُكِ" pas "كيف حالك"
-
 JSON:
-{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Explication claire en 3-4 phrases","arabic_words":[{"arabic":"مَثَل","transliteration":"mathal","meaning":"exemple"}],"examples":[{"arabic":"جُمْلَة مُفِيدَة","transliteration":"jumla mufida","french":"phrase utile","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Traduire","type":"translate","question":"Bonjour","answer":"مَرْحَباً","options":["مَرْحَباً","شُكْراً","مَعَ السَّلامَة","مَاء"]}]}`,
+{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Explication claire en 3-4 phrases","arabic_words":[{"arabic":"exemple","transliteration":"exemple","meaning":"exemple"}],"examples":[{"arabic":"phrase","transliteration":"translittération","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Instruction","type":"translate","question":"question","answer":"réponse","options":["réponse","option2","option3","option4"]}]}`,
         2048,
       );
       return res;

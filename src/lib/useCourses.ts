@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const COURSES_KEY = '@maa_courses_v1';
+const DEFAULT_COURSES_KEY = '@maa_courses_v1';
 
 export type CourseSource = 'error' | 'conversation' | 'manual';
 export type CourseType = 'grammar' | 'pronunciation' | 'vocabulary' | 'writing' | 'culture';
@@ -38,14 +38,17 @@ export interface CourseExercise {
   options?: string[];
 }
 
-export function useCourses() {
+// storageKey permet de scoper les cours par profil+langue :
+//   `@maa_courses_${profileId}_${languageCode}`
+export function useCourses(storageKey: string = DEFAULT_COURSES_KEY) {
   const [courses, setCourses] = useState<CourseLesson[]>([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     try {
-      const raw = await AsyncStorage.getItem(COURSES_KEY);
+      const raw = await AsyncStorage.getItem(storageKey);
       if (raw) setCourses(JSON.parse(raw));
+      else setCourses([]);
     } catch (err) {
       console.error('Erreur chargement cours:', err);
     } finally {
@@ -54,14 +57,13 @@ export function useCourses() {
   };
 
   const save = async (updated: CourseLesson[]) => {
-    await AsyncStorage.setItem(COURSES_KEY, JSON.stringify(updated));
+    await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
     setCourses(updated);
   };
 
-  /** Ajoute un cours s'il n'existe pas déjà sur le même topic */
+  /** Ajoute un cours s'il n'existe pas déjà sur le même topic dans les 24h */
   const addCourse = async (course: Omit<CourseLesson, 'id' | 'created_at' | 'read' | 'starred'>) => {
     const current = courses;
-    // Évite les doublons sur le même sujet (dans les 24h)
     const recent = current.find(c => {
       const age = Date.now() - new Date(c.created_at).getTime();
       return c.trigger_topic === course.trigger_topic && age < 24 * 3600 * 1000;
@@ -97,17 +99,18 @@ export function useCourses() {
   };
 
   const clearAll = async () => {
-    await AsyncStorage.removeItem(COURSES_KEY);
+    await AsyncStorage.removeItem(storageKey);
     setCourses([]);
   };
 
-  const unreadCount = courses.filter(c => !c.read).length;
+  const unreadCount    = courses.filter(c => !c.read).length;
   const starredCourses = courses.filter(c => c.starred);
-  const recentCourses = [...courses].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const recentCourses  = [...courses].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
-  useEffect(() => { load(); }, []);
+  // Recharge les cours quand la clé change (changement de profil/langue)
+  useEffect(() => { load(); }, [storageKey]);
 
   return {
     courses,

@@ -15,6 +15,7 @@ import * as Speech from 'expo-speech';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCourses, CourseLesson, CourseType } from '../lib/useCourses';
+import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
@@ -39,10 +40,14 @@ type FilterType = 'all' | CourseType | 'starred';
 type ViewType = 'list' | 'detail' | 'chat';
 
 export default function CoursScreen() {
+  const { activeProfile, language } = useProfile();
+  const coursKey = activeProfile
+    ? `@maa_courses_${activeProfile.id}_${activeProfile.activeLanguageCode}`
+    : '@maa_courses_v1';
   const {
     recentCourses, unreadCount, markRead, toggleStar,
     deleteCourse, loading, reload, addCourse,
-  } = useCourses();
+  } = useCourses(coursKey);
   const { getErrorsForAIPrompt, getErrorSummary } = useErrorTracker();
 
   const [view, setView] = useState<ViewType>('list');

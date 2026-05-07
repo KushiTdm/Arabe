@@ -13,7 +13,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Speech from 'expo-speech';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserProgress } from '../lib/useUserProgress';
+import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -93,8 +93,8 @@ export default function WritingScreen() {
   const canvasRef = useRef<View>(null);
   const canvasLayout = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
-  const { addXP, updateProgress, progress, canUseAI, incrementCredits, creditsRemaining } =
-    useUserProgress();
+  const { addXP, updateProgress, currentProgress: progress, canUseAI, incrementCredits, creditsRemaining } =
+    useProfile();
   const {
     addError,
     addSession,

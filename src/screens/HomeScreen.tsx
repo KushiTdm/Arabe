@@ -1,17 +1,18 @@
 import React from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useUserProgress } from '../lib/useUserProgress';
+import { useProfile } from '../lib/ProfileContext';
 import { useCourses } from '../lib/useCourses';
 import { Card, Badge, LoadingSpinner, ProgressBar } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function HomeScreen() {
-  const { progress, loading, creditsRemaining } = useUserProgress();
-  const { unreadCount } = useCourses();
+  const { currentProgress: progress, loading, creditsRemaining, activeProfile, language } = useProfile();
+  const coursKey = activeProfile
+    ? `@maa_courses_${activeProfile.id}_${activeProfile.activeLanguageCode}`
+    : '@maa_courses_v1';
+  const { unreadCount } = useCourses(coursKey);
   const navigation = useNavigation<any>();
 
   if (loading) {
@@ -22,16 +23,25 @@ export default function HomeScreen() {
     );
   }
 
+  const userName     = activeProfile?.name ?? '';
+  const langName     = language.familiarName;
+  const greetingWord = language.greetingWord;
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          {/* *** GRAND TEXTE ARABE DE BIENVENUE *** */}
-          <Text style={styles.greeting}>مرحباً فاطمة</Text>
-          <Text style={styles.subtitle}>Continue ton apprentissage !</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.greeting}>{greetingWord}</Text>
+          <Text style={styles.greetingName}>{userName} !</Text>
+          <Text style={styles.subtitle}>Continue ton apprentissage du {langName}</Text>
         </View>
-        <Badge color="primary">{creditsRemaining()} crédits</Badge>
+        <View style={styles.avatarBadgeCol}>
+          <View style={styles.avatarBubble}>
+            <Text style={styles.avatarText}>{activeProfile?.avatar ?? '🌍'}</Text>
+          </View>
+          <Badge color="primary">{creditsRemaining()} crédits</Badge>
+        </View>
       </View>
 
       {/* XP Progress */}
@@ -52,36 +62,40 @@ export default function HomeScreen() {
 
         <LessonCard
           title="Conversation IA"
-          subtitle="Parle en arabe avec l'IA — elle crée des cours !"
+          subtitle={`Parle en ${langName} avec l'IA — elle crée des cours !`}
           icon="chatbubbles"
           onPress={() => navigation.navigate('Conversation')}
           color="primary"
         />
         <LessonCard
-          title="Écriture arabe"
-          subtitle="Dessine les lettres avec ton doigt"
+          title="Écriture"
+          subtitle={`Pratique l'écriture ${language.rtl ? 'avec les formes des lettres' : 'des mots'}`}
           icon="pencil"
           onPress={() => navigation.navigate('Writing')}
           color="secondary"
         />
         <LessonCard
           title="Vocabulaire"
-          subtitle="240+ mots · Catégories progressives"
+          subtitle={`Mots par catégories · ${language.categories.length} thèmes`}
           icon="book"
           onPress={() => navigation.navigate('Vocabulary')}
           color="accent"
         />
         <LessonCard
           title="Mes Cours"
-          subtitle={unreadCount > 0 ? `${unreadCount} nouveau${unreadCount > 1 ? 'x' : ''} cours créé${unreadCount > 1 ? 's' : ''} par l'IA !` : "Leçons personnalisées par l'IA"}
+          subtitle={
+            unreadCount > 0
+              ? `${unreadCount} nouveau${unreadCount > 1 ? 'x' : ''} cours créé${unreadCount > 1 ? 's' : ''} par l'IA !`
+              : "Leçons personnalisées par l'IA"
+          }
           icon="school"
           onPress={() => navigation.navigate('Cours')}
           color="primary"
           badge={unreadCount > 0 ? String(unreadCount) : undefined}
         />
         <LessonCard
-          title="Alphabet arabe"
-          subtitle="Maîtrise les 28 lettres en détail"
+          title={`Alphabet · ${language.script}`}
+          subtitle={`${language.alphabet.length} lettres / sons à maîtriser`}
           icon="text"
           onPress={() => navigation.navigate('Alphabet')}
           color="secondary"
@@ -137,9 +151,9 @@ function LessonCard({ title, subtitle, icon, onPress, color, badge }: {
 
 function XPBar({ xp = 0, level = 'beginner' }: { xp?: number; level?: string }) {
   const levelThresholds: Record<string, { min: number; max: number; label: string }> = {
-    beginner:     { min: 0,    max: 300,  label: 'Débutante'     },
+    beginner:     { min: 0,    max: 300,  label: 'Débutant'      },
     intermediate: { min: 300,  max: 1000, label: 'Intermédiaire' },
-    advanced:     { min: 1000, max: 2000, label: 'Avancée'       },
+    advanced:     { min: 1000, max: 2000, label: 'Avancé'        },
   };
   const threshold = levelThresholds[level] ?? levelThresholds.beginner;
   const pct = Math.min(((xp - threshold.min) / (threshold.max - threshold.min)) * 100, 100);
@@ -160,9 +174,13 @@ const styles = StyleSheet.create({
   loadingContainer:   { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
 
   header:             { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing['2xl'] },
-  // *** GRAND TEXTE ARABE D'ACCUEIL ***
-  greeting:           { fontSize: 36, fontWeight: '800', color: colors.text, letterSpacing: 0.5 },
+  greeting:           { fontSize: 30, fontWeight: '800', color: colors.text, letterSpacing: 0.5 },
+  greetingName:       { fontSize: 22, fontWeight: '700', color: colors.primary, marginTop: 2 },
   subtitle:           { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 4 },
+
+  avatarBadgeCol:     { alignItems: 'flex-end', gap: 8 },
+  avatarBubble:       { width: 44, height: 44, borderRadius: 22, backgroundColor: `${colors.primary}15`, justifyContent: 'center', alignItems: 'center' },
+  avatarText:         { fontSize: 26 },
 
   xpCard:             { marginBottom: spacing['2xl'] },
   xpHeader:           { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
