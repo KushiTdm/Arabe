@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -66,8 +66,24 @@ export function useProfiles() {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Latest profiles, readable synchronously. Without this, two awaited updates
+  // in the same handler (e.g. addXP puis updateProgress) rebuild the profiles
+  // from the stale closure state and the second write erases the first.
+  const profilesRef = useRef<UserProfile[]>([]);
+  profilesRef.current = profiles;
+
   // ── Derived: active profile ──────────────────────────────────────────
   const activeProfile = profiles.find(p => p.id === activeProfileId) ?? null;
+
+  const getActiveProfile = (): UserProfile | null =>
+    profilesRef.current.find(p => p.id === activeProfileId) ?? null;
+
+  const getCurrentProgress = (): LanguageProgress | null => {
+    const p = getActiveProfile();
+    if (!p) return null;
+    return p.languages.find(l => l.languageCode === p.activeLanguageCode)
+      ?? defaultLanguageProgress(p.activeLanguageCode);
+  };
 
   // ── Derived: current language progress ──────────────────────────────
   const currentProgress: LanguageProgress | null = activeProfile
@@ -94,6 +110,7 @@ export function useProfiles() {
   };
 
   const saveProfiles = async (updated: UserProfile[]) => {
+    profilesRef.current = updated;
     await AsyncStorage.setItem(PROFILES_KEY, JSON.stringify(updated));
     setProfiles(updated);
   };
@@ -113,7 +130,7 @@ export function useProfiles() {
       activeLanguageCode: languageCode,
       languages: [defaultLanguageProgress(languageCode)],
     };
-    const updated = [...profiles, profile];
+    const updated = [...profilesRef.current, profile];
     await saveProfiles(updated);
     await saveActiveId(profile.id);
     return profile;
@@ -126,7 +143,7 @@ export function useProfiles() {
 
   // ── Delete profile ────────────────────────────────────────────────────
   const deleteProfile = async (profileId: string) => {
-    const updated = profiles.filter(p => p.id !== profileId);
+    const updated = profilesRef.current.filter(p => p.id !== profileId);
     await saveProfiles(updated);
     if (activeProfileId === profileId) {
       const newActive = updated[0]?.id ?? null;
@@ -137,21 +154,22 @@ export function useProfiles() {
 
   // ── Update profile name / avatar ──────────────────────────────────────
   const updateProfile = async (profileId: string, changes: Partial<Pick<UserProfile, 'name' | 'avatar'>>) => {
-    const updated = profiles.map(p => p.id === profileId ? { ...p, ...changes } : p);
+    const updated = profilesRef.current.map(p => p.id === profileId ? { ...p, ...changes } : p);
     await saveProfiles(updated);
   };
 
   // ── Switch language within active profile ─────────────────────────────
   const switchLanguage = async (languageCode: string) => {
-    if (!activeProfile) return;
+    const active = getActiveProfile();
+    if (!active) return;
     // Ensure progress entry exists for that language
-    const hasLang = activeProfile.languages.some(l => l.languageCode === languageCode);
+    const hasLang = active.languages.some(l => l.languageCode === languageCode);
     const updatedLanguages = hasLang
-      ? activeProfile.languages
-      : [...activeProfile.languages, defaultLanguageProgress(languageCode)];
+      ? active.languages
+      : [...active.languages, defaultLanguageProgress(languageCode)];
 
-    const updated = profiles.map(p =>
-      p.id === activeProfile.id
+    const updated = profilesRef.current.map(p =>
+      p.id === active.id
         ? { ...p, activeLanguageCode: languageCode, languages: updatedLanguages }
         : p,
     );
@@ -160,27 +178,29 @@ export function useProfiles() {
 
   // ── Update language progress ──────────────────────────────────────────
   const updateProgress = async (changes: Partial<LanguageProgress>) => {
-    if (!activeProfile) return;
-    const langCode = activeProfile.activeLanguageCode;
+    const active = getActiveProfile();
+    if (!active) return;
+    const langCode = active.activeLanguageCode;
 
-    const updatedLanguages = activeProfile.languages.map(l =>
+    const updatedLanguages = active.languages.map(l =>
       l.languageCode === langCode ? { ...l, ...changes } : l,
     );
     // If language didn't exist yet, add it
-    if (!activeProfile.languages.find(l => l.languageCode === langCode)) {
+    if (!active.languages.find(l => l.languageCode === langCode)) {
       updatedLanguages.push({ ...defaultLanguageProgress(langCode), ...changes });
     }
 
-    const updated = profiles.map(p =>
-      p.id === activeProfile.id ? { ...p, languages: updatedLanguages } : p,
+    const updated = profilesRef.current.map(p =>
+      p.id === active.id ? { ...p, languages: updatedLanguages } : p,
     );
     await saveProfiles(updated);
   };
 
   // ── Add XP (auto-levels) ──────────────────────────────────────────────
   const addXP = async (xp: number) => {
-    if (!currentProgress) return;
-    const newXP = currentProgress.xp_points + xp;
+    const progress = getCurrentProgress();
+    if (!progress) return;
+    const newXP = progress.xp_points + xp;
     let newLevel: LanguageProgress['level'] = 'beginner';
     if (newXP >= 1000) newLevel = 'advanced';
     else if (newXP >= 300) newLevel = 'intermediate';
@@ -189,9 +209,10 @@ export function useProfiles() {
 
   // ── AI credits (per language) ─────────────────────────────────────────
   const incrementCredits = async (): Promise<boolean> => {
-    if (!currentProgress) return false;
-    if (currentProgress.ai_credits_used >= MAX_AI_CREDITS) return false;
-    await updateProgress({ ai_credits_used: currentProgress.ai_credits_used + 1 });
+    const progress = getCurrentProgress();
+    if (!progress) return false;
+    if (progress.ai_credits_used >= MAX_AI_CREDITS) return false;
+    await updateProgress({ ai_credits_used: progress.ai_credits_used + 1 });
     return true;
   };
 
@@ -207,16 +228,17 @@ export function useProfiles() {
 
   // ── Streak update ─────────────────────────────────────────────────────
   const updateStreak = async () => {
-    if (!currentProgress) return;
+    const progress = getCurrentProgress();
+    if (!progress) return;
     const today = new Date().toISOString().split('T')[0];
-    if (currentProgress.last_practice_date === today) return;
+    if (progress.last_practice_date === today) return;
 
-    const last = new Date(currentProgress.last_practice_date);
+    const last = new Date(progress.last_practice_date);
     const now = new Date(today);
     const diffDays = Math.round((now.getTime() - last.getTime()) / 86400000);
 
     const newStreak = diffDays === 1
-      ? currentProgress.streak_days + 1
+      ? progress.streak_days + 1
       : 1;
 
     await updateProgress({ streak_days: newStreak, last_practice_date: today });

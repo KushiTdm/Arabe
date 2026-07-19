@@ -60,13 +60,13 @@ export default function CoursScreen() {
   const [chatInput, setChatInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
-    { role: 'ai', text: '👋 Bonjour Fatima ! Demande-moi de créer un cours sur n\'importe quel sujet arabe. Par exemple : "Explique-moi comment former le pluriel en arabe" ou "Crée un cours sur les salutations formelles".' }
+    { role: 'ai', text: `👋 Bonjour ${activeProfile?.name ?? ''} ! Demande-moi de créer un cours sur n'importe quel sujet en ${language.familiarName.toLowerCase()}. Par exemple : "Explique-moi comment former le pluriel" ou "Crée un cours sur les salutations formelles".` }
   ]);
 
   useFocusEffect(useCallback(() => { reload(); }, []));
 
-  const speakArabic = (text: string) => {
-    Speech.speak(text, { language: 'ar-SA', rate: 0.8 });
+  const speakNative = (text: string) => {
+    Speech.speak(text, { language: language.ttsLang, rate: 0.8 });
   };
 
   const openCourse = async (course: CourseLesson) => {
@@ -122,18 +122,18 @@ export default function CoursScreen() {
       }
 
       const res = await invokeAI<CourseResponse>(
-        `Tu es un professeur d'arabe expert. Fatima te demande : "${text}"
+        `${language.aiSeedPrompt}
+L'élève ${activeProfile?.name ?? ''} te demande : "${text}"
 
-${errorsCtx ? `Contexte d'apprentissage de Fatima:\n${errorsCtx.substring(0, 400)}` : ''}
+${errorsCtx ? `Contexte d'apprentissage de l'élève:\n${errorsCtx.substring(0, 400)}` : ''}
 
 RÈGLES IMPORTANTES:
-- Tous les mots arabes DOIVENT avoir les voyelles (harakat/tashkil)
-- Exemple correct: "مَرْحَباً" pas "مرحبا"
-- Translitérations en français
+- Les champs "arabic" contiennent les mots/phrases en ${language.familiarName} (nom de champ historique)
+- Translitérations / aides de prononciation en français
 
 Génère un cours complet.
 JSON (compact):
-{"title":"Titre du cours","type":"grammar","summary":"Résumé en 1 phrase","explanation":"Explication en 3-4 phrases claires","arabic_words":[{"arabic":"مَثَل","transliteration":"mathal","meaning":"exemple"}],"examples":[{"arabic":"جُمْلَة","transliteration":"jumla","french":"phrase","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Traduire","type":"translate","question":"Bonjour","answer":"مَرْحَباً","options":["مَرْحَباً","شُكْراً","وَدَاعاً","مَاء"]}]}`,
+{"title":"Titre du cours","type":"grammar","summary":"Résumé en 1 phrase","explanation":"Explication en 3-4 phrases claires","arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Traduire","type":"translate","question":"Bonjour","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
         2048,
       );
 
@@ -204,15 +204,16 @@ JSON (compact):
       }
 
       const res = await invokeAI<CourseResponse>(
-        `Professeur d'arabe expert. Génère un cours CIBLÉ pour corriger les erreurs de Fatima.
+        `${language.aiSeedPrompt}
+Génère un cours CIBLÉ pour corriger les erreurs de l'élève ${activeProfile?.name ?? ''}.
 
 ${errorsCtx}
 
 Axe principal: ${dominant} dans ${weakCats}.
-RÈGLE: Arabe avec voyelles (harakat). Ex: "مَرْحَباً" pas "مرحبا"
+RÈGLE: Les champs "arabic" contiennent les mots/phrases en ${language.familiarName} (nom de champ historique).
 
 JSON:
-{"title":"Titre ciblé sur ${dominant}","type":"${dominant === 'pronunciation' ? 'pronunciation' : dominant === 'writing' ? 'writing' : 'grammar'}","summary":"Résumé","explanation":"Explication","arabic_words":[{"arabic":"مَثَل","transliteration":"mathal","meaning":"exemple"}],"examples":[{"arabic":"جُمْلَة","transliteration":"jumla","french":"phrase","note":"note"}],"tips":["conseil 1"],"exercises":[{"instruction":"Exercice","type":"translate","question":"Q","answer":"مَرْحَباً","options":["مَرْحَباً","شُكْراً","وَدَاعاً","مَاء"]}]}`,
+{"title":"Titre ciblé sur ${dominant}","type":"${dominant === 'pronunciation' ? 'pronunciation' : dominant === 'writing' ? 'writing' : 'grammar'}","summary":"Résumé","explanation":"Explication","arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"note"}],"tips":["conseil 1"],"exercises":[{"instruction":"Exercice","type":"translate","question":"Q","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
         2048,
       );
 
@@ -277,7 +278,7 @@ JSON:
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.quickActionBtn, isGenerating && { opacity: 0.5 }]}
-              onPress={() => setChatInput('Explique-moi les règles du pluriel en arabe')}
+              onPress={() => setChatInput(`Explique-moi les règles du pluriel en ${language.familiarName.toLowerCase()}`)}
               disabled={isGenerating}
             >
               <Ionicons name="bulb" size={14} color={colors.primary} />
@@ -321,7 +322,7 @@ JSON:
               style={styles.chatInput}
               value={chatInput}
               onChangeText={setChatInput}
-              placeholder="Ex: Explique le dual en arabe..."
+              placeholder={`Ex: Explique un point de grammaire en ${language.familiarName.toLowerCase()}...`}
               placeholderTextColor={colors.textMuted}
               multiline
               editable={!isGenerating}
@@ -405,7 +406,7 @@ JSON:
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>🔑 Mots clés</Text>
               {selectedCourse.arabic_words.map((w, i) => (
-                <TouchableOpacity key={i} style={styles.wordRow} onPress={() => speakArabic(w.arabic)}>
+                <TouchableOpacity key={i} style={styles.wordRow} onPress={() => speakNative(w.arabic)}>
                   <Text style={styles.wordArabic}>{w.arabic}</Text>
                   <View style={styles.wordInfo}>
                     <Text style={styles.wordTranslit}>{w.transliteration}</Text>
@@ -424,7 +425,7 @@ JSON:
             <Card style={styles.sectionCard}>
               <Text style={styles.sectionTitle}>💬 Exemples</Text>
               {selectedCourse.examples.map((ex, i) => (
-                <TouchableOpacity key={i} style={styles.exampleItem} onPress={() => speakArabic(ex.arabic)}>
+                <TouchableOpacity key={i} style={styles.exampleItem} onPress={() => speakNative(ex.arabic)}>
                   <View style={styles.exampleContent}>
                     <Text style={styles.exampleArabic}>{ex.arabic}</Text>
                     <Text style={styles.exampleTranslit}>{ex.transliteration}</Text>
@@ -440,7 +441,7 @@ JSON:
           {/* Tips */}
           {selectedCourse.tips?.length > 0 && (
             <Card style={[styles.sectionCard, { backgroundColor: `${meta.color}08` }]}>
-              <Text style={styles.sectionTitle}>✨ Conseils pour Fatima</Text>
+              <Text style={styles.sectionTitle}>✨ Conseils pour {activeProfile?.name ?? 'toi'}</Text>
               {selectedCourse.tips.map((tip, i) => (
                 <View key={i} style={styles.tipRow}>
                   <Text style={[styles.tipDot, { color: meta.color }]}>•</Text>
@@ -487,7 +488,7 @@ JSON:
                   </TouchableOpacity>
 
                   {showAnswers[i] && (
-                    <TouchableOpacity style={styles.answerBox} onPress={() => speakArabic(ex.answer)}>
+                    <TouchableOpacity style={styles.answerBox} onPress={() => speakNative(ex.answer)}>
                       <Text style={styles.answerLabel}>Réponse :</Text>
                       <Text style={styles.answerText}>{ex.answer}</Text>
                       <Ionicons name="volume-high" size={16} color={colors.primary} />

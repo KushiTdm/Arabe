@@ -83,6 +83,19 @@ function parseJSON<T>(text: string): T {
   }
 }
 
+const OFFLINE_MESSAGE =
+  'Pas de connexion Internet. Les fonctions IA nécessitent le réseau — '
+  + 'le vocabulaire, les quiz, les révisions et l\'alphabet fonctionnent hors ligne.';
+
+async function fetchOrOffline(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch {
+    // fetch ne rejette que sur erreur réseau (pas sur status HTTP)
+    throw new Error(OFFLINE_MESSAGE);
+  }
+}
+
 function handleHttpError(status: number, model: string, body: string): never {
   if (status === 400) {
     const isNotFound = body.includes('not found') || body.includes('NOT_FOUND');
@@ -119,7 +132,7 @@ export async function invokeAI<T = Record<string, unknown>>(
     throw new Error('Clé API manquante. Ajoutez votre clé dans Profil → ⚙️.');
   }
 
-  const response = await fetch(getApiUrl(apiKey, model), {
+  const response = await fetchOrOffline(getApiUrl(apiKey, model), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -153,7 +166,7 @@ export async function invokeAIWithAudio<T = Record<string, unknown>>(
     throw new Error('Clé API manquante. Ajoutez votre clé dans Profil → ⚙️.');
   }
 
-  const response = await fetch(getApiUrl(apiKey, model), {
+  const response = await fetchOrOffline(getApiUrl(apiKey, model), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

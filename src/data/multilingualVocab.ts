@@ -602,6 +602,245 @@ const DE: LangVocab = {
   ],
 };
 
+// ─── Vietnamien ──────────────────────────────────────────────────────────────
+// transliteration = aide de prononciation "à la française" (l'orthographe
+// vietnamienne n'est pas intuitive pour un francophone : d=/z/, x=/s/, ph=/f/…)
+const VI: LangVocab = {
+  greetings: [
+    { native_word: 'Xin chào',        transliteration: 'sin tchao',        french_translation: 'Bonjour',            category: 'greetings' },
+    { native_word: 'Chào buổi sáng',  transliteration: 'tchao bouoï chang',french_translation: 'Bonjour (matin)',    category: 'greetings' },
+    { native_word: 'Chào buổi tối',   transliteration: 'tchao bouoï toï',  french_translation: 'Bonsoir',            category: 'greetings' },
+    { native_word: 'Bạn khỏe không?', transliteration: 'ban khoué khong',  french_translation: 'Comment vas-tu ?',   category: 'greetings' },
+    { native_word: 'Cảm ơn',          transliteration: 'kam eune',         french_translation: 'Merci',              category: 'greetings' },
+    { native_word: 'Không có gì',     transliteration: 'khong ko zi',      french_translation: 'De rien',            category: 'greetings' },
+    { native_word: 'Xin lỗi',         transliteration: 'sin loï',          french_translation: 'Pardon / Désolé',    category: 'greetings' },
+    { native_word: 'Tạm biệt',        transliteration: 'tam biêt',         french_translation: 'Au revoir',          category: 'greetings' },
+    { native_word: 'Vâng / Dạ',       transliteration: 'veung / za',       french_translation: 'Oui (poli)',         category: 'greetings' },
+    { native_word: 'Không',           transliteration: 'khong',            french_translation: 'Non',                category: 'greetings' },
+  ],
+  numbers: [
+    { native_word: 'một',  transliteration: 'môt',   french_translation: 'Un',    category: 'numbers' },
+    { native_word: 'hai',  transliteration: 'haï',   french_translation: 'Deux',  category: 'numbers' },
+    { native_word: 'ba',   transliteration: 'ba',    french_translation: 'Trois', category: 'numbers' },
+    { native_word: 'bốn',  transliteration: 'bone',  french_translation: 'Quatre',category: 'numbers' },
+    { native_word: 'năm',  transliteration: 'nam',   french_translation: 'Cinq',  category: 'numbers' },
+    { native_word: 'sáu',  transliteration: 'chaou', french_translation: 'Six',   category: 'numbers' },
+    { native_word: 'bảy',  transliteration: 'baï',   french_translation: 'Sept',  category: 'numbers' },
+    { native_word: 'tám',  transliteration: 'tam',   french_translation: 'Huit',  category: 'numbers' },
+    { native_word: 'chín', transliteration: 'tchine',french_translation: 'Neuf',  category: 'numbers' },
+    { native_word: 'mười', transliteration: 'mouoï', french_translation: 'Dix',   category: 'numbers' },
+  ],
+  family: [
+    { native_word: 'bố',       transliteration: 'bô',        french_translation: 'Père',        category: 'family' },
+    { native_word: 'mẹ',       transliteration: 'mè',        french_translation: 'Mère',        category: 'family' },
+    { native_word: 'anh trai', transliteration: 'aïn traï',  french_translation: 'Frère aîné',  category: 'family' },
+    { native_word: 'em trai',  transliteration: 'èm traï',   french_translation: 'Frère cadet', category: 'family' },
+    { native_word: 'chị gái',  transliteration: 'tchi gaï',  french_translation: 'Sœur aînée',  category: 'family' },
+    { native_word: 'em gái',   transliteration: 'èm gaï',    french_translation: 'Sœur cadette',category: 'family' },
+    { native_word: 'ông',      transliteration: 'ong',       french_translation: 'Grand-père',  category: 'family' },
+    { native_word: 'bà',       transliteration: 'ba',        french_translation: 'Grand-mère',  category: 'family' },
+    { native_word: 'con trai', transliteration: 'kone traï', french_translation: 'Fils',        category: 'family' },
+    { native_word: 'con gái',  transliteration: 'kone gaï',  french_translation: 'Fille',       category: 'family' },
+  ],
+  food: [
+    { native_word: 'bánh mì',  transliteration: 'baïn mi',    french_translation: 'Pain',    category: 'food' },
+    { native_word: 'nước',     transliteration: 'nouok',      french_translation: 'Eau',     category: 'food' },
+    { native_word: 'sữa',      transliteration: 'cheua',      french_translation: 'Lait',    category: 'food' },
+    { native_word: 'cơm',      transliteration: 'keume',      french_translation: 'Riz',     category: 'food' },
+    { native_word: 'thịt',     transliteration: 'thit',       french_translation: 'Viande',  category: 'food' },
+    { native_word: 'cá',       transliteration: 'ka',         french_translation: 'Poisson', category: 'food' },
+    { native_word: 'gà',       transliteration: 'ga',         french_translation: 'Poulet',  category: 'food' },
+    { native_word: 'trái cây', transliteration: 'traï kéï',   french_translation: 'Fruit',   category: 'food' },
+    { native_word: 'cà phê',   transliteration: 'ka fé',      french_translation: 'Café',    category: 'food' },
+    { native_word: 'trà',      transliteration: 'tra',        french_translation: 'Thé',     category: 'food' },
+  ],
+  travel: [
+    { native_word: 'sân bay',   transliteration: 'seune baï',   french_translation: 'Aéroport',  category: 'travel' },
+    { native_word: 'khách sạn', transliteration: 'khatch chan', french_translation: 'Hôtel',     category: 'travel' },
+    { native_word: 'tàu hỏa',   transliteration: 'taou houa',   french_translation: 'Train',     category: 'travel' },
+    { native_word: 'ô tô',      transliteration: 'ô tô',        french_translation: 'Voiture',   category: 'travel' },
+    { native_word: 'vé',        transliteration: 'vé',          french_translation: 'Billet',    category: 'travel' },
+    { native_word: 'hộ chiếu',  transliteration: 'hô tchiêou',  french_translation: 'Passeport', category: 'travel' },
+    { native_word: 'thành phố', transliteration: 'thaïn fô',    french_translation: 'Ville',     category: 'travel' },
+    { native_word: 'máy bay',   transliteration: 'maï baï',     french_translation: 'Avion',     category: 'travel' },
+    { native_word: 'bên trái',  transliteration: 'bène traï',   french_translation: 'Gauche',    category: 'travel' },
+    { native_word: 'bên phải',  transliteration: 'bène faï',    french_translation: 'Droite',    category: 'travel' },
+  ],
+  daily_life: [
+    { native_word: 'nhà',        transliteration: 'nia',          french_translation: 'Maison',     category: 'daily_life' },
+    { native_word: 'trường học', transliteration: 'trouong hok',  french_translation: 'École',      category: 'daily_life' },
+    { native_word: 'sách',       transliteration: 'chatch',       french_translation: 'Livre',      category: 'daily_life' },
+    { native_word: 'điện thoại', transliteration: 'diène thouaï', french_translation: 'Téléphone',  category: 'daily_life' },
+    { native_word: 'ngày',       transliteration: 'ngaï',         french_translation: 'Jour',       category: 'daily_life' },
+    { native_word: 'đêm',        transliteration: 'dème',         french_translation: 'Nuit',       category: 'daily_life' },
+    { native_word: 'bạn',        transliteration: 'ban',          french_translation: 'Ami',        category: 'daily_life' },
+    { native_word: 'ngày mai',   transliteration: 'ngaï maï',     french_translation: 'Demain',     category: 'daily_life' },
+    { native_word: 'hôm qua',    transliteration: 'home koua',    french_translation: 'Hier',       category: 'daily_life' },
+    { native_word: 'hôm nay',    transliteration: 'home naï',     french_translation: "Aujourd'hui",category: 'daily_life' },
+  ],
+  colors: [
+    { native_word: 'màu đỏ',        transliteration: 'maou do',          french_translation: 'Rouge',   category: 'colors' },
+    { native_word: 'màu xanh dương',transliteration: 'maou saïn zouong', french_translation: 'Bleu',    category: 'colors' },
+    { native_word: 'màu xanh lá',   transliteration: 'maou saïn la',     french_translation: 'Vert',    category: 'colors' },
+    { native_word: 'màu vàng',      transliteration: 'maou vang',        french_translation: 'Jaune',   category: 'colors' },
+    { native_word: 'màu trắng',     transliteration: 'maou trang',       french_translation: 'Blanc',   category: 'colors' },
+    { native_word: 'màu đen',       transliteration: 'maou dène',        french_translation: 'Noir',    category: 'colors' },
+    { native_word: 'màu nâu',       transliteration: 'maou neou',        french_translation: 'Marron',  category: 'colors' },
+    { native_word: 'màu cam',       transliteration: 'maou kam',         french_translation: 'Orange',  category: 'colors' },
+    { native_word: 'màu hồng',      transliteration: 'maou hong',        french_translation: 'Rose',    category: 'colors' },
+    { native_word: 'màu xám',       transliteration: 'maou sam',         french_translation: 'Gris',    category: 'colors' },
+  ],
+  animals: [
+    { native_word: 'chó',   transliteration: 'tcho',    french_translation: 'Chien',    category: 'animals' },
+    { native_word: 'mèo',   transliteration: 'mèo',     french_translation: 'Chat',     category: 'animals' },
+    { native_word: 'ngựa',  transliteration: 'ngeua',   french_translation: 'Cheval',   category: 'animals' },
+    { native_word: 'bò',    transliteration: 'bo',      french_translation: 'Vache',    category: 'animals' },
+    { native_word: 'sư tử', transliteration: 'chou tou',french_translation: 'Lion',     category: 'animals' },
+    { native_word: 'voi',   transliteration: 'voï',     french_translation: 'Éléphant', category: 'animals' },
+    { native_word: 'chim',  transliteration: 'tchime',  french_translation: 'Oiseau',   category: 'animals' },
+    { native_word: 'thỏ',   transliteration: 'tho',     french_translation: 'Lapin',    category: 'animals' },
+    { native_word: 'cá',    transliteration: 'ka',      french_translation: 'Poisson',  category: 'animals' },
+    { native_word: 'hổ',    transliteration: 'hô',      french_translation: 'Tigre',    category: 'animals' },
+  ],
+  body: [
+    { native_word: 'đầu',   transliteration: 'deou',   french_translation: 'Tête',    category: 'body' },
+    { native_word: 'mắt',   transliteration: 'mat',    french_translation: 'Œil',     category: 'body' },
+    { native_word: 'tai',   transliteration: 'taï',    french_translation: 'Oreille', category: 'body' },
+    { native_word: 'mũi',   transliteration: 'mouï',   french_translation: 'Nez',     category: 'body' },
+    { native_word: 'miệng', transliteration: 'miêng',  french_translation: 'Bouche',  category: 'body' },
+    { native_word: 'tay',   transliteration: 'taï',    french_translation: 'Main',    category: 'body' },
+    { native_word: 'chân',  transliteration: 'tcheune',french_translation: 'Jambe',   category: 'body' },
+    { native_word: 'tim',   transliteration: 'time',   french_translation: 'Cœur',    category: 'body' },
+  ],
+  emotions: [
+    { native_word: 'vui',      transliteration: 'vouï',      french_translation: 'Heureux',   category: 'emotions' },
+    { native_word: 'buồn',     transliteration: 'bouone',    french_translation: 'Triste',    category: 'emotions' },
+    { native_word: 'tức giận', transliteration: 'touk zeune',french_translation: 'En colère', category: 'emotions' },
+    { native_word: 'sợ',       transliteration: 'cheu',      french_translation: 'Effrayé',   category: 'emotions' },
+    { native_word: 'mệt',      transliteration: 'mèt',       french_translation: 'Fatigué',   category: 'emotions' },
+    { native_word: 'đói',      transliteration: 'doï',       french_translation: 'Affamé',    category: 'emotions' },
+  ],
+};
+
+// ─── Anglais ─────────────────────────────────────────────────────────────────
+// transliteration = aide de prononciation "à la française"
+const EN: LangVocab = {
+  greetings: [
+    { native_word: 'Hello',           transliteration: 'hèlo',           french_translation: 'Bonjour',           category: 'greetings' },
+    { native_word: 'Good morning',    transliteration: 'goud morning',   french_translation: 'Bonjour (matin)',   category: 'greetings' },
+    { native_word: 'Good evening',    transliteration: 'goud ivning',    french_translation: 'Bonsoir',           category: 'greetings' },
+    { native_word: 'How are you?',    transliteration: 'haou ar you',    french_translation: 'Comment vas-tu ?',  category: 'greetings' },
+    { native_word: 'Thank you',       transliteration: 'thènk you',      french_translation: 'Merci',             category: 'greetings' },
+    { native_word: "You're welcome",  transliteration: 'your ouèlkeum',  french_translation: 'De rien',           category: 'greetings' },
+    { native_word: 'Please',          transliteration: 'pliiz',          french_translation: 'S\'il vous plaît',  category: 'greetings' },
+    { native_word: 'Sorry',           transliteration: 'sori',           french_translation: 'Pardon / Désolé',   category: 'greetings' },
+    { native_word: 'Goodbye',         transliteration: 'goud-baï',       french_translation: 'Au revoir',         category: 'greetings' },
+    { native_word: 'Yes / No',        transliteration: 'yès / nôou',     french_translation: 'Oui / Non',         category: 'greetings' },
+  ],
+  numbers: [
+    { native_word: 'one',   transliteration: 'ouane',  french_translation: 'Un',    category: 'numbers' },
+    { native_word: 'two',   transliteration: 'tou',    french_translation: 'Deux',  category: 'numbers' },
+    { native_word: 'three', transliteration: 'thrii',  french_translation: 'Trois', category: 'numbers' },
+    { native_word: 'four',  transliteration: 'for',    french_translation: 'Quatre',category: 'numbers' },
+    { native_word: 'five',  transliteration: 'faïv',   french_translation: 'Cinq',  category: 'numbers' },
+    { native_word: 'six',   transliteration: 'siks',   french_translation: 'Six',   category: 'numbers' },
+    { native_word: 'seven', transliteration: 'sèven',  french_translation: 'Sept',  category: 'numbers' },
+    { native_word: 'eight', transliteration: 'éït',    french_translation: 'Huit',  category: 'numbers' },
+    { native_word: 'nine',  transliteration: 'naïn',   french_translation: 'Neuf',  category: 'numbers' },
+    { native_word: 'ten',   transliteration: 'tèn',    french_translation: 'Dix',   category: 'numbers' },
+  ],
+  family: [
+    { native_word: 'father',      transliteration: 'fazeur',      french_translation: 'Père',       category: 'family' },
+    { native_word: 'mother',      transliteration: 'mazeur',      french_translation: 'Mère',       category: 'family' },
+    { native_word: 'brother',     transliteration: 'brazeur',     french_translation: 'Frère',      category: 'family' },
+    { native_word: 'sister',      transliteration: 'sisteur',     french_translation: 'Sœur',       category: 'family' },
+    { native_word: 'son',         transliteration: 'sonne',       french_translation: 'Fils',       category: 'family' },
+    { native_word: 'daughter',    transliteration: 'doteur',      french_translation: 'Fille',      category: 'family' },
+    { native_word: 'grandfather', transliteration: 'grand-fazeur',french_translation: 'Grand-père', category: 'family' },
+    { native_word: 'grandmother', transliteration: 'grand-mazeur',french_translation: 'Grand-mère', category: 'family' },
+    { native_word: 'uncle',       transliteration: 'onnkeul',     french_translation: 'Oncle',      category: 'family' },
+    { native_word: 'aunt',        transliteration: 'ant',         french_translation: 'Tante',      category: 'family' },
+  ],
+  food: [
+    { native_word: 'bread',   transliteration: 'brèd',    french_translation: 'Pain',    category: 'food' },
+    { native_word: 'water',   transliteration: 'ouoteur', french_translation: 'Eau',     category: 'food' },
+    { native_word: 'milk',    transliteration: 'milk',    french_translation: 'Lait',    category: 'food' },
+    { native_word: 'rice',    transliteration: 'raïs',    french_translation: 'Riz',     category: 'food' },
+    { native_word: 'meat',    transliteration: 'miit',    french_translation: 'Viande',  category: 'food' },
+    { native_word: 'fish',    transliteration: 'fich',    french_translation: 'Poisson', category: 'food' },
+    { native_word: 'chicken', transliteration: 'tchikène',french_translation: 'Poulet',  category: 'food' },
+    { native_word: 'fruit',   transliteration: 'frout',   french_translation: 'Fruit',   category: 'food' },
+    { native_word: 'coffee',  transliteration: 'kofi',    french_translation: 'Café',    category: 'food' },
+    { native_word: 'tea',     transliteration: 'tii',     french_translation: 'Thé',     category: 'food' },
+  ],
+  travel: [
+    { native_word: 'airport',  transliteration: 'èrport',   french_translation: 'Aéroport',  category: 'travel' },
+    { native_word: 'hotel',    transliteration: 'hôtèl',    french_translation: 'Hôtel',     category: 'travel' },
+    { native_word: 'train',    transliteration: 'tréïn',    french_translation: 'Train',     category: 'travel' },
+    { native_word: 'car',      transliteration: 'kar',      french_translation: 'Voiture',   category: 'travel' },
+    { native_word: 'ticket',   transliteration: 'tikèt',    french_translation: 'Billet',    category: 'travel' },
+    { native_word: 'passport', transliteration: 'passport', french_translation: 'Passeport', category: 'travel' },
+    { native_word: 'city',     transliteration: 'siti',     french_translation: 'Ville',     category: 'travel' },
+    { native_word: 'plane',    transliteration: 'pléïn',    french_translation: 'Avion',     category: 'travel' },
+    { native_word: 'left',     transliteration: 'lèft',     french_translation: 'Gauche',    category: 'travel' },
+    { native_word: 'right',    transliteration: 'raït',     french_translation: 'Droite',    category: 'travel' },
+  ],
+  daily_life: [
+    { native_word: 'house',     transliteration: 'haous',    french_translation: 'Maison',     category: 'daily_life' },
+    { native_word: 'school',    transliteration: 'skoul',    french_translation: 'École',      category: 'daily_life' },
+    { native_word: 'book',      transliteration: 'bouk',     french_translation: 'Livre',      category: 'daily_life' },
+    { native_word: 'phone',     transliteration: 'fôoun',    french_translation: 'Téléphone',  category: 'daily_life' },
+    { native_word: 'day',       transliteration: 'déï',      french_translation: 'Jour',       category: 'daily_life' },
+    { native_word: 'night',     transliteration: 'naït',     french_translation: 'Nuit',       category: 'daily_life' },
+    { native_word: 'friend',    transliteration: 'frènd',    french_translation: 'Ami',        category: 'daily_life' },
+    { native_word: 'tomorrow',  transliteration: 'toumorô',  french_translation: 'Demain',     category: 'daily_life' },
+    { native_word: 'yesterday', transliteration: 'yèsteurdéï',french_translation: 'Hier',      category: 'daily_life' },
+    { native_word: 'today',     transliteration: 'toudéï',   french_translation: "Aujourd'hui",category: 'daily_life' },
+  ],
+  colors: [
+    { native_word: 'red',    transliteration: 'rèd',    french_translation: 'Rouge',   category: 'colors' },
+    { native_word: 'blue',   transliteration: 'blou',   french_translation: 'Bleu',    category: 'colors' },
+    { native_word: 'green',  transliteration: 'griin',  french_translation: 'Vert',    category: 'colors' },
+    { native_word: 'yellow', transliteration: 'yèlô',   french_translation: 'Jaune',   category: 'colors' },
+    { native_word: 'white',  transliteration: 'ouaït',  french_translation: 'Blanc',   category: 'colors' },
+    { native_word: 'black',  transliteration: 'blak',   french_translation: 'Noir',    category: 'colors' },
+    { native_word: 'brown',  transliteration: 'braoun', french_translation: 'Marron',  category: 'colors' },
+    { native_word: 'orange', transliteration: 'orindj', french_translation: 'Orange',  category: 'colors' },
+    { native_word: 'pink',   transliteration: 'pink',   french_translation: 'Rose',    category: 'colors' },
+    { native_word: 'grey',   transliteration: 'gréï',   french_translation: 'Gris',    category: 'colors' },
+  ],
+  animals: [
+    { native_word: 'dog',      transliteration: 'dog',      french_translation: 'Chien',    category: 'animals' },
+    { native_word: 'cat',      transliteration: 'kat',      french_translation: 'Chat',     category: 'animals' },
+    { native_word: 'horse',    transliteration: 'hors',     french_translation: 'Cheval',   category: 'animals' },
+    { native_word: 'cow',      transliteration: 'kaou',     french_translation: 'Vache',    category: 'animals' },
+    { native_word: 'lion',     transliteration: 'laïone',   french_translation: 'Lion',     category: 'animals' },
+    { native_word: 'elephant', transliteration: 'èlifant',  french_translation: 'Éléphant', category: 'animals' },
+    { native_word: 'bird',     transliteration: 'beurd',    french_translation: 'Oiseau',   category: 'animals' },
+    { native_word: 'rabbit',   transliteration: 'rabit',    french_translation: 'Lapin',    category: 'animals' },
+    { native_word: 'fish',     transliteration: 'fich',     french_translation: 'Poisson',  category: 'animals' },
+    { native_word: 'tiger',    transliteration: 'taïgueur', french_translation: 'Tigre',    category: 'animals' },
+  ],
+  body: [
+    { native_word: 'head',  transliteration: 'hèd',    french_translation: 'Tête',    category: 'body' },
+    { native_word: 'eye',   transliteration: 'aï',     french_translation: 'Œil',     category: 'body' },
+    { native_word: 'ear',   transliteration: 'ireu',   french_translation: 'Oreille', category: 'body' },
+    { native_word: 'nose',  transliteration: 'nôouz',  french_translation: 'Nez',     category: 'body' },
+    { native_word: 'mouth', transliteration: 'maous',  french_translation: 'Bouche',  category: 'body' },
+    { native_word: 'hand',  transliteration: 'hand',   french_translation: 'Main',    category: 'body' },
+    { native_word: 'leg',   transliteration: 'lèg',    french_translation: 'Jambe',   category: 'body' },
+    { native_word: 'heart', transliteration: 'hart',   french_translation: 'Cœur',    category: 'body' },
+  ],
+  emotions: [
+    { native_word: 'happy',  transliteration: 'hapi',    french_translation: 'Heureux',   category: 'emotions' },
+    { native_word: 'sad',    transliteration: 'sad',     french_translation: 'Triste',    category: 'emotions' },
+    { native_word: 'angry',  transliteration: 'anngri',  french_translation: 'En colère', category: 'emotions' },
+    { native_word: 'scared', transliteration: 'skèrd',   french_translation: 'Effrayé',   category: 'emotions' },
+    { native_word: 'tired',  transliteration: 'taïeurd', french_translation: 'Fatigué',   category: 'emotions' },
+    { native_word: 'hungry', transliteration: 'honngri', french_translation: 'Affamé',    category: 'emotions' },
+  ],
+};
+
 // ─── Registre global ─────────────────────────────────────────────────────────
 // Pour les langues sans données statiques (it, pt, ru, ko), on retourne un objet vide
 // et VocabularyScreen affichera un message invitant à utiliser l'IA Conversation.
@@ -611,6 +850,8 @@ const VOCAB_BY_LANG: Record<string, LangVocab> = {
   zh: ZH,
   ja: JA,
   de: DE,
+  vi: VI,
+  en: EN,
 };
 
 export interface VocabWord {
@@ -645,4 +886,17 @@ export function getAvailableCategories(langCode: string): string[] {
 export function getTotalWords(langCode: string): number {
   const langVocab = VOCAB_BY_LANG[langCode] ?? {};
   return Object.values(langVocab).reduce((acc, words) => acc + words.length, 0);
+}
+
+// Mot du jour : choix déterministe (même mot toute la journée pour une langue)
+export function getWordOfTheDay(langCode: string, dateStr: string): VocabWord | null {
+  const all = getAvailableCategories(langCode)
+    .flatMap(cat => getWordsForCategory(langCode, cat));
+  if (all.length === 0) return null;
+  const seed = `${dateStr}_${langCode}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+  }
+  return all[hash % all.length];
 }

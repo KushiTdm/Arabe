@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
@@ -19,6 +19,8 @@ import CoursScreen      from './src/screens/Coursscreen';
 import AlphabetScreen   from './src/screens/AlphabetScreen';
 import ProfileScreen    from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
+import QuizScreen       from './src/screens/QuizScreen';
+import ReviewScreen     from './src/screens/ReviewScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -106,9 +108,25 @@ function RootStack() {
         <>
           <Stack.Screen name="MainTabs" component={HomeTabs} />
           <Stack.Screen name="Alphabet" component={AlphabetScreen} />
+          <Stack.Screen name="Quiz"     component={QuizScreen} />
+          <Stack.Screen name="Review"   component={ReviewScreen} />
         </>
       )}
     </Stack.Navigator>
+  );
+}
+
+/**
+ * On the web (Expo Web in Chrome) the app would otherwise stretch across the
+ * full desktop width. We center it in a phone-sized column so the preview looks
+ * like the real mobile app. On native this renders its children untouched.
+ */
+function AppShell({ children }: { children: React.ReactNode }) {
+  if (Platform.OS !== 'web') return <>{children}</>;
+  return (
+    <View style={shellStyles.outer}>
+      <View style={shellStyles.phone}>{children}</View>
+    </View>
   );
 }
 
@@ -116,14 +134,34 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ProfileProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <RootStack />
-        </NavigationContainer>
+        <AppShell>
+          <NavigationContainer>
+            <StatusBar style="dark" />
+            <RootStack />
+          </NavigationContainer>
+        </AppShell>
       </ProfileProvider>
     </SafeAreaProvider>
   );
 }
+
+const shellStyles = StyleSheet.create({
+  outer: {
+    flex: 1,
+    backgroundColor: '#0e1a18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phone: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 460,
+    backgroundColor: colors.background,
+    overflow: 'hidden',
+    // @ts-expect-error web-only shadow for the phone frame
+    boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
+  },
+});
 
 const styles = StyleSheet.create({
   splash: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },

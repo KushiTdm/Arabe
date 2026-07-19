@@ -3,7 +3,9 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
+import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
@@ -12,6 +14,8 @@ import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { useCourses } from '../lib/useCourses';
 import { Card, LoadingSpinner } from '../components/RNComponents';
+import { PressableScale, Animated, FadeInDown } from '../components/anim';
+import { CATEGORY_IMAGES } from '../theme/images';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI, invokeAIWithAudio } from '../api/aiClient';
 
@@ -169,10 +173,25 @@ JSON:
       if (courseContent) {
         try {
           const courseData = {
-            ...courseContent,
+            title: courseContent.title,
+            summary: courseContent.summary,
+            explanation: courseContent.explanation,
+            tips: courseContent.tips || [],
             source: 'conversation' as const,
             trigger_topic: topicFr,
             type: (courseContent.type as any) || 'grammar',
+            // CourseLesson garde les noms de champs historiques "arabic*"
+            arabic_words: (courseContent.native_words || []).map(w => ({
+              arabic: w.native,
+              transliteration: w.transliteration,
+              meaning: w.meaning,
+            })),
+            examples: (courseContent.examples || []).map(ex => ({
+              arabic: ex.native,
+              transliteration: ex.transliteration,
+              french: ex.french,
+              note: ex.note,
+            })),
             exercises: (courseContent.exercises || []).map(ex => ({
               ...ex,
               type: ex.type as 'fill' | 'translate' | 'choose' | 'pronounce',
@@ -365,23 +384,45 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
           )}
 
           <View style={styles.topicsGrid}>
-            {TOPICS.map(topic => (
-              <TouchableOpacity
-                key={topic.id}
-                style={[
-                  styles.topicCard,
-                  topic.id === 'exercise' && styles.exerciseCard,
-                  (!canUseAI() || isLoading) && { opacity: 0.5 },
-                ]}
-                onPress={() => startConversation(topic)}
-                disabled={!canUseAI() || isLoading}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.topicEmoji}>{topic.emoji}</Text>
-                <Text style={[styles.topicNative, language.rtl && { writingDirection: 'rtl' }]}>{topic.label}</Text>
-                <Text style={styles.topicFrench}>{topic.fr}</Text>
-              </TouchableOpacity>
-            ))}
+            {TOPICS.map((topic, i) => {
+              const isExercise = topic.id === 'exercise';
+              const bg = CATEGORY_IMAGES[topic.id];
+              return (
+                <Animated.View
+                  key={topic.id}
+                  entering={FadeInDown.delay(i * 45).springify().damping(16)}
+                  style={isExercise ? styles.exerciseWrap : styles.topicWrap}
+                >
+                  <PressableScale
+                    style={[
+                      styles.topicCard,
+                      isExercise && styles.exerciseCard,
+                      (!canUseAI() || isLoading) && { opacity: 0.5 },
+                    ]}
+                    onPress={() => startConversation(topic)}
+                    disabled={!canUseAI() || isLoading}
+                  >
+                    {!isExercise && bg && (
+                      <>
+                        <Image source={bg} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
+                        <LinearGradient
+                          colors={['rgba(15,28,26,0.2)', 'rgba(15,28,26,0.55)', 'rgba(15,28,26,0.9)']}
+                          locations={[0, 0.5, 1]}
+                          style={StyleSheet.absoluteFill as any}
+                        />
+                      </>
+                    )}
+                    <Text style={styles.topicEmoji}>{topic.emoji}</Text>
+                    <Text style={[
+                      styles.topicNative,
+                      !isExercise && styles.topicNativeOnImage,
+                      language.rtl && { writingDirection: 'rtl' },
+                    ]}>{topic.label}</Text>
+                    <Text style={[styles.topicFrench, !isExercise && styles.topicFrenchOnImage]}>{topic.fr}</Text>
+                  </PressableScale>
+                </Animated.View>
+              );
+            })}
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -611,20 +652,25 @@ const styles = StyleSheet.create({
   },
   noCreditsText: { fontSize: 14, color: colors.destructive, flex: 1 },
 
-  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  topicsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  topicWrap: { width: '48%', marginBottom: 12 },
+  exerciseWrap: { width: '100%', marginBottom: 12 },
   topicCard: {
-    width: '47%', backgroundColor: colors.card,
-    borderRadius: borderRadius['2xl'], borderWidth: 1,
-    borderColor: colors.border, padding: spacing.lg, alignItems: 'center',
+    height: 122, borderRadius: borderRadius['2xl'], overflow: 'hidden',
+    justifyContent: 'flex-end', padding: 12, backgroundColor: colors.primary,
+    shadowColor: colors.primary, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.16, shadowRadius: 8, elevation: 3,
   },
   exerciseCard: {
-    width: '97%',
-    backgroundColor: `${colors.secondary}10`,
-    borderColor: `${colors.secondary}40`,
+    backgroundColor: `${colors.secondary}12`,
+    borderWidth: 1, borderColor: `${colors.secondary}45`,
+    alignItems: 'center', justifyContent: 'center',
   },
-  topicEmoji: { fontSize: 30, marginBottom: 6 },
-  topicNative: { fontSize: 16, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  topicFrench: { fontSize: 13, color: colors.textMuted, marginTop: 3 },
+  topicEmoji: { fontSize: 26, marginBottom: 4 },
+  topicNative: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
+  topicNativeOnImage: { color: colors.white, textAlign: 'left', textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  topicFrench: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+  topicFrenchOnImage: { color: 'rgba(255,255,255,0.88)' },
 
   chatHeader: {
     flexDirection: 'row', alignItems: 'center',

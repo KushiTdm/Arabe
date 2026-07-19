@@ -1,15 +1,18 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Alert, TextInput,
+  View, Text, StyleSheet, ScrollView, Alert, TextInput, Image,
   TouchableOpacity, ActivityIndicator, Dimensions, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProfile } from '../lib/ProfileContext';
 import { MAX_AI_CREDITS } from '../lib/useProfiles';
+import { computeBadges } from '../lib/badges';
 import { SUPPORTED_LANGUAGES } from '../lib/languages';
+import { LANGUAGE_IMAGES } from '../theme/images';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, LoadingSpinner, ProgressBar } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -18,7 +21,9 @@ import {
   getModel, saveModel, GEMINI_FREE_MODELS, DEFAULT_MODEL,
 } from '../api/aiClient';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+import { CONTENT_WIDTH } from '../lib/dimensions';
+
+const SCREEN_WIDTH = CONTENT_WIDTH;
 
 const REPORT_KEY_PREFIX   = '@maa_ai_report_';
 const EXERCISES_KEY_PREFIX = '@maa_ai_exercises_';
@@ -333,22 +338,29 @@ JSON: {
       <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {/* ── Header profil ── */}
-        <View style={styles.header}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarEmoji}>{userAvatar}</Text>
-          </View>
-          <View style={{ flex: 1, marginLeft: 14 }}>
-            <Text style={styles.userName}>{userName}</Text>
-            <View style={styles.langRow}>
-              <Text style={styles.langFlag}>{language.flag}</Text>
-              <Text style={styles.userLevel}>{language.familiarName} · {currentLevel.label}</Text>
+        <View style={styles.profileHero}>
+          <Image source={LANGUAGE_IMAGES[language.code]} style={StyleSheet.absoluteFill as any} resizeMode="cover" />
+          <LinearGradient
+            colors={['rgba(15,28,26,0.35)', 'rgba(15,28,26,0.88)']}
+            style={StyleSheet.absoluteFill as any}
+          />
+          <View style={styles.profileHeroRow}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarEmoji}>{userAvatar}</Text>
             </View>
-          </View>
-          <View style={[styles.apiStatusBadge, { backgroundColor: hasApiKey ? `${colors.success}20` : `${colors.destructive}15` }]}>
-            <View style={[styles.apiStatusDot, { backgroundColor: hasApiKey ? colors.success : colors.destructive }]} />
-            <Text style={[styles.apiStatusText, { color: hasApiKey ? colors.success : colors.destructive }]}>
-              {hasApiKey ? 'IA active' : 'IA inactive'}
-            </Text>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={styles.userName}>{userName}</Text>
+              <View style={styles.langRow}>
+                <Text style={styles.langFlag}>{language.flag}</Text>
+                <Text style={styles.userLevel}>{language.familiarName} · {currentLevel.label}</Text>
+              </View>
+            </View>
+            <View style={[styles.apiStatusBadge, { backgroundColor: hasApiKey ? 'rgba(16,185,129,0.85)' : 'rgba(239,68,68,0.85)' }]}>
+              <View style={[styles.apiStatusDot, { backgroundColor: colors.white }]} />
+              <Text style={[styles.apiStatusText, { color: colors.white }]}>
+                {hasApiKey ? 'IA active' : 'IA inactive'}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -399,14 +411,28 @@ JSON: {
               <ProgressBar progress={(creditsUsed / MAX_AI_CREDITS) * 100} height={8} color={colors.primary} />
             </Card>
 
-            <Card style={styles.achievementsCard}>
-              <Text style={styles.sectionTitle}>🏆 Succès</Text>
-              <Achievement title="Premier pas"       description="Termine ta première leçon"    completed={(progress?.lessons_completed       ?? 0) > 0}  />
-              <Achievement title="Assidu"            description="7 jours consécutifs"           completed={(progress?.streak_days            ?? 0) >= 7}  />
-              <Achievement title="Vocabulaire riche" description="Apprendre 50 mots"             completed={(progress?.vocab_learned           ?? 0) >= 50} />
-              <Achievement title="Conversationniste" description="10 conversations avec l'IA"    completed={(progress?.conversations_count     ?? 0) >= 10} />
-              <Achievement title="Calligraphe"       description="20 exercices d'écriture"       completed={(progress?.writing_exercises_count ?? 0) >= 20} />
-            </Card>
+            {activeProfile && (() => {
+              const badges = computeBadges(activeProfile);
+              const earnedCount = badges.filter(b => b.earned).length;
+              return (
+                <Card style={styles.achievementsCard}>
+                  <Text style={styles.sectionTitle}>🏆 Succès · {earnedCount}/{badges.length}</Text>
+                  <View style={styles.badgeGrid}>
+                    {badges.map(badge => (
+                      <View key={badge.id} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
+                        <Text style={[styles.badgeEmoji, !badge.earned && styles.badgeEmojiLocked]}>
+                          {badge.earned ? badge.emoji : '🔒'}
+                        </Text>
+                        <Text style={[styles.badgeLabel, !badge.earned && styles.badgeLabelLocked]} numberOfLines={1}>
+                          {badge.label}
+                        </Text>
+                        <Text style={styles.badgeDesc} numberOfLines={2}>{badge.description}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </Card>
+              );
+            })()}
 
             {/* Autres profils */}
             <Card style={styles.profilesCard}>
@@ -851,36 +877,20 @@ function StatItem({ icon, value, label, color }: { icon: string; value: number; 
   );
 }
 
-function Achievement({ title, description, completed }: { title: string; description: string; completed: boolean }) {
-  return (
-    <View style={styles.achievementItem}>
-      <Ionicons
-        name={completed ? 'checkmark-circle' : 'ellipse-outline'}
-        size={20}
-        color={completed ? colors.success : colors.textMuted}
-        style={{ marginRight: spacing.md }}
-      />
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.achievementTitle, completed && { color: colors.success }]}>{title}</Text>
-        <Text style={styles.achievementDesc}>{description}</Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   safeArea:       { flex: 1, backgroundColor: colors.background },
   container:      { flex: 1 },
   content:        { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 120 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-  header:         { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  avatarCircle:   { width: 52, height: 52, borderRadius: 26, backgroundColor: `${colors.primary}15`, justifyContent: 'center', alignItems: 'center' },
-  avatarEmoji:    { fontSize: 30 },
-  userName:       { fontSize: fontSize.lg, fontWeight: '700', color: colors.text },
+  profileHero:    { marginHorizontal: -16, marginTop: -16, marginBottom: 16, paddingTop: 24, minHeight: 156, justifyContent: 'flex-end', overflow: 'hidden', backgroundColor: colors.primary },
+  profileHeroRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 16 },
+  avatarCircle:   { width: 56, height: 56, borderRadius: 28, backgroundColor: 'rgba(255,255,255,0.92)', justifyContent: 'center', alignItems: 'center' },
+  avatarEmoji:    { fontSize: 32 },
+  userName:       { fontSize: fontSize.xl, fontWeight: '800', color: colors.white, textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5 },
   langRow:        { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   langFlag:       { fontSize: 14 },
-  userLevel:      { fontSize: fontSize.xs, color: colors.textMuted },
+  userLevel:      { fontSize: fontSize.xs, color: 'rgba(255,255,255,0.92)', fontWeight: '600' },
 
   apiStatusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: borderRadius.full, gap: 4 },
   apiStatusDot:   { width: 6, height: 6, borderRadius: 3 },
@@ -909,9 +919,26 @@ const styles = StyleSheet.create({
   creditsCount:   { fontSize: fontSize.xs, color: colors.textMuted },
 
   achievementsCard: { marginBottom: 12 },
-  achievementItem:  { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: `${colors.border}80` },
-  achievementTitle: { fontSize: fontSize.sm, fontWeight: '600', color: colors.text },
-  achievementDesc:  { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 1 },
+  badgeGrid: {
+    flexDirection: 'row', flexWrap: 'wrap',
+    justifyContent: 'space-between', rowGap: 10,
+  },
+  badgeItem: {
+    width: '31%', alignItems: 'center',
+    backgroundColor: `${colors.success}0A`,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1, borderColor: `${colors.success}30`,
+    paddingVertical: 10, paddingHorizontal: 6, gap: 2,
+  },
+  badgeItemLocked: {
+    backgroundColor: `${colors.textMuted}08`,
+    borderColor: colors.border,
+  },
+  badgeEmoji: { fontSize: 24 },
+  badgeEmojiLocked: { opacity: 0.5 },
+  badgeLabel: { fontSize: fontSize.xs, fontWeight: '700', color: colors.text },
+  badgeLabelLocked: { color: colors.textMuted },
+  badgeDesc: { fontSize: 8, color: colors.textMuted, textAlign: 'center', lineHeight: 11 },
 
   profilesCard:      { marginBottom: 12 },
   profileRow:        { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },

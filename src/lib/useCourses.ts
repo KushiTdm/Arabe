@@ -3,6 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DEFAULT_COURSES_KEY = '@maa_courses_v1';
 
+// Plafond de sécurité (évite une croissance illimitée d'AsyncStorage) plutôt
+// qu'une vraie limite fonctionnelle — largement au-delà d'un usage normal.
+export const MAX_COURSES = 500;
+
 export type CourseSource = 'error' | 'conversation' | 'manual';
 export type CourseType = 'grammar' | 'pronunciation' | 'vocabulary' | 'writing' | 'culture';
 
@@ -78,7 +82,7 @@ export function useCourses(storageKey: string = DEFAULT_COURSES_KEY) {
       starred: false,
     };
 
-    const updated = [newCourse, ...current].slice(0, 50); // max 50 cours
+    const updated = [newCourse, ...current].slice(0, MAX_COURSES);
     await save(updated);
     return newCourse;
   };

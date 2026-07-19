@@ -8,13 +8,20 @@ import {
   TextInput,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as Speech from 'expo-speech';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
 import { Card } from '../components/RNComponents';
+import { PressableScale, Animated, FadeInDown } from '../components/anim';
+import { CATEGORY_IMAGES } from '../theme/images';
 import { useProfile } from '../lib/ProfileContext';
+import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
+import { useVocabAudio, vocabAudioStorageKey } from '../lib/useVocabAudio';
+import { VocabAudioRecorder } from '../components/VocabAudioRecorder';
 import { invokeAI } from '../api/aiClient';
 import {
   getWordsForCategory,
@@ -43,8 +50,10 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
 // ─── Main screen ─────────────────────────────────────────────────────────────
 
 export default function VocabularyScreen() {
-  const { language, canUseAI, incrementCredits } = useProfile();
+  const { language, canUseAI, incrementCredits, activeProfile } = useProfile();
   const langCode = language.code;
+  const reviewDeck = useReviewDeck(reviewStorageKey(activeProfile?.id, langCode));
+  const vocabAudio = useVocabAudio(vocabAudioStorageKey(activeProfile?.id, langCode));
 
   const availableCategories = getAvailableCategories(langCode);
   const totalWords = getTotalWords(langCode);
@@ -217,6 +226,12 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                 <TouchableOpacity onPress={() => speakWord(word.native_word)} style={styles.speakBtn}>
                   <Ionicons name="volume-high" size={20} color={colors.primary} />
                 </TouchableOpacity>
+                <VocabAudioRecorder
+                  wordId={word.id}
+                  audio={vocabAudio.getAudio(word.id)}
+                  onSave={vocabAudio.saveAudio}
+                  onDelete={vocabAudio.deleteAudio}
+                />
               </>
             )}
           </TouchableOpacity>
@@ -304,6 +319,9 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                           <Text style={styles.aiTagText}>IA</Text>
                         </View>
                       )}
+                      {!!vocabAudio.getAudio(word.id) && (
+                        <Ionicons name="mic" size={12} color={colors.secondary} />
+                      )}
                     </View>
                     {!!word.transliteration && (
                       <Text style={styles.wordTranslit}>{word.transliteration}</Text>
@@ -314,6 +332,16 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                   </View>
                   <TouchableOpacity onPress={() => speakWord(word.native_word)} style={styles.iconBtn}>
                     <Ionicons name="volume-high" size={18} color={colors.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => reviewDeck.has(word.id) ? reviewDeck.removeWord(word.id) : reviewDeck.addWord(word)}
+                    style={styles.iconBtn}
+                  >
+                    <Ionicons
+                      name={reviewDeck.has(word.id) ? 'bookmark' : 'bookmark-outline'}
+                      size={18}
+                      color={reviewDeck.has(word.id) ? colors.secondary : colors.textMuted}
+                    />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => toggleMastered(word.id)} style={styles.iconBtn}>
                     <Ionicons
@@ -365,30 +393,45 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
         </View>
 
         <View style={styles.grid}>
-          {availableCategories.map(cat => {
+          {availableCategories.map((cat, i) => {
             const meta = CATEGORY_META[cat];
             if (!meta) return null;
             const words = getWordsForCategory(langCode, cat);
             const masteredCount = words.filter(w => masteredIds.has(w.id)).length;
-            const pct = Math.round((masteredCount / words.length) * 100);
+            const pct = words.length ? Math.round((masteredCount / words.length) * 100) : 0;
+            const bg = CATEGORY_IMAGES[cat];
 
             return (
-              <TouchableOpacity
+              <Animated.View
                 key={cat}
-                style={styles.catCard}
-                onPress={() => { setSelectedCategory(cat); setSearch(''); }}
-                activeOpacity={0.75}
+                entering={FadeInDown.delay(i * 55).springify().damping(16)}
+                style={styles.catCardWrap}
               >
-                <Text style={styles.catEmoji}>{meta.emoji}</Text>
-                <Text style={styles.catLabel}>{meta.label}</Text>
-                <Text style={styles.catCount}>{words.length} mots</Text>
-                <View style={styles.miniProgressBg}>
-                  <View style={[styles.miniProgressFill, { width: `${pct}%` as any }]} />
-                </View>
-                {masteredCount > 0 && (
-                  <Text style={styles.catMastered}>{pct}% maîtrisé</Text>
-                )}
-              </TouchableOpacity>
+                <PressableScale
+                  style={styles.catCard}
+                  onPress={() => { setSelectedCategory(cat); setSearch(''); }}
+                >
+                  {bg && <Image source={bg} style={StyleSheet.absoluteFill as any} resizeMode="cover" />}
+                  <LinearGradient
+                    colors={['rgba(15,28,26,0.15)', 'rgba(15,28,26,0.55)', 'rgba(15,28,26,0.92)']}
+                    locations={[0, 0.5, 1]}
+                    style={StyleSheet.absoluteFill as any}
+                  />
+                  <View style={styles.catBadge}>
+                    <Text style={styles.catEmoji}>{meta.emoji}</Text>
+                  </View>
+                  <View style={styles.catCardContent}>
+                    <Text style={styles.catLabel}>{meta.label}</Text>
+                    <Text style={styles.catCount}>{words.length} mots</Text>
+                    <View style={styles.miniProgressBg}>
+                      <View style={[styles.miniProgressFill, { width: `${pct}%` as any }]} />
+                    </View>
+                    {masteredCount > 0 && (
+                      <Text style={styles.catMastered}>{pct}% maîtrisé</Text>
+                    )}
+                  </View>
+                </PressableScale>
+              </Animated.View>
             );
           })}
         </View>
@@ -425,26 +468,37 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: fontSize.base, color: colors.textMuted, textAlign: 'center', lineHeight: 24 },
 
   categoryContent: { paddingHorizontal: 16, paddingBottom: 120 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  catCardWrap: { width: '48%', marginBottom: 12 },
   catCard: {
-    width: '47%',
-    backgroundColor: colors.card,
+    height: 142,
     borderRadius: borderRadius['2xl'],
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    alignItems: 'center',
+    overflow: 'hidden',
+    justifyContent: 'flex-end',
+    backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 4,
   },
-  catEmoji: { fontSize: 28, marginBottom: 6 },
-  catLabel: { fontSize: fontSize.base, fontWeight: '700', color: colors.text, textAlign: 'center' },
-  catCount: { fontSize: fontSize.xs, color: colors.primary, marginTop: 4, fontWeight: '600' },
+  catBadge: {
+    position: 'absolute', top: 10, left: 10,
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  catEmoji: { fontSize: 20 },
+  catCardContent: { padding: 12 },
+  catLabel: { fontSize: fontSize.base, fontWeight: '800', color: colors.white },
+  catCount: { fontSize: fontSize.xs, color: 'rgba(255,255,255,0.85)', marginTop: 2, fontWeight: '600' },
   miniProgressBg: {
     width: '100%', height: 4,
-    backgroundColor: `${colors.textMuted}20`,
+    backgroundColor: 'rgba(255,255,255,0.25)',
     borderRadius: 2, overflow: 'hidden', marginTop: 8,
   },
-  miniProgressFill: { height: '100%', backgroundColor: colors.success, borderRadius: 2 },
-  catMastered: { fontSize: 9, color: colors.success, fontWeight: '700', marginTop: 4 },
+  miniProgressFill: { height: '100%', backgroundColor: colors.accentLight, borderRadius: 2 },
+  catMastered: { fontSize: 9, color: colors.accentLight, fontWeight: '700', marginTop: 4 },
 
   searchBar: {
     flexDirection: 'row', alignItems: 'center',

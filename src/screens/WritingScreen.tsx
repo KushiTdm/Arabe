@@ -19,8 +19,9 @@ import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI } from '../api/aiClient';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CANVAS_SIZE = SCREEN_WIDTH - 32 - 32;
+import { CONTENT_WIDTH } from '../lib/dimensions';
+
+const CANVAS_SIZE = CONTENT_WIDTH - 32 - 32;
 
 interface Point { x: number; y: number; }
 interface Stroke { points: Point[]; }
