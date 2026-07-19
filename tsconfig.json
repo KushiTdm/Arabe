@@ -1,7 +1,9 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "types": []
+    "types": [],
+    "module": "esnext",
+    "moduleResolution": "bundler"
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods", "__tests__", "src/lib/AuthContext*"]
