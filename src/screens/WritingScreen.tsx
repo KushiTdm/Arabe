@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI } from '../api/aiClient';
+import { getAvailableCategories, getWordsForCategory } from '../data/multilingualVocab';
 
 import { CONTENT_WIDTH } from '../lib/dimensions';
 
@@ -44,6 +45,7 @@ interface AIGeneratedExercise {
 }
 
 type ScreenMode = 'learn' | 'practice' | 'ai_exercise';
+type TargetType = 'letter' | 'word';
 
 export default function WritingScreen() {
   const { language, addXP, updateProgress, currentProgress: progress, canUseAI, incrementCredits, creditsRemaining, activeProfile } =
@@ -58,11 +60,12 @@ export default function WritingScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [feedback, setFeedback] = useState<AIWritingFeedback | null>(null);
   const [mode, setMode] = useState<ScreenMode>('learn');
+  const [targetType, setTargetType] = useState<TargetType>('letter');
   const [isLoadingExercise, setIsLoadingExercise] = useState(false);
   const [aiExercise, setAiExercise] = useState<AIGeneratedExercise | null>(null);
 
-  const canvasRef = useRef<View>(null);
-  const canvasLayout = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
+  // true pendant qu'un trait est en cours → désactive le scroll de la page
+  const [canvasActive, setCanvasActive] = useState(false);
 
   const {
     addError,
@@ -71,19 +74,35 @@ export default function WritingScreen() {
     getAdaptiveExerciseSuggestion,
   } = useErrorTracker();
 
-  const letter = letters[currentIndex] ?? letters[0];
+  // Cibles d'écriture "mots" : vocabulaire statique de la langue active
+  const wordTargets = useMemo(
+    () => getAvailableCategories(language.code)
+      .flatMap(cat => getWordsForCategory(language.code, cat))
+      .map(w => ({ letter: w.native_word, name: w.french_translation, sound: w.transliteration })),
+    [language.code],
+  );
+  const hasWords = wordTargets.length > 0;
+  const targets = targetType === 'word' && hasWords ? wordTargets : letters;
+  const letter = targets[currentIndex] ?? targets[0];
 
   const speakLetter = (text: string) => {
     Speech.speak(text, { language: language.ttsLang, rate: 0.7 });
   };
 
   const handleNext = () => {
-    setCurrentIndex(i => (i + 1) % letters.length);
+    setCurrentIndex(i => (i + 1) % targets.length);
     clearCanvas();
   };
 
   const handlePrev = () => {
-    setCurrentIndex(i => (i - 1 + letters.length) % letters.length);
+    setCurrentIndex(i => (i - 1 + targets.length) % targets.length);
+    clearCanvas();
+  };
+
+  const switchTargetType = (type: TargetType) => {
+    if (type === targetType) return;
+    setTargetType(type);
+    setCurrentIndex(0);
     clearCanvas();
   };
 
@@ -96,31 +115,29 @@ export default function WritingScreen() {
   const isDrawing = useRef(false);
   const lastPoint = useRef<Point | null>(null);
 
-  const getRelativePoint = (pageX: number, pageY: number): Point | null => {
-    if (!canvasLayout.current) return null;
-    return {
-      x: pageX - canvasLayout.current.x,
-      y: pageY - canvasLayout.current.y,
-    };
-  };
-
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
+      // Ne jamais céder le geste à la ScrollView parente : sans ça, un trait
+      // vertical est interprété comme un scroll et le dessin s'interrompt.
+      onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: evt => {
-        const { pageX, pageY } = evt.nativeEvent;
-        const pt = getRelativePoint(pageX, pageY);
-        if (!pt) return;
+        // locationX/Y = coordonnées relatives au canvas lui-même : fiables
+        // même après un scroll (contrairement à pageX/pageY + measure()).
+        const { locationX, locationY } = evt.nativeEvent;
+        const pt = { x: locationX, y: locationY };
         isDrawing.current = true;
+        setCanvasActive(true);
         lastPoint.current = pt;
         setCurrentStroke([pt]);
       },
       onPanResponderMove: evt => {
         if (!isDrawing.current) return;
-        const { pageX, pageY } = evt.nativeEvent;
-        const pt = getRelativePoint(pageX, pageY);
-        if (!pt) return;
+        const { locationX, locationY } = evt.nativeEvent;
+        const pt = { x: locationX, y: locationY };
+        if (pt.x < 0 || pt.y < 0 || pt.x > CANVAS_SIZE || pt.y > CANVAS_SIZE) return;
         if (
           lastPoint.current &&
           Math.abs(pt.x - lastPoint.current.x) < 1 &&
@@ -131,6 +148,7 @@ export default function WritingScreen() {
       },
       onPanResponderRelease: () => {
         isDrawing.current = false;
+        setCanvasActive(false);
         lastPoint.current = null;
         setCurrentStroke(prev => {
           if (prev.length >= 2) setStrokes(s => [...s, { points: prev }]);
@@ -139,6 +157,7 @@ export default function WritingScreen() {
       },
       onPanResponderTerminate: () => {
         isDrawing.current = false;
+        setCanvasActive(false);
         lastPoint.current = null;
         setCurrentStroke(prev => {
           if (prev.length >= 2) setStrokes(s => [...s, { points: prev }]);
@@ -190,7 +209,7 @@ export default function WritingScreen() {
 
   const analyzeWriting = async () => {
     if (strokes.length === 0) {
-      Alert.alert(userName, `Dessine le caractère avant de demander une analyse !`);
+      Alert.alert(userName, `Dessine d'abord avant de demander une analyse !`);
       return;
     }
     if (!canUseAI()) {
@@ -216,10 +235,11 @@ export default function WritingScreen() {
       const errorsContext = getErrorsForAIPrompt();
       const targetLetter = mode === 'ai_exercise' && aiExercise ? aiExercise.target_letter : letter.letter;
       const targetName = mode === 'ai_exercise' && aiExercise ? aiExercise.target_letter_name : letter.name;
+      const targetKind = mode !== 'ai_exercise' && targetType === 'word' ? 'mot' : 'caractère';
 
       const res = await invokeAI<AIWritingFeedback>(
         `${language.aiSeedPrompt}
-Tu analyses l'écriture de ${userName} qui essaie d'écrire le caractère "${targetLetter}" (${targetName}) en ${language.familiarName}.
+Tu analyses l'écriture de ${userName} qui essaie d'écrire le ${targetKind} "${targetLetter}" (${targetName}) en ${language.familiarName}.
 
 Canvas: ${CANVAS_SIZE}x${CANVAS_SIZE}px.${language.rtl ? ' L\'écriture va de DROITE à GAUCHE.' : ''}
 Nombre de traits: ${strokes.length}
@@ -240,8 +260,8 @@ JSON: { "score": 7, "feedback": "...", "encouragement": "...", "tips": ["...", "
       if (res.score < 6) {
         await addError({
           type: 'writing',
-          category: `lettres ${language.familiarName}`,
-          description: `Difficulté avec le caractère ${targetLetter} (${targetName})`,
+          category: `${targetKind === 'mot' ? 'mots' : 'lettres'} ${language.familiarName}`,
+          description: `Difficulté avec le ${targetKind} ${targetLetter} (${targetName})`,
           correct_form: targetLetter,
           user_attempt: `${strokes.length} traits, score ${res.score}/10`,
           source: 'writing',
@@ -250,7 +270,7 @@ JSON: { "score": 7, "feedback": "...", "encouragement": "...", "tips": ["...", "
 
       await addSession({
         type: 'writing',
-        topic: `Caractère ${targetName}`,
+        topic: `${targetKind === 'mot' ? 'Mot' : 'Caractère'} ${targetName}`,
         duration_minutes: 1,
         score: res.score,
         errors_count: res.score < 6 ? 1 : 0,
@@ -327,7 +347,9 @@ JSON: {
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.headerTitle}>✍️ Écriture {language.familiarName}</Text>
-              <Text style={styles.headerSubtitle}>Caractère {currentIndex + 1}/{letters.length}</Text>
+              <Text style={styles.headerSubtitle}>
+                {targetType === 'word' ? 'Mot' : 'Caractère'} {currentIndex + 1}/{targets.length}
+              </Text>
             </View>
             <View style={styles.creditsTag}>
               <Ionicons name="flash" size={14} color={colors.primary} />
@@ -336,12 +358,36 @@ JSON: {
           </View>
 
           <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${((currentIndex + 1) / letters.length) * 100}%` }]} />
+            <View style={[styles.progressBarFill, { width: `${((currentIndex + 1) / targets.length) * 100}%` }]} />
           </View>
+
+          {/* Bascule Lettres / Mots */}
+          {hasWords && (
+            <View style={styles.targetTypeRow}>
+              <TouchableOpacity
+                style={[styles.targetTypeBtn, targetType === 'letter' && styles.targetTypeBtnActive]}
+                onPress={() => switchTargetType('letter')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.targetTypeText, targetType === 'letter' && styles.targetTypeTextActive]}>
+                  🔤 Lettres
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.targetTypeBtn, targetType === 'word' && styles.targetTypeBtnActive]}
+                onPress={() => switchTargetType('word')}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.targetTypeText, targetType === 'word' && styles.targetTypeTextActive]}>
+                  📖 Mots
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <Card style={styles.letterCard}>
             <TouchableOpacity onPress={() => speakLetter(letter.letter)} style={styles.letterContainer} activeOpacity={0.7}>
-              <Text style={styles.letterText}>{letter.letter}</Text>
+              <Text style={styles.letterText} adjustsFontSizeToFit numberOfLines={1}>{letter.letter}</Text>
               <View style={styles.speakHint}>
                 <Ionicons name="volume-high" size={14} color={colors.primary} />
                 <Text style={styles.speakHintText}>Toucher pour écouter</Text>
@@ -428,7 +474,7 @@ JSON: {
         contentContainerStyle={styles.practiceScrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        scrollEnabled={!isDrawing.current}
+        scrollEnabled={!canvasActive}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => { setMode('learn'); clearCanvas(); }} style={styles.backBtn} activeOpacity={0.7}>
@@ -470,7 +516,7 @@ JSON: {
 
         <Card style={styles.referenceCard}>
           <TouchableOpacity onPress={() => speakLetter(activeLetter.letter)} style={styles.refLetterBtn} activeOpacity={0.7}>
-            <Text style={styles.refLetter}>{activeLetter.letter}</Text>
+            <Text style={styles.refLetter} adjustsFontSizeToFit numberOfLines={1}>{activeLetter.letter}</Text>
             <Ionicons name="volume-high" size={12} color={colors.primary} style={{ marginTop: 2 }} />
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: 14 }}>
@@ -486,20 +532,16 @@ JSON: {
 
         <View style={styles.canvasWrapper}>
           <View
-            ref={canvasRef}
-            onLayout={() => {
-              if (canvasRef.current) {
-                canvasRef.current.measure((_x, _y, width, height, pageX, pageY) => {
-                  canvasLayout.current = { x: pageX, y: pageY, width, height };
-                });
-              }
-            }}
             style={[styles.canvas, { width: CANVAS_SIZE, height: CANVAS_SIZE }]}
             {...panResponder.panHandlers}
           >
             {showGuide && (
-              <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-                <Text style={[styles.guideLetterText, { fontSize: CANVAS_SIZE * 0.65 }]}>
+              <View pointerEvents="none" style={[StyleSheet.absoluteFill, { justifyContent: 'center', alignItems: 'center' }]}>
+                <Text
+                  style={[styles.guideLetterText, { fontSize: CANVAS_SIZE * 0.65, width: CANVAS_SIZE - 16 }]}
+                  adjustsFontSizeToFit
+                  numberOfLines={1}
+                >
                   {activeLetter.letter}
                 </Text>
               </View>
@@ -640,6 +682,16 @@ const styles = StyleSheet.create({
   secondaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: `${colors.primary}12`, borderRadius: borderRadius['2xl'], paddingVertical: 14, gap: 8, marginBottom: 16, borderWidth: 1, borderColor: `${colors.primary}25`, width: '100%' },
   secondaryBtnText: { color: colors.primary, fontSize: fontSize.base, fontWeight: '600' },
 
+  targetTypeRow: { flexDirection: 'row', gap: 8, marginBottom: 14, width: '100%' },
+  targetTypeBtn: {
+    flex: 1, alignItems: 'center', paddingVertical: 10,
+    borderRadius: borderRadius.xl, backgroundColor: colors.card,
+    borderWidth: 1.5, borderColor: colors.border,
+  },
+  targetTypeBtnActive: { borderColor: colors.primary, backgroundColor: `${colors.primary}10` },
+  targetTypeText: { fontSize: fontSize.sm, fontWeight: '700', color: colors.textMuted },
+  targetTypeTextActive: { color: colors.primary },
+
   navRow: { flexDirection: 'row', gap: 10, marginBottom: 16, width: '100%' },
   navBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.card, borderRadius: borderRadius.xl, paddingVertical: 12, gap: 6, borderWidth: 1, borderColor: colors.border },
   navBtnPrimary: { backgroundColor: colors.primary, borderColor: colors.primary },
@@ -663,7 +715,7 @@ const styles = StyleSheet.create({
 
   canvasWrapper: { alignItems: 'center', marginBottom: 14, width: '100%' },
   canvas: { backgroundColor: '#f9fafb', borderRadius: borderRadius.xl, borderWidth: 2, borderColor: colors.border, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-  guideLetterText: { position: 'absolute', fontWeight: '200', color: `${colors.textMuted}20`, textAlign: 'center' },
+  guideLetterText: { fontWeight: '200', color: `${colors.textMuted}20`, textAlign: 'center' },
   canvasActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingHorizontal: 4 },
   canvasActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6, paddingHorizontal: 12, borderRadius: borderRadius.full, backgroundColor: `${colors.textMuted}10` },
   canvasActionText: { fontSize: fontSize.xs, fontWeight: '600', color: colors.primary },

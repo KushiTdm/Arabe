@@ -46,6 +46,7 @@ interface AIMessage {
   native_text: string;
   transliteration: string;
   french_translation: string;
+  user_transcription?: string; // ce que l'élève a dit dans un message vocal
   suggestion?: string;
   pronunciation_feedback?: string;
   correction?: string;
@@ -122,20 +123,23 @@ export default function ConversationScreen() {
         : `Prof: ${m.native} - ${m.french}`)
       .join('\n');
 
-  const buildSimplePrompt = (topic: string, history: string, errorsCtx: string, userMessage: string) =>
+  const buildSimplePrompt = (topic: string, history: string, errorsCtx: string, userMessage: string, isVoice = false) =>
     `${language.aiSeedPrompt}
 Thème: "${topic}". Élève: ${userName}.
-${history ? `Historique récent:\n${history}\n` : ''}
+${history ? `Historique récent de la conversation:\n${history}\n` : ''}
 Message de ${userName}: ${userMessage}
 
 RÈGLES IMPORTANTES:
 - Réponds chaleureusement, corrige gentiment
+- FAIS AVANCER le dialogue : réagis d'abord à ce que dit ${userName}, puis rebondis avec UNE question ou un élément NOUVEAU du thème
+- INTERDIT de répéter ou reformuler une phrase déjà présente dans l'historique — chaque réponse doit apporter du contenu nouveau
+${isVoice ? `- Le message de ${userName} est un AUDIO joint : écoute-le, transcris ses mots dans user_transcription, évalue sa prononciation dans pronunciation_feedback` : ''}
 - Si ${userName} pose une question de grammaire/règle, mets should_create_course=true
 
 ${errorsCtx ? errorsCtx.substring(0, 300) : ''}
 
 Réponds avec ce JSON (COMPACT, sans espaces inutiles):
-{"native_text":"","transliteration":"","french_translation":"","pronunciation_feedback":"","correction":"","suggestion":"","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
+{"native_text":"","transliteration":"","french_translation":"","user_transcription":"","pronunciation_feedback":"","correction":"","suggestion":"","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
 
   const generateCourseContent = async (title: string, type: string, topic: string): Promise<AICourse | null> => {
     try {
@@ -340,10 +344,24 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
       if (!ok) return;
       const audioBase64 = await FileSystem.readAsStringAsync(audioUri, { encoding: FileSystem.EncodingType.Base64 });
       const res = await invokeAIWithAudio<AIMessage>(
-        buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(), `(message vocal de ${userName})`),
+        buildSimplePrompt(
+          selectedTopic.fr,
+          buildHistory(),
+          getErrorsForAIPrompt(),
+          '(audio joint — à transcrire)',
+          true,
+        ),
         audioBase64, 'audio/m4a',
       );
       if (!res?.native_text) throw new Error('Réponse IA vide.');
+      // La transcription entre dans le fil ET dans l'historique des prochains
+      // tours — sans elle, chaque tour vocal repartait de zéro et l'IA
+      // répétait la même réponse en boucle.
+      const transcription = res.user_transcription?.trim();
+      setMessages(prev => [...prev, {
+        role: 'user',
+        text: transcription ? `🎤 ${transcription}` : '🎤 (message vocal)',
+      }]);
       await handleAIResponse(res, selectedTopic.fr);
       await addXP(5);
       await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
