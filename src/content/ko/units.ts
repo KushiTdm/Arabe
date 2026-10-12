@@ -109,7 +109,7 @@ export const KO_UNITS: SimpleUnit[] = [
     goal: 'Dire ce qu\'on aime',
     phrases: [
       '저는 커피를 좋아해요|jeoneun keopireul joahaeyo|J\'aime le café|img:coffee', '저는 사과를 좋아해요|jeoneun sagwareul joahaeyo|J\'aime les pommes|img:apple', '저는 우유를 안 좋아해요|jeoneun uyureul an joahaeyo|Je n\'aime pas le lait|img:milk',
-      '좋아요|joayo|C\'est bien, j\'aime', '싫어요|sireoyo|Je n\'aime pas', '예뻐요|yeppeoyo|C\'est joli', '커요|keoyo|C\'est grand', '작아요|jagayo|C\'est petit', '이 집은 커요|i jibeun keoyo|Cette maison est grande|img:house', '뭘 좋아해요?|mwol joahaeyo|Qu\'est-ce que vous aimez ?',
+      '좋아요|joayo|C\'est bien, j\'aime', '싫어요|sireoyo|Je n\'aime pas, je ne veux pas', '예뻐요|yeppeoyo|C\'est joli', '커요|keoyo|C\'est grand', '작아요|jagayo|C\'est petit', '이 집은 커요|i jibeun keoyo|Cette maison est grande|img:house', '뭘 좋아해요?|mwol joahaeyo|Qu\'est-ce que vous aimez ?',
     ],
     qa: [['뭘 좋아해요?', '저는 커피를 좋아해요', '커요', '작아요']],
   },

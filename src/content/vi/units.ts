@@ -12,7 +12,7 @@ export const VI_READING: Omit<ReadingSpec, 'known'>[] = [
     goal: 'Entendre et reproduire trois tons',
     letters: ['ma', 'mà', 'má'],
     intro: [{ title: 'Six tons, une syllabe', body: 'Le vietnamien a 6 tons, marqués par des signes sur la voyelle. Une même syllabe change complètement de sens : ma (fantôme), mà (mais), má (joue). Trois d\'abord : ngang (plat, sans signe), huyền (grave, voix qui descend ` ), sắc (aigu, voix qui monte ´ ).' }],
-    words: ws(['ma|ton plat|fantôme', 'mà|ton grave|mais', 'má|ton aigu|joue', 'ba|ton plat|trois, papa', 'bà|ton grave|grand-mère', 'bá|ton aigu|oncle (frère aîné du père)', 'la|ton plat|crier', 'là|ton grave|être', 'lá|ton aigu|feuille']),
+    words: ws(['ma|ton plat|fantôme', 'mà|ton grave|mais', 'má|ton aigu|joue', 'ba|ton plat|trois, papa', 'bà|ton grave|grand-mère', 'cá|ton aigu|poisson', 'la|ton plat|crier', 'là|ton grave|être', 'lá|ton aigu|feuille']),
     pairs: [[w('ma|ton plat|fantôme'), w('má|ton aigu|joue'), 'Voix plate, puis voix qui monte.'], [w('ba|ton plat|trois'), w('bà|ton grave|grand-mère'), 'Plat contre grave : écoute la voix qui descend.']],
   },
   {
@@ -20,7 +20,7 @@ export const VI_READING: Omit<ReadingSpec, 'known'>[] = [
     goal: 'Entendre et reproduire les trois tons restants',
     letters: ['mả', 'mã', 'mạ'],
     intro: [{ title: 'Les trois tons difficiles', body: 'hỏi (mả ˀ) : descend puis remonte doucement. ngã (mã ~) : monte avec une rupture de voix au milieu. nặng (mạ . ) : bref, bas, voix qui s\'arrête net. Ces trois-là demandent de l\'écoute : utilise « Lent ».' }],
-    words: ws(['mả|ton interrogatif|tombe', 'mã|ton brisé|cheval, code', 'mạ|ton lourd|jeune plant de riz', 'bả|ton interrogatif|appât', 'bã|ton brisé|résidu', 'bạ|ton lourd|au hasard']),
+    words: ws(['mả|ton interrogatif|tombe', 'mã|ton brisé|code (cheval en sino-vietnamien)', 'mạ|ton lourd|jeune plant de riz', 'bả|ton interrogatif|appât empoisonné', 'bã|ton brisé|résidu', 'bạ|ton lourd|au hasard']),
     pairs: [[w('mả|ton interrogatif|tombe'), w('mạ|ton lourd|jeune plant'), 'Descend-remonte contre bref et bas.'], [w('mã|ton brisé|cheval'), w('má|ton aigu|joue'), 'Le brisé a une rupture, l\'aigu monte tout droit.']],
   },
   {
@@ -43,9 +43,9 @@ export const VI_UNITS: SimpleUnit[] = [
   {
     id: 'vi-1', theme: 'greetings', title: 'Saluer',
     goal: 'Saluer en adaptant le pronom (anh, chị, em)',
-    tip: { title: 'Pas de « tu » neutre', body: 'Le vietnamien choisit le pronom selon l\'âge et le sexe : anh (homme un peu plus âgé), chị (femme un peu plus âgée), em (plus jeune), bạn (ami de même âge). « Chào anh » = « bonjour (grand frère) ».' },
+    tip: { title: 'Pas de « tu » neutre', body: 'Le vietnamien choisit le pronom selon l\'âge et le sexe : anh (homme un peu plus âgé), chị (femme un peu plus âgée), em (plus jeune), bạn (ami de même âge) ; pour les personnes beaucoup plus âgées : chú, bác, cô. « Chào anh » = « bonjour (grand frère) ».' },
     phrases: [
-      'Xin chào|Bonjour|img:handshake', 'Chào anh|Bonjour (à un homme plus âgé)', 'Chào chị|Bonjour (à une femme plus âgée)', 'Chào em|Bonjour (à un plus jeune)', 'Tạm biệt|Au revoir|👋',
+      'Xin chào|Bonjour|img:handshake', 'Chào anh|Bonjour (à un homme un peu plus âgé)', 'Chào chị|Bonjour (à une femme un peu plus âgée)', 'Chào em|Bonjour (à une personne plus jeune)', 'Tạm biệt|Au revoir|👋',
       'Cảm ơn|Merci|🙏', 'Không có gì|De rien', 'Xin lỗi|Pardon, désolé', 'Vâng|Oui (poli)', 'Không|Non', 'Bạn khỏe không?|Comment vas-tu ?', 'Tôi khỏe, cảm ơn|Je vais bien, merci',
     ],
     qa: [['Bạn khỏe không?', 'Tôi khỏe, cảm ơn', 'Tạm biệt', 'Xin lỗi'], ['Cảm ơn', 'Không có gì', 'Xin chào', 'Tạm biệt']],

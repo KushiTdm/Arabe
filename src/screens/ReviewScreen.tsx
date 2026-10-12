@@ -5,7 +5,9 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Image,
 } from 'react-native';
+import { ILLUSTRATIONS } from '../theme/images';
 import { WordPic } from '../components/WordPic';
 import { WordFlipCard } from '../components/motion';
 import { Ionicons } from '@expo/vector-icons';
@@ -98,7 +100,7 @@ export default function ReviewScreen() {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.doneContainer}>
-          <Text style={styles.doneEmoji}>{knownCount === total ? '🏆' : '📚'}</Text>
+          <Image source={knownCount === total ? ILLUSTRATIONS.achievement : ILLUSTRATIONS.review} style={styles.doneArt} resizeMode="contain" />
           <Text style={styles.doneTitle}>Session terminée !</Text>
           <Text style={styles.doneScore}>{knownCount} / {total} retenues</Text>
           <Text style={styles.doneXp}>+{knownCount} XP</Text>
@@ -236,7 +238,7 @@ export default function ReviewScreen() {
           </TouchableOpacity>
         ) : (
           <View style={styles.emptyDueBox}>
-            <Text style={styles.emptyDueEmoji}>{deck.cards.length > 0 ? '✅' : '🗂️'}</Text>
+            <Image source={deck.cards.length > 0 ? ILLUSTRATIONS.success : ILLUSTRATIONS.empty} style={styles.emptyDueArt} resizeMode="contain" />
             <Text style={styles.emptyDueText}>
               {deck.cards.length > 0
                 ? 'Rien à réviser aujourd\'hui — reviens demain !'
@@ -345,6 +347,7 @@ const styles = StyleSheet.create({
   },
   emptyDueBox: { alignItems: 'center', paddingVertical: 18, gap: 8 },
   emptyDueEmoji: { fontSize: 40 },
+  emptyDueArt: { width: 96, height: 96 },
   emptyDueText: { fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 32 },
 
   deckList: { marginTop: 20, paddingHorizontal: 16 },
@@ -415,6 +418,7 @@ const styles = StyleSheet.create({
   // done
   doneContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   doneEmoji: { fontSize: 64, marginBottom: 12 },
+  doneArt: { width: 160, height: 160, marginBottom: 12 },
   doneTitle: { fontSize: fontSize['2xl'], fontWeight: '800', color: colors.text, marginBottom: 8 },
   doneScore: { fontSize: fontSize['3xl'], fontWeight: '800', color: colors.primary },
   doneXp: { fontSize: fontSize.lg, fontWeight: '700', color: colors.secondary, marginTop: 4 },

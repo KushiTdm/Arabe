@@ -47,21 +47,21 @@ export const ZH_READING: Omit<ReadingSpec, 'known'>[] = [
 export const ZH_UNITS: SimpleUnit[] = [
   {
     id: 'zh-1', theme: 'greetings', title: 'Saluer, se présenter', romanized: true,
-    goal: 'Dire bonjour, son nom et sa nationalité (是, 不)',
+    goal: 'Dire bonjour, son nom et sa nationalité (是， 不)',
     tip: { title: 'Pas de conjugaison', body: 'Le chinois n\'a ni conjugaison ni articles. « 我是学生 » = « moi être étudiant ». Pour nier, 不 devant le verbe : « 我不是学生 » (je ne suis pas étudiant).' },
     phrases: [
       '你好|nǐ hǎo|Bonjour, salut|img:handshake', '您好|nín hǎo|Bonjour (poli)', '早上好|zǎoshang hǎo|Bonjour (le matin)|img:sunrise', '晚上好|wǎnshang hǎo|Bonsoir|img:sunset', '再见|zàijiàn|Au revoir|👋',
-      '你叫什么名字?|nǐ jiào shénme míngzi|Comment t\'appelles-tu ?', '我叫安娜|wǒ jiào Ānnà|Je m\'appelle Anna', '我是法国人|wǒ shì Fǎguó rén|Je suis français(e)|🇫🇷', '我是学生|wǒ shì xuésheng|Je suis étudiant|img:student',
-      '你好吗?|nǐ hǎo ma|Comment vas-tu ?', '我很好,谢谢|wǒ hěn hǎo, xièxie|Très bien, merci', '很高兴认识你|hěn gāoxìng rènshi nǐ|Enchanté(e)', '谢谢|xièxie|Merci|🙏', '不客气|bú kèqi|De rien',
+      '你叫什么名字？|nǐ jiào shénme míngzi|Comment t\'appelles-tu ?', '我叫安娜|wǒ jiào Ānnà|Je m\'appelle Anna', '我是法国人|wǒ shì Fǎguó rén|Je suis français(e)|🇫🇷', '我是学生|wǒ shì xuésheng|Je suis étudiant|img:student',
+      '你好吗？|nǐ hǎo ma|Comment vas-tu ?', '我很好，谢谢|wǒ hěn hǎo, xièxie|Très bien, merci', '很高兴认识你|hěn gāoxìng rènshi nǐ|Enchanté(e)', '谢谢|xièxie|Merci|🙏', '不客气|bú kèqi|De rien',
     ],
     tokens: {
       '我叫安娜': ['我|wǒ', '叫|jiào', '安娜|Ānnà'],
       '我是法国人': ['我|wǒ', '是|shì', '法国人|Fǎguó rén'],
       '我是学生': ['我|wǒ', '是|shì', '学生|xuésheng'],
-      '你好吗?': ['你|nǐ', '好|hǎo', '吗|ma'],
+      '你好吗？': ['你|nǐ', '好|hǎo', '吗|ma'],
     },
     orders: ['我叫安娜', '我是法国人', '我是学生'],
-    qa: [['你叫什么名字?', '我叫安娜', '再见', '不客气'], ['你好吗?', '我很好,谢谢', '再见', '谢谢'], ['谢谢', '不客气', '你好', '再见']],
+    qa: [['你叫什么名字？', '我叫安娜', '再见', '不客气'], ['你好吗？', '我很好，谢谢', '再见', '谢谢'], ['谢谢', '不客气', '你好', '再见']],
   },
   {
     id: 'zh-2', theme: 'family', title: 'Famille et nombres', romanized: true,
@@ -70,21 +70,21 @@ export const ZH_UNITS: SimpleUnit[] = [
     phrases: [
       '一|yī|un (1)|1️⃣', '二|èr|deux (2)|2️⃣', '三|sān|trois (3)|3️⃣', '四|sì|quatre (4)|4️⃣', '五|wǔ|cinq (5)|5️⃣', '六|liù|six (6)|6️⃣', '七|qī|sept (7)|7️⃣', '八|bā|huit (8)|8️⃣', '九|jiǔ|neuf (9)|9️⃣', '十|shí|dix (10)|🔟',
       '爸爸|bàba|papa|img:father', '妈妈|māma|maman|img:mother', '哥哥|gēge|frère aîné|img:brother', '姐姐|jiějie|sœur aînée|img:sister',
-      '你有兄弟姐妹吗?|nǐ yǒu xiōngdì jiěmèi ma|As-tu des frères et sœurs ?', '我有两个哥哥|wǒ yǒu liǎng gè gēge|J\'ai deux grands frères', '这是我妈妈|zhè shì wǒ māma|Voici ma mère',
+      '你有兄弟姐妹吗？|nǐ yǒu xiōngdìjiěmèi ma|As-tu des frères et sœurs ?', '我有两个哥哥|wǒ yǒu liǎng gè gēge|J\'ai deux grands frères', '这是我妈妈|zhè shì wǒ māma|Voici ma mère',
     ],
     tokens: {
       '我有两个哥哥': ['我|wǒ', '有|yǒu', '两|liǎng', '个|gè', '哥哥|gēge'],
       '这是我妈妈': ['这|zhè', '是|shì', '我|wǒ', '妈妈|māma'],
     },
     orders: ['我有两个哥哥', '这是我妈妈'],
-    qa: [['你有兄弟姐妹吗?', '我有两个哥哥', '十', '五']],
+    qa: [['你有兄弟姐妹吗？', '我有两个哥哥', '十', '五']],
   },
   {
     id: 'zh-3', theme: 'daily_life', title: 'Heure et date', romanized: true,
     goal: 'Dire l\'heure : temps, lieu, puis verbe',
     tip: { title: 'Temps, lieu, verbe', body: 'L\'ordre est fixe : QUAND + OÙ + ACTION. « 我七点起床 » = « moi sept-heures me-lever » ; « 我在公司工作 » = « moi dans-l\'entreprise travailler ». Les mots de temps se placent avant le verbe.' },
     phrases: [
-      '现在几点?|xiànzài jǐ diǎn|Quelle heure est-il ?|img:clock', '现在三点|xiànzài sān diǎn|Il est trois heures', '今天|jīntiān|aujourd\'hui', '明天|míngtiān|demain', '昨天|zuótiān|hier',
+      '现在几点？|xiànzài jǐ diǎn|Quelle heure est-il ?|img:clock', '现在三点|xiànzài sān diǎn|Il est trois heures', '今天|jīntiān|aujourd\'hui', '明天|míngtiān|demain', '昨天|zuótiān|hier',
       '我七点起床|wǒ qī diǎn qǐchuáng|Je me lève à sept heures|⏰', '我八点吃早饭|wǒ bā diǎn chī zǎofàn|Je prends le petit-déjeuner à huit heures|🍳', '我在公司工作|wǒ zài gōngsī gōngzuò|Je travaille dans une entreprise|💼', '我十一点睡觉|wǒ shíyī diǎn shuìjiào|Je me couche à onze heures|😴',
     ],
     tokens: {
@@ -93,7 +93,7 @@ export const ZH_UNITS: SimpleUnit[] = [
       '我在公司工作': ['我|wǒ', '在|zài', '公司|gōngsī', '工作|gōngzuò'],
     },
     orders: ['我七点起床', '我八点吃早饭', '我在公司工作'],
-    qa: [['现在几点?', '现在三点', '今天', '明天']],
+    qa: [['现在几点？', '现在三点', '今天', '明天']],
   },
   {
     id: 'zh-4', theme: 'food', title: 'Manger et boire', romanized: true,
@@ -101,41 +101,41 @@ export const ZH_UNITS: SimpleUnit[] = [
     tip: { title: '想 et 要', body: '想 = avoir envie de, 要 = vouloir / commander : « 我想喝茶 » (j\'aimerais du thé), « 我要一杯咖啡 » (je prends un café). 杯 (bēi) est le classificateur des verres et tasses.' },
     phrases: [
       '水|shuǐ|eau|img:water', '茶|chá|thé|img:tea', '咖啡|kāfēi|café|img:coffee', '米饭|mǐfàn|riz|🍚', '面包|miànbāo|pain|img:bread', '鱼|yú|poisson|img:fish', '苹果|píngguǒ|pomme|img:apple', '鸡蛋|jīdàn|œuf|img:eggs',
-      '你想喝什么?|nǐ xiǎng hē shénme|Que veux-tu boire ?', '我想喝茶|wǒ xiǎng hē chá|J\'aimerais du thé', '我要一杯咖啡|wǒ yào yì bēi kāfēi|Je prends un café', '我很饿|wǒ hěn è|J\'ai faim|🍽️', '我很渴|wǒ hěn kě|J\'ai soif|img:drinking', '买单|mǎidān|L\'addition, s\'il vous plaît',
+      '你想喝什么？|nǐ xiǎng hē shénme|Que veux-tu boire ?', '我想喝茶|wǒ xiǎng hē chá|J\'aimerais du thé', '我要一杯咖啡|wǒ yào yì bēi kāfēi|Je prends un café', '我很饿|wǒ hěn è|J\'ai faim|🍽️', '我很渴|wǒ hěn kě|J\'ai soif|img:drinking', '买单|mǎidān|L\'addition, s\'il vous plaît',
     ],
     tokens: {
       '我想喝茶': ['我|wǒ', '想|xiǎng', '喝|hē', '茶|chá'],
       '我要一杯咖啡': ['我|wǒ', '要|yào', '一杯|yì bēi', '咖啡|kāfēi'],
-      '你想喝什么?': ['你|nǐ', '想|xiǎng', '喝|hē', '什么|shénme'],
+      '你想喝什么？': ['你|nǐ', '想|xiǎng', '喝|hē', '什么|shénme'],
     },
-    orders: ['我想喝茶', '我要一杯咖啡', '你想喝什么?'],
-    qa: [['你想喝什么?', '我想喝茶', '苹果', '鸡蛋']],
+    orders: ['我想喝茶', '我要一杯咖啡', '你想喝什么？'],
+    qa: [['你想喝什么？', '我想喝茶', '苹果', '鸡蛋']],
   },
   {
     id: 'zh-5', theme: 'daily_life', title: 'Acheter', romanized: true,
     goal: 'Demander un prix (多少钱)',
     phrases: [
-      '多少钱?|duōshao qián|Combien ça coûte ?|img:money', '五块钱|wǔ kuài qián|Cinq yuans', '太贵了|tài guì le|C\'est trop cher', '便宜一点|piányi yìdiǎn|Un peu moins cher, s\'il vous plaît', '我要这个|wǒ yào zhège|Je veux celui-ci',
-      '可以刷卡吗?|kěyǐ shuākǎ ma|Puis-je payer par carte ?|💳', '商店|shāngdiàn|magasin|🏪', '钱|qián|argent|img:money',
+      '多少钱？|duōshao qián|Combien ça coûte ?|img:money', '五块钱|wǔ kuài qián|Cinq yuans', '太贵了|tài guì le|C\'est trop cher', '便宜一点|piányi yìdiǎn|Un peu moins cher, s\'il vous plaît', '我要这个|wǒ yào zhège|Je veux celui-ci',
+      '可以刷卡吗？|kěyǐ shuākǎ ma|Puis-je payer par carte ?|💳', '商店|shāngdiàn|magasin|🏪', '钱|qián|argent|img:money',
     ],
     tokens: { '我要这个': ['我|wǒ', '要|yào', '这个|zhège'] },
     orders: ['我要这个'],
-    qa: [['多少钱?', '五块钱', '商店', '钱'], ['太贵了', '便宜一点', '商店', '钱']],
+    qa: [['多少钱？', '五块钱', '商店', '钱'], ['太贵了', '便宜一点', '商店', '钱']],
   },
   {
     id: 'zh-6', theme: 'places', title: 'Localiser', romanized: true,
     goal: 'Dire où se trouve quelque chose (在)',
     tip: { title: '在 = être situé', body: '« 医院在那儿 » = « l\'hôpital est là-bas ». 在 relie un objet à son lieu. « 哪儿 » (nǎr) = où, « 那儿 » (nàr) = là-bas.' },
     phrases: [
-      '医院在哪儿?|yīyuàn zài nǎr|Où est l\'hôpital ?', '医院在那儿|yīyuàn zài nàr|L\'hôpital est là-bas|img:hospital', '学校|xuéxiào|école|img:school', '图书馆|túshūguǎn|bibliothèque|img:library',
-      '左边|zuǒbian|à gauche|⬅️', '右边|yòubian|à droite|➡️', '一直走|yìzhí zǒu|Allez tout droit|⬆️', '很近|hěn jìn|C\'est près', '很远|hěn yuǎn|C\'est loin', '厕所在哪儿?|cèsuǒ zài nǎr|Où sont les toilettes ?',
+      '医院在哪儿？|yīyuàn zài nǎr|Où est l\'hôpital ?', '医院在那儿|yīyuàn zài nàr|L\'hôpital est là-bas|img:hospital', '学校|xuéxiào|école|img:school', '图书馆|túshūguǎn|bibliothèque|img:library',
+      '左边|zuǒbian|à gauche|⬅️', '右边|yòubian|à droite|➡️', '一直走|yìzhí zǒu|Allez tout droit|⬆️', '很近|hěn jìn|C\'est près', '很远|hěn yuǎn|C\'est loin', '厕所在哪儿？|cèsuǒ zài nǎr|Où sont les toilettes ?',
     ],
     tokens: {
-      '医院在哪儿?': ['医院|yīyuàn', '在|zài', '哪儿|nǎr'],
+      '医院在哪儿？': ['医院|yīyuàn', '在|zài', '哪儿|nǎr'],
       '医院在那儿': ['医院|yīyuàn', '在|zài', '那儿|nàr'],
-      '厕所在哪儿?': ['厕所|cèsuǒ', '在|zài', '哪儿|nǎr'],
+      '厕所在哪儿？': ['厕所|cèsuǒ', '在|zài', '哪儿|nǎr'],
     },
-    orders: ['医院在哪儿?', '医院在那儿', '厕所在哪儿?'],
-    qa: [['医院在哪儿?', '医院在那儿', '学校', '图书馆'], ['医院在哪儿?', '很近', '左边', '右边']],
+    orders: ['医院在哪儿？', '医院在那儿', '厕所在哪儿？'],
+    qa: [['医院在哪儿？', '医院在那儿', '学校', '图书馆'], ['医院在哪儿？', '很近', '左边', '右边']],
   },
 ];

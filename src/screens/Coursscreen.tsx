@@ -9,7 +9,9 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
+import { ILLUSTRATIONS } from '../theme/images';
 import { Ionicons } from '@expo/vector-icons';
 import { useSpeaker } from '../lib/useSpeaker';
 import { levelBrief } from '../lib/pedagogy';
@@ -573,7 +575,7 @@ JSON:
         {/* Empty state */}
         {filteredCourses.length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>📚</Text>
+            <Image source={ILLUSTRATIONS.empty} style={styles.emptyArt} resizeMode="contain" />
             <Text style={styles.emptyTitle}>Aucun cours encore</Text>
             <Text style={styles.emptyBody}>
               {filter === 'all'
@@ -698,6 +700,7 @@ const styles = StyleSheet.create({
 
   emptyState: { alignItems: 'center', paddingTop: 40, paddingHorizontal: 20 },
   emptyEmoji: { fontSize: 56, marginBottom: 16 },
+  emptyArt: { width: 140, height: 140, marginBottom: 16 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 10 },
   emptyBody: {
     fontSize: 15, color: colors.textMuted, textAlign: 'center',

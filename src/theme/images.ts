@@ -55,3 +55,47 @@ export const LESSON_IMAGES: Record<string, ImageSourcePropType> = {
   quiz:         require('../../assets/images/lesson-quiz.jpg'),
   review:       require('../../assets/images/lesson-review.jpg'),
 };
+
+// ─── Illustrations & icônes générées (assets/illustrations, assets/categories) ──
+
+/** Logo de l'app (assets/icon.png). */
+export const APP_LOGO: ImageSourcePropType = require('../../assets/icon.png');
+
+/** Illustrations d'écrans : onboarding, fin de séance, états vides. */
+export const ILLUSTRATIONS = {
+  welcome:       require('../../assets/illustrations/onboarding-welcome.png'),
+  path:          require('../../assets/illustrations/onboarding-path.png'),
+  voice:         require('../../assets/illustrations/onboarding-voice.png'),
+  success:       require('../../assets/illustrations/success.png'),
+  streak:        require('../../assets/illustrations/streak.png'),
+  empty:         require('../../assets/illustrations/empty-state.png'),
+  levelUnlocked: require('../../assets/illustrations/level-unlocked.png'),
+  review:        require('../../assets/illustrations/review.png'),
+  achievement:   require('../../assets/illustrations/achievement.png'),
+} as const satisfies Record<string, ImageSourcePropType>;
+
+/** Icône par id de catégorie de vocabulaire. */
+export const CATEGORY_ICONS: Record<string, ImageSourcePropType> = {
+  greetings:  require('../../assets/categories/greetings.png'),
+  numbers:    require('../../assets/categories/numbers.png'),
+  family:     require('../../assets/categories/family.png'),
+  food:       require('../../assets/categories/food.png'),
+  travel:     require('../../assets/categories/travel.png'),
+  daily_life: require('../../assets/categories/daily-life.png'),
+  colors:     require('../../assets/categories/colors.png'),
+  animals:    require('../../assets/categories/animals.png'),
+  body:       require('../../assets/categories/body.png'),
+  emotions:   require('../../assets/categories/emotions.png'),
+  religion:   require('../../assets/categories/religion.png'),
+  work:       require('../../assets/categories/work.png'),
+};
+
+/** Icône par type de leçon / d'activité. */
+export const ACTIVITY_ICONS = {
+  alphabet:     require('../../assets/categories/alphabet.png'),
+  conversation: require('../../assets/categories/conversation.png'),
+  cours:        require('../../assets/categories/course.png'),
+  quiz:         require('../../assets/categories/quiz.png'),
+  review:       require('../../assets/categories/review.png'),
+  writing:      require('../../assets/categories/writing.png'),
+} as const satisfies Record<string, ImageSourcePropType>;

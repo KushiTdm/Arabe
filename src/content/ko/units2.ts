@@ -29,10 +29,10 @@ export const KO_A2: SimpleUnit[] = lv('intermediate', [
     goal: 'Employer -아/어 주세요 et -(으)ㄹ 수 있다',
     tip: { title: 'Demander, pouvoir', body: '-아/어 주세요 = « s\'il vous plaît, faites… » (« 도와 주세요 »). -(으)ㄹ 수 있다/없다 = pouvoir / ne pas pouvoir (« 할 수 있어요 »). -아/어도 돼요? = est-ce permis de… ?' },
     phrases: [
-      '도와 주세요|dowa juseyo|Aidez-moi, s\'il vous plaît', '천천히 말해 주세요|cheoncheonhi malhae juseyo|Parlez lentement, s\'il vous plaît', '다시 한 번 말해 주세요|dasi han beon malhae juseyo|Répétez, s\'il vous plaît', '한국어를 할 수 있어요|hangugeoreul hal su isseoyo|Je sais parler coréen',
+      '도와주세요|dowajuseyo|Aidez-moi, s\'il vous plaît', '천천히 말해 주세요|cheoncheonhi malhae juseyo|Parlez lentement, s\'il vous plaît', '다시 한 번 말해 주세요|dasi han beon malhae juseyo|Répétez, s\'il vous plaît', '한국어를 할 수 있어요|hangugeoreul hal su isseoyo|Je sais parler coréen',
       '수영할 수 없어요|suyeonghal su eopseoyo|Je ne sais pas nager', '여기에 앉아도 돼요?|yeogie anjado dwaeyo|Puis-je m\'asseoir ici ?', '네, 앉으세요|ne anjeuseyo|Oui, asseyez-vous', '사진을 찍어도 돼요?|sajineul jjigeodo dwaeyo|Puis-je prendre une photo ?',
     ],
-    qa: [['여기에 앉아도 돼요?', '네, 앉으세요', '도와 주세요', '수영할 수 없어요']],
+    qa: [['여기에 앉아도 돼요?', '네, 앉으세요', '도와주세요', '수영할 수 없어요']],
   },
   {
     id: 'ko-10', theme: 'daily_life', title: 'Expliquer, comparer', romanized: true,

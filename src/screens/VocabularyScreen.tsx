@@ -21,7 +21,7 @@ import { WordFlipCard, SpeakingWaves } from '../components/motion';
 import { LEXICON_THEMES } from '../content/lexicon';
 import { Card } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
-import { CATEGORY_IMAGES } from '../theme/images';
+import { CATEGORY_IMAGES, CATEGORY_ICONS } from '../theme/images';
 import { useProfile } from '../lib/ProfileContext';
 import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
 import { useVocabAudio, vocabAudioStorageKey } from '../lib/useVocabAudio';
@@ -442,7 +442,9 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                     style={StyleSheet.absoluteFill as any}
                   />
                   <View style={styles.catBadge}>
-                    <Text style={styles.catEmoji}>{meta.emoji}</Text>
+                    {CATEGORY_ICONS[cat]
+                      ? <Image source={CATEGORY_ICONS[cat]} style={styles.catIcon} resizeMode="contain" />
+                      : <Text style={styles.catEmoji}>{meta.emoji}</Text>}
                   </View>
                   <View style={styles.catCardContent}>
                     <Text style={styles.catLabel}>{meta.label}</Text>
@@ -513,6 +515,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   catEmoji: { fontSize: 20 },
+  catIcon: { width: 30, height: 30 },
   catCardContent: { padding: 12 },
   catLabel: { fontSize: fontSize.base, fontWeight: '800', color: colors.white },
   catCount: { fontSize: fontSize.xs, color: 'rgba(255,255,255,0.85)', marginTop: 2, fontWeight: '600' },

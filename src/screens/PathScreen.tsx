@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -8,6 +8,7 @@ import { usePathProgress } from '../lib/usePathProgress';
 import {
   LEVEL_LABEL, STEP_ICON, stepLabel, type PathLevel, type PathUnit,
 } from '../data/learningPath';
+import { ILLUSTRATIONS } from '../theme/images';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 const LEVEL_ORDER: PathLevel[] = ['beginner', 'intermediate', 'advanced'];
@@ -40,6 +41,12 @@ export default function PathScreen() {
       <View style={styles.barBg}><View style={[styles.barFill, { width: `${pct}%` as any }]} /></View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {path.finished && (
+          <View style={styles.finishedBanner}>
+            <Image source={ILLUSTRATIONS.levelUnlocked} style={styles.finishedArt} resizeMode="contain" />
+            <Text style={styles.finishedText}>Parcours terminé, bravo !</Text>
+          </View>
+        )}
         {LEVEL_ORDER.map(level => {
           const units = path.units.filter(u => u.level === level);
           if (units.length === 0) return null;
@@ -119,6 +126,9 @@ function UnitRow(props: {
 }
 
 const styles = StyleSheet.create({
+  finishedBanner: { alignItems: 'center', marginBottom: spacing.lg },
+  finishedArt: { width: 120, height: 120 },
+  finishedText: { fontSize: fontSize.base, fontWeight: '700', color: colors.text, marginTop: 4 },
   safe:        { flex: 1, backgroundColor: colors.background },
   header:      { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
   backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: `${colors.textMuted}15`, justifyContent: 'center', alignItems: 'center' },

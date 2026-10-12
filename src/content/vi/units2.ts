@@ -19,10 +19,10 @@ export const VI_A2: SimpleUnit[] = lv('intermediate', [
     goal: 'Comparer avec hơn et nhất',
     tip: { title: 'hơn et nhất', body: 'Comparatif : adjectif + « hơn » (« đắt hơn » = plus cher). Superlatif : adjectif + « nhất » (« đẹp nhất » = le plus beau). « So với » ou « hơn + nom » indique l\'élément de comparaison.' },
     phrases: [
-      'Hà Nội lạnh hơn Sài Gòn|Hanoï est plus froid que Saïgon', 'Cái này đắt hơn cái kia|Celui-ci est plus cher que celui-là', 'Đây là cái đẹp nhất|C\'est le plus beau', 'Tôi cao hơn anh trai|Je suis plus grand que mon frère|img:brother', 'Phở ngon nhất|Le phở est le meilleur',
+      'Hà Nội lạnh hơn Sài Gòn|Hanoï est plus froid que Saïgon', 'Cái này đắt hơn cái kia|Celui-ci est plus cher que celui-là', 'Đây là cái đẹp nhất|C\'est le plus beau', 'Tôi cao hơn anh trai tôi|Je suis plus grand que mon frère|img:brother', 'Phở ngon nhất|Le phở est le meilleur',
       'Hôm nay nóng hơn hôm qua|Aujourd\'hui il fait plus chaud qu\'hier', 'Cái nào rẻ nhất?|Lequel est le moins cher ?', 'Cái này rẻ nhất|Celui-ci est le moins cher',
     ],
-    qa: [['Cái nào rẻ nhất?', 'Cái này rẻ nhất', 'Tôi cao hơn anh trai', 'Hà Nội lạnh hơn Sài Gòn']],
+    qa: [['Cái nào rẻ nhất?', 'Cái này rẻ nhất', 'Tôi cao hơn anh trai tôi', 'Hà Nội lạnh hơn Sài Gòn']],
   },
   {
     id: 'vi-9', theme: 'body', title: 'Santé',
@@ -70,7 +70,7 @@ export const VI_B1: SimpleUnit[] = lv('advanced', [
     goal: 'Raconter un souvenir ou un projet',
     phrases: [
       'Hồi nhỏ tôi sống ở quê|Enfant, je vivais à la campagne', 'Năm ngoái tôi đã đi Việt Nam|L\'année dernière je suis allé au Vietnam', 'Đầu tiên chúng tôi đến Hà Nội|D\'abord nous sommes arrivés à Hanoï', 'Sau đó chúng tôi đi Huế|Ensuite nous sommes allés à Huế', 'Cuối cùng chúng tôi về nhà|Enfin nous sommes rentrés',
-      'Sang năm tôi sẽ đi lại|L\'année prochaine j\'y retournerai', 'Chuyến đi thế nào?|Comment était le voyage ?', 'Rất tuyệt|C\'était génial',
+      'Sang năm tôi sẽ quay lại|L\'année prochaine je reviendrai', 'Chuyến đi thế nào?|Comment était le voyage ?', 'Rất tuyệt|C\'était génial',
     ],
     qa: [['Chuyến đi thế nào?', 'Rất tuyệt', 'Sau đó chúng tôi đi Huế', 'Cuối cùng chúng tôi về nhà']],
   },

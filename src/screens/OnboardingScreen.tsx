@@ -8,9 +8,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useProfile } from '../lib/ProfileContext';
 import { SUPPORTED_LANGUAGES } from '../lib/languages';
-import { HERO_IMAGE, LANGUAGE_THUMBS } from '../theme/images';
+import { HERO_IMAGE, LANGUAGE_THUMBS, APP_LOGO, ILLUSTRATIONS } from '../theme/images';
 import { Animated, FadeInDown, FadeInUp } from '../components/anim';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
+
+const INTRO_SLIDES = [
+  { image: ILLUSTRATIONS.welcome, title: 'Apprends 11 langues', body: 'Arabe, espagnol, japonais, coréen… choisis la tienne et progresse à ton rythme.' },
+  { image: ILLUSTRATIONS.path, title: 'Un parcours guidé', body: 'Des unités courtes, du débutant au niveau avancé, avec quiz et révisions.' },
+  { image: ILLUSTRATIONS.voice, title: 'Parle à voix haute', body: 'Écoute les mots, répète-les et entraîne ta prononciation.' },
+] as const;
 
 const AVATARS = [
   '🦁', '🐬', '🦊', '🐧', '🦋', '🐙',
@@ -33,7 +39,8 @@ function diffLabel(d: string) {
 
 export default function OnboardingScreen() {
   const { createProfile } = useProfile();
-  const [step, setStep] = useState<1 | 2>(1);
+  const [step, setStep] = useState<0 | 1 | 2>(0);
+  const [slide, setSlide] = useState(0);
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState(AVATARS[0]);
   const [selectedLang, setSelectedLang] = useState('ar');
@@ -51,6 +58,39 @@ export default function OnboardingScreen() {
       setCreating(false);
     }
   };
+
+  // ── Étape 0 : introduction en 3 écrans ───────────────────────────────────
+  if (step === 0) {
+    const s = INTRO_SLIDES[slide];
+    const last = slide === INTRO_SLIDES.length - 1;
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.introWrap}>
+          <TouchableOpacity style={styles.skipBtn} onPress={() => setStep(1)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Text style={styles.skipText}>Passer</Text>
+          </TouchableOpacity>
+          <Animated.View key={slide} entering={FadeInUp.duration(400)} style={styles.introBody}>
+            <Image source={s.image} style={styles.introArt} resizeMode="contain" />
+            <Text style={styles.introTitle}>{s.title}</Text>
+            <Text style={styles.introText}>{s.body}</Text>
+          </Animated.View>
+          <View style={styles.dots}>
+            {INTRO_SLIDES.map((_, i) => (
+              <View key={i} style={[styles.dot, i === slide && styles.dotActive]} />
+            ))}
+          </View>
+          <TouchableOpacity
+            style={styles.btn}
+            onPress={() => (last ? setStep(1) : setSlide(slide + 1))}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.btnText}>{last ? 'Commencer' : 'Suivant'}</Text>
+            <Ionicons name="arrow-forward" size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // ── Étape 1 : prénom + avatar ─────────────────────────────────────────────
   if (step === 1) {
@@ -70,8 +110,8 @@ export default function OnboardingScreen() {
                 style={StyleSheet.absoluteFill as any}
               />
               <View style={styles.heroContent}>
-                <Text style={styles.heroLogo}>🌍</Text>
-                <Text style={styles.heroAppName}>LinguaLearn</Text>
+                <Image source={APP_LOGO} style={styles.heroLogo} resizeMode="cover" />
+                <Text style={styles.heroAppName}>Polyglotte</Text>
                 <Text style={styles.heroTagline}>Apprends une langue, voyage avec les mots</Text>
               </View>
             </Animated.View>
@@ -198,7 +238,7 @@ const styles = StyleSheet.create({
     marginBottom: 24, justifyContent: 'flex-end', backgroundColor: colors.primary,
   },
   heroContent: { padding: 18 },
-  heroLogo: { fontSize: 34 },
+  heroLogo: { width: 44, height: 44, borderRadius: 11 },
   heroAppName: { fontSize: fontSize['3xl'], fontWeight: '800', color: colors.white, marginTop: 2 },
   heroTagline: { fontSize: fontSize.sm, color: 'rgba(255,255,255,0.9)', marginTop: 4 },
 
@@ -206,6 +246,17 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: fontSize.base, color: colors.textMuted, marginBottom: 32 },
 
   backBtn: { marginBottom: 16 },
+
+  introWrap: { flex: 1, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 },
+  skipBtn: { alignSelf: 'flex-end', padding: 6 },
+  skipText: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' },
+  introBody: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  introArt: { width: 260, height: 260, marginBottom: 24 },
+  introTitle: { fontSize: fontSize['3xl'], fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 10 },
+  introText: { fontSize: fontSize.base, color: colors.textMuted, textAlign: 'center', lineHeight: 22, paddingHorizontal: 12 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 12 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+  dotActive: { width: 22, backgroundColor: colors.primary },
 
   section: { marginBottom: 28 },
   label: {

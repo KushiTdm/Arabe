@@ -6,6 +6,8 @@ import {
 } from '../data/multilingualVocab';
 import type { LanguageConfig, AlphabetLetter } from './languages';
 import { levelTag, type Level } from './pedagogy';
+import { hasIntegratedCourse, getLessons } from '../content';
+import { getLexicon, getLexiconCategories, getLexiconForUnit, LEXICON_THEMES } from '../content/lexicon';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -16,6 +18,11 @@ export interface QuizQuestion {
   choices: string[];
   correctIndex: number;
   explanation: string;
+  /** Photo du mot (clé de content/images.ts) ou emoji de repli, affichée au-dessus de la question. */
+  image?: string;
+  emoji?: string;
+  /** Question à l'oreille : lire `speakText` automatiquement. */
+  listen?: boolean;
 }
 
 export const QUIZ_SIZE = 8;
@@ -197,5 +204,100 @@ export function generateLetterQuiz(
       correctIndex: choices.indexOf(correct),
       explanation: `${target.letter} = ${correct}${target.example ? ` — ex. ${target.example}` : ''}`,
     };
+  });
+}
+
+
+// ─── Thèmes de quiz tirés du lexique des leçons (sans IA, sans crédit) ───────
+
+export interface QuizTheme {
+  id: string;
+  label: string;
+  emoji: string;
+  /** Nombre de mots testables. */
+  count: number;
+  kind: 'theme' | 'unit' | 'mix' | 'deck';
+  subtitle?: string;
+}
+
+const LEVEL_EMOJI: Record<string, string> = { beginner: '🟢', intermediate: '🟡', advanced: '🔴' };
+const LEVEL_NAME: Record<string, string> = { beginner: 'A1', intermediate: 'A2', advanced: 'B1' };
+
+/** Thèmes disponibles pour une langue au contenu intégré (≥ 4 mots chacun). */
+export function getQuizThemes(code: string): { themes: QuizTheme[]; units: QuizTheme[]; mix: QuizTheme | null } {
+  if (!hasIntegratedCourse(code)) return { themes: [], units: [], mix: null };
+  const all = getLexicon(code);
+  const themes = getLexiconCategories(code)
+    .map(id => ({ id, words: all.filter(w => w.category === id) }))
+    .filter(t => t.words.length >= 4)
+    .map<QuizTheme>(t => ({
+      id: t.id, kind: 'theme', count: t.words.length,
+      label: LEXICON_THEMES[t.id]?.label ?? t.id, emoji: LEXICON_THEMES[t.id]?.emoji ?? '📚',
+    }));
+  const units = getLessons(code)
+    .map(l => ({ l, n: getLexiconForUnit(code, l.id).length }))
+    .filter(x => x.n >= 4)
+    .map<QuizTheme>(({ l, n }) => ({
+      id: `unit:${l.id}`, kind: 'unit', count: n, label: l.title,
+      emoji: LEVEL_EMOJI[l.level] ?? '📘', subtitle: LEVEL_NAME[l.level],
+    }));
+  const mix = all.length >= 8
+    ? { id: 'mix:all', kind: 'mix' as const, count: all.length, label: 'Tout mélangé', emoji: '🎲', subtitle: 'Tous les mots des leçons' }
+    : null;
+  return { themes, units, mix };
+}
+
+/** Mots d'un thème de quiz (thème lexical, unité, ou tout le lexique). */
+export function getThemeWords(code: string, themeId: string): VocabWord[] {
+  if (themeId === 'mix:all') return getLexicon(code);
+  if (themeId.startsWith('unit:')) return getLexiconForUnit(code, themeId.slice(5));
+  return getWordsForCategory(code, themeId);
+}
+
+/**
+ * Quiz mêlant quatre types de questions : sens du mot, traduction vers la langue,
+ * photo (« comment dit-on ceci ? ») et écoute. Les photos et l'audio servent
+ * seulement quand le mot en a.
+ */
+export function generateWordsQuiz(words: VocabWord[], pool: VocabWord[], size: number = QUIZ_SIZE): QuizQuestion[] {
+  const usable = words.filter(w => w.native_word && w.french_translation);
+  if (usable.length < 4) return [];
+  const bigPool = pool.length >= 8 ? pool : usable;
+
+  return shuffle(usable).slice(0, size).map((word, i) => {
+    const kinds: Array<'nf' | 'fn' | 'listen' | 'img'> = ['nf', 'fn', 'listen'];
+    if (word.img || word.emoji) kinds.push('img', 'img');
+    const kind = kinds[(i + Math.floor(Math.random() * kinds.length)) % kinds.length];
+
+    const toFrench = () => {
+      const distractors = pickDistractors(bigPool, word.french_translation, 'french_translation');
+      const choices = shuffle([word.french_translation, ...distractors]);
+      return { choices, correctIndex: choices.indexOf(word.french_translation) };
+    };
+    const toNative = () => {
+      const distractors = pickDistractors(bigPool, word.native_word, 'native_word');
+      const choices = shuffle([word.native_word, ...distractors]);
+      return { choices, correctIndex: choices.indexOf(word.native_word) };
+    };
+
+    if (kind === 'img') {
+      return {
+        question: 'Comment dit-on ceci ?',
+        image: word.img, emoji: word.emoji, ...toNative(), explanation: explanationFor(word),
+      };
+    }
+    if (kind === 'listen') {
+      return {
+        question: 'Que signifie ce que tu entends ?',
+        speakText: word.native_word, listen: true, ...toFrench(), explanation: explanationFor(word),
+      };
+    }
+    if (kind === 'nf') {
+      return {
+        question: `Que signifie « ${word.native_word} » ?`,
+        speakText: word.native_word, ...toFrench(), explanation: explanationFor(word),
+      };
+    }
+    return { question: `Comment dit-on « ${word.french_translation} » ?`, ...toNative(), explanation: explanationFor(word) };
   });
 }

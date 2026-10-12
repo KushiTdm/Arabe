@@ -11,7 +11,7 @@ export const JA_A2: SimpleUnit[] = lv('intermediate', [
     tip: { title: 'ます → ました', body: 'Le passé poli remplace ます par ました : たべます → たべました (j\'ai mangé). La négation du passé : ませんでした (« たべませんでした »).' },
     phrases: [
       'きのうえいがをみました|kinō eiga o mimashita|Hier j\'ai vu un film', 'がっこうへいきました|gakkō e ikimashita|Je suis allé à l\'école|img:school', 'ひるごはんをたべました|hirugohan o tabemashita|J\'ai déjeuné', 'なにをしましたか|nani o shimashita ka|Qu\'avez-vous fait ?',
-      'しゅうまつともだちにあいました|shūmatsu tomodachi ni aimashita|Ce week-end j\'ai vu un ami', 'きのう|kinō|hier', 'せんしゅう|senshū|la semaine dernière', 'あさ|asa|le matin',
+      'しゅうまつにともだちにあいました|shūmatsu ni tomodachi ni aimashita|Ce week-end j\'ai vu un ami', 'きのう|kinō|hier', 'せんしゅう|senshū|la semaine dernière', 'あさ|asa|le matin',
     ],
     tokens: {
       'がっこうへいきました': ['がっこう|gakkō', 'へ|e', 'いきました|ikimashita'],

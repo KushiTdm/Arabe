@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import type { ImageSourcePropType } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +13,7 @@ import { LEVEL_LABEL, STEP_ICON } from '../data/learningPath';
 import { AnimatedBar } from '../components/motion';
 import { LoadingSpinner } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
-import { LANGUAGE_IMAGES } from '../theme/images';
+import { LANGUAGE_IMAGES, ILLUSTRATIONS } from '../theme/images';
 import { colors, borderRadius, fontSize } from '../theme';
 
 const HERO_CONTENT_HEIGHT = 112;
@@ -72,7 +73,7 @@ export default function HomeScreen() {
         <View style={styles.body}>
           {/* ── Statistiques sur une seule ligne ────────────────────── */}
           <Animated.View entering={FadeInDown.delay(60).springify().damping(16)} style={styles.statsRow}>
-            <Stat icon="flame" color={colors.secondary} value={progress?.streak_days ?? 0} label="jours" />
+            <Stat icon="flame" image={ILLUSTRATIONS.streak} color={colors.secondary} value={progress?.streak_days ?? 0} label="jours" />
             <View style={styles.statDivider} />
             <Stat icon="flash" color={colors.primary} value={progress?.xp_points ?? 0} label="XP" />
             <View style={styles.statDivider} />
@@ -185,10 +186,12 @@ const SHORT_LABEL: Record<string, string> = {
   read: 'Signes', readquiz: 'Test', vocab: 'Mots', speak: 'Dialogue', quiz: 'Quiz', lesson: 'Leçon',
 };
 
-function Stat({ icon, color, value, label }: { icon: string; color: string; value: number; label: string }) {
+function Stat({ icon, image, color, value, label }: { icon: string; image?: ImageSourcePropType; color: string; value: number; label: string }) {
   return (
     <View style={styles.stat}>
-      <Ionicons name={icon as any} size={16} color={color} />
+      {image
+        ? <Image source={image} style={{ width: 20, height: 20 }} resizeMode="contain" />
+        : <Ionicons name={icon as any} size={16} color={color} />}
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>

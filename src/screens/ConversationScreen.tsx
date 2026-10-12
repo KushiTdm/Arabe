@@ -21,7 +21,7 @@ import { useErrorTracker } from '../lib/useErrorTracker';
 import { useCourses } from '../lib/useCourses';
 import { Card, LoadingSpinner } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
-import { CATEGORY_IMAGES } from '../theme/images';
+import { CATEGORY_IMAGES, CATEGORY_ICONS } from '../theme/images';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 import { invokeAI, invokeAIWithAudio } from '../api/aiClient';
 
@@ -482,7 +482,9 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
                         />
                       </>
                     )}
-                    <Text style={styles.topicEmoji}>{topic.emoji}</Text>
+                    {CATEGORY_ICONS[topic.id]
+                      ? <Image source={CATEGORY_ICONS[topic.id]} style={styles.topicIcon} resizeMode="contain" />
+                      : <Text style={styles.topicEmoji}>{topic.emoji}</Text>}
                     <Text style={[
                       styles.topicNative,
                       !isExercise && styles.topicNativeOnImage,
@@ -737,6 +739,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   topicEmoji: { fontSize: 26, marginBottom: 4 },
+  topicIcon: { width: 34, height: 34, marginBottom: 4 },
   topicNative: { fontSize: 15, fontWeight: '700', color: colors.text, textAlign: 'center' },
   topicNativeOnImage: { color: colors.white, textAlign: 'left', textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   topicFrench: { fontSize: 13, color: colors.textMuted, marginTop: 2 },

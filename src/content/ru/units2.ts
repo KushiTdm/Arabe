@@ -9,7 +9,7 @@ export const RU_A2: SimpleUnit[] = lv('intermediate', [
     goal: 'Employer le datif (мне нужно)',
     tip: { title: 'Le datif des besoins et de l\'âge', body: 'En russe, on dit « à moi » : « Мне двадцать лет » (à moi vingt ans), « Мне нужно работать » (à moi il faut travailler), « Мне холодно » (à moi froid). Pronoms au datif : мне, тебе, ему, ей, нам.' },
     phrases: [
-      'Мне двадцать лет|mnié dvatsat\' liét|J\'ai vingt ans', 'Сколько тебе лет?|skol\'ka tibié liét|Quel âge as-tu ?', 'Мне нужно работать|mnié noujna rabotat\'|Je dois travailler|💼', 'Мне нравится кофе|mnié nravitsa kofié|J\'aime le café|img:coffee',
+      'Мне двадцать лет|mnié dvatsat\' liét|J\'ai vingt ans', 'Сколько тебе лет?|skol\'ka tibié liét|Quel âge as-tu ?', 'Мне нужно работать|mnié noujna rabotat\'|Je dois travailler|💼', 'Мне нравится кофе|mnié nravitsa kofé|J\'aime le café|img:coffee',
       'Мне холодно|mnié kholadna|J\'ai froid', 'Мне жарко|mnié jarka|J\'ai chaud', 'Мне надо идти|mnié nada iti|Je dois y aller', 'Тебе нужна помощь?|tibié noujna pomochtch\'|As-tu besoin d\'aide ?', 'Мне нужна помощь|mnié noujna pomochtch\'|J\'ai besoin d\'aide',
     ],
     qa: [['Сколько тебе лет?', 'Мне двадцать лет', 'Мне холодно', 'Мне жарко'], ['Тебе нужна помощь?', 'Мне нужна помощь', 'Мне холодно', 'Мне надо идти']],
@@ -20,7 +20,7 @@ export const RU_A2: SimpleUnit[] = lv('intermediate', [
     tip: { title: 'L\'instrumental', body: 'Il exprime l\'accompagnement (« с братом » = avec mon frère), le moyen (« ручкой » = avec un stylo) et la profession après « работать » ou « быть » : « Я работаю врачом » (je travaille comme médecin). Terminaisons : -ом / -ем (masc.), -ой / -ей (fém.).' },
     phrases: [
       'Я работаю врачом|ia rabotaïou vratchom|Je travaille comme médecin|🩺', 'Я живу с братом|ia jivou s bratom|J\'habite avec mon frère|img:brother', 'Кем ты работаешь?|kiem ty rabotaïech\'|Quel est ton métier ?', 'Я хочу быть учителем|ia khatchou byt\' outchitiélem|Je veux être professeur|img:teacher',
-      'Он пишет ручкой|on pichiet routchkoï|Il écrit avec un stylo|img:pen', 'Чай с молоком|tchaï s malakom|Thé au lait|img:tea', 'Кофе с сахаром|kofié s sakharam|Café avec du sucre', 'Мы говорим с другом|my gavarim s drougom|Nous parlons avec un ami',
+      'Он пишет ручкой|on pichiet routchkoï|Il écrit avec un stylo|img:pen', 'Чай с молоком|tchaï s malakom|Thé au lait|img:tea', 'Кофе с сахаром|kofé s sakharam|Café avec du sucre', 'Мы говорим с другом|my gavarim s drougom|Nous parlons avec un ami',
     ],
     qa: [['Кем ты работаешь?', 'Я работаю врачом', 'Чай с молоком', 'Кофе с сахаром']],
   },
@@ -40,7 +40,7 @@ export const RU_A2: SimpleUnit[] = lv('intermediate', [
     tip: { title: 'Deux aspects', body: 'Imperfectif = durée ou répétition (« читать »), perfectif = résultat, action finie (« прочитать »). Futur de l\'imperfectif : « буду » + infinitif. Futur du perfectif : on le conjugue comme un présent (« прочитаю » = je lirai jusqu\'au bout).' },
     phrases: [
       'Завтра я буду работать|zaftra ia boudou rabotat\'|Demain je travaillerai', 'Я напишу письмо|ia napichou pis\'mo|J\'écrirai une lettre', 'Что ты будешь делать?|chto ty boudiech diélat\'|Que feras-tu ?', 'Я буду читать весь вечер|ia boudou tchitat\' viess\' viétchir|Je lirai toute la soirée',
-      'Я прочитаю эту книгу|ia pratchitaïou étou knigou|Je lirai ce livre jusqu\'au bout|img:book', 'на следующей неделе|na sliédouiouchtchiï nidiélié|la semaine prochaine', 'скоро|skora|bientôt', 'потом|patom|ensuite',
+      'Я прочитаю эту книгу|ia pratchitaïou étou knigou|Je lirai ce livre jusqu\'au bout|img:book', 'на следующей неделе|na sliédouiouchtchéï nidiélié|la semaine prochaine', 'скоро|skora|bientôt', 'потом|patom|ensuite',
     ],
     qa: [['Что ты будешь делать?', 'Я буду читать весь вечер', 'скоро', 'потом']],
   },
@@ -82,7 +82,7 @@ export const RU_B1: SimpleUnit[] = lv('advanced', [
     goal: 'Employer пойти, приехать, уйти',
     tip: { title: 'Le préfixe donne la direction', body: 'по- = partir (пойти), при- = arriver (прийти, приехать), у- = quitter (уйти, уехать), вы- = sortir (выйти), за- = passer prendre / entrer (зайти). Le verbe de base reste идти / ехать.' },
     phrases: [
-      'Я пойду домой|ia païdou damoï|J\'irai à la maison|img:house', 'Он приехал вчера|on priiékhal vtchira|Il est arrivé hier (en transport)', 'Она ушла|ana oucha|Elle est partie', 'Мы вышли из дома|my vychli iz doma|Nous sommes sortis de la maison',
+      'Я пойду домой|ia païdou damoï|J\'irai à la maison|img:house', 'Он приехал вчера|on priiékhal vtchira|Il est arrivé hier (en transport)', 'Она ушла|ana ouchla|Elle est partie', 'Мы вышли из дома|my vychli iz doma|Nous sommes sortis de la maison',
       'Он пришёл поздно|on prichiol pozna|Il est arrivé tard (à pied)', 'Я зайду к тебе|ia zaïdou k tibié|Je passerai chez toi', 'Он уехал в Москву|on ouiékhal v maskvou|Il est parti à Moscou', 'Где он?|gdié on|Où est-il ?',
     ],
     qa: [['Где он?', 'Он уехал в Москву', 'Она ушла', 'Он приехал вчера']],

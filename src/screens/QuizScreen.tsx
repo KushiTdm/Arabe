@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
+import { ILLUSTRATIONS } from '../theme/images';
 import { Ionicons } from '@expo/vector-icons';
 import { useSpeaker } from '../lib/useSpeaker';
 import * as Haptics from 'expo-haptics';
@@ -27,7 +29,16 @@ import {
   generateAIQuiz,
   generateLetterQuiz,
   LETTERS_CATEGORY,
+  getQuizThemes,
+  getThemeWords,
+  generateWordsQuiz,
+  type QuizTheme,
 } from '../lib/quiz';
+import { hasIntegratedCourse } from '../content';
+import { WordPic } from '../components/WordPic';
+import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
+import { getLexicon } from '../content/lexicon';
+import type { VocabWord } from '../data/multilingualVocab';
 import { markStepDone, pathStorageKey } from '../lib/usePathProgress';
 import { QUIZ_PASS_PCT, READQUIZ_PASS_PCT } from '../data/learningPath';
 
@@ -52,6 +63,7 @@ export default function QuizScreen() {
 
   const [phase, setPhase] = useState<Phase>('setup');
   const [category, setCategory] = useState<VocabCategory | null>(null);
+  const [themeSel, setThemeSel] = useState<QuizTheme | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
@@ -64,6 +76,16 @@ export default function QuizScreen() {
   const pathStep: { unitId: string; stepIdx: number } | undefined = route.params?.pathStep;
 
   const bestScore = currentProgress?.quiz_best_score ?? 0;
+
+  // Thèmes tirés du lexique des leçons (langues au contenu intégré)
+  const integrated = hasIntegratedCourse(language.code);
+  const quizThemes = React.useMemo(() => getQuizThemes(language.code), [language.code]);
+  const deck = useReviewDeck(reviewStorageKey(activeProfile?.id, language.code));
+  const deckWords: VocabWord[] = React.useMemo(() => deck.cards.map(c => ({
+    id: c.id, native_word: c.native_word, transliteration: c.transliteration,
+    french_translation: c.french_translation, category: c.category, mastered: false,
+    practice_count: c.practice_count, img: c.img, emoji: c.emoji,
+  })), [deck.cards]);
 
   const { say } = useSpeaker();
   const speak = (text: string) => say(text);
@@ -121,6 +143,19 @@ export default function QuizScreen() {
     setPhase('playing');
   };
 
+  /** Lance un quiz sur un thème du lexique, une unité, « tout mélangé » ou « mon paquet ». */
+  const startTheme = (theme: QuizTheme) => {
+    const words = theme.kind === 'deck' ? deckWords : getThemeWords(language.code, theme.id);
+    const qs = generateWordsQuiz(words, getLexicon(language.code));
+    if (qs.length === 0) { setGenError('Pas assez de mots pour ce quiz.'); return; }
+    setGenError(null);
+    setLetterSet(null); setStepResult(null);
+    setThemeSel(theme);
+    setCategory({ id: theme.id, label: theme.label, emoji: theme.emoji });
+    setQuestions(qs); setCurrent(0); setSelected(null); setCorrectCount(0);
+    setPhase('playing');
+  };
+
   const answer = (index: number) => {
     if (selected !== null) return;
     setSelected(index);
@@ -168,6 +203,13 @@ export default function QuizScreen() {
     }
   };
 
+  // Questions « à l'oreille » : lecture automatique
+  useEffect(() => {
+    const q = questions[current];
+    if (phase === 'playing' && q?.listen && q.speakText) speak(q.speakText);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, current, questions]);
+
   // ── Lancement depuis le parcours d'apprentissage ──────────────────────
   const launchId = route.params?.launchId;
   useEffect(() => {
@@ -192,7 +234,9 @@ export default function QuizScreen() {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.doneContainer}>
-          <Text style={styles.doneEmoji}>{perfect ? '🏆' : pct >= 50 ? '🎉' : '💪'}</Text>
+          {pct >= 50
+            ? <Image source={perfect ? ILLUSTRATIONS.achievement : ILLUSTRATIONS.success} style={styles.doneArt} resizeMode="contain" />
+            : <Image source={ILLUSTRATIONS.path} style={styles.doneArt} resizeMode="contain" />}
           <Text style={styles.doneTitle}>
             {perfect ? 'Parfait !' : pct >= 50 ? 'Bien joué !' : 'Continue à t\'entraîner !'}
           </Text>
@@ -221,13 +265,13 @@ export default function QuizScreen() {
           <View style={styles.doneActions}>
             <TouchableOpacity
               style={styles.doneBtnSecondary}
-              onPress={() => { setPhase('setup'); setCategory(null); setLetterSet(null); setStepResult(null); }}
+              onPress={() => { setPhase('setup'); setCategory(null); setThemeSel(null); setLetterSet(null); setStepResult(null); }}
             >
               <Text style={styles.doneBtnSecondaryText}>Autre catégorie</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.doneBtnPrimary}
-              onPress={() => { if (letterSet) startLetterQuiz(letterSet); else if (category) startQuiz(category); }}
+              onPress={() => { if (letterSet) startLetterQuiz(letterSet); else if (themeSel) startTheme(themeSel); else if (category) startQuiz(category); }}
             >
               <Ionicons name="refresh" size={16} color={colors.white} />
               <Text style={styles.doneBtnPrimaryText}>Rejouer</Text>
@@ -266,6 +310,7 @@ export default function QuizScreen() {
 
           <ScrollView contentContainerStyle={styles.playContent} showsVerticalScrollIndicator={false}>
             <View style={styles.questionCard}>
+              {(!!q.image || !!q.emoji) && <View style={{ marginBottom: 10 }}><WordPic img={q.image} emoji={q.emoji} size={130} /></View>}
               <Text style={[styles.questionText, language.rtl && q.speakText && styles.rtlText]}>
                 {q.question}
               </Text>
@@ -355,6 +400,67 @@ export default function QuizScreen() {
           </View>
         )}
 
+        {integrated && (quizThemes.themes.length > 0 || deckWords.length >= 4) ? (
+          <>
+            {deckWords.length >= 4 && (
+              <>
+                <Text style={styles.setupHint}>Mon paquet</Text>
+                <View style={styles.themeList}>
+                  <PressableScale style={styles.themeRow} disabled={isGenerating}
+                    onPress={() => startTheme({ id: 'deck', kind: 'deck', label: 'Mon paquet', emoji: '🔖', count: deckWords.length })}>
+                    <Text style={styles.themeEmoji}>🔖</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.themeLabel}>Mots de mon paquet</Text>
+                      <Text style={styles.themeSub}>{deckWords.length} mots à réviser</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </PressableScale>
+                </View>
+              </>
+            )}
+
+            <Text style={styles.setupHint}>Par thème</Text>
+            <View style={styles.catGrid}>
+              {quizThemes.themes.map((t, i) => (
+                <Animated.View key={t.id} entering={FadeInDown.delay(i * 35).springify().damping(16)} style={styles.catCardWrap}>
+                  <PressableScale style={styles.catCard} onPress={() => startTheme(t)} disabled={isGenerating}>
+                    <Text style={styles.catEmoji}>{t.emoji}</Text>
+                    <Text style={styles.catLabel}>{t.label}</Text>
+                    <Text style={styles.themeSub}>{t.count} mots</Text>
+                  </PressableScale>
+                </Animated.View>
+              ))}
+              {quizThemes.mix && (
+                <View style={styles.catCardWrap}>
+                  <PressableScale style={[styles.catCard, { borderColor: colors.secondary }]} onPress={() => startTheme(quizThemes.mix!)} disabled={isGenerating}>
+                    <Text style={styles.catEmoji}>{quizThemes.mix.emoji}</Text>
+                    <Text style={styles.catLabel}>{quizThemes.mix.label}</Text>
+                    <Text style={styles.themeSub}>{quizThemes.mix.count} mots</Text>
+                  </PressableScale>
+                </View>
+              )}
+            </View>
+
+            {quizThemes.units.length > 0 && (
+              <>
+                <Text style={[styles.setupHint, { marginTop: 18 }]}>Par unité du parcours</Text>
+                <View style={styles.themeList}>
+                  {quizThemes.units.map(u => (
+                    <PressableScale key={u.id} style={styles.themeRow} onPress={() => startTheme(u)} disabled={isGenerating}>
+                      <Text style={styles.themeEmoji}>{u.emoji}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.themeLabel} numberOfLines={1}>{u.label}</Text>
+                        <Text style={styles.themeSub}>{u.subtitle} · {u.count} mots</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    </PressableScale>
+                  ))}
+                </View>
+              </>
+            )}
+          </>
+        ) : (
+          <>
         <Text style={styles.setupHint}>Choisis une catégorie :</Text>
         <View style={styles.catGrid}>
           {language.categories.map((cat, i) => (
@@ -380,6 +486,8 @@ export default function QuizScreen() {
             </Animated.View>
           ))}
         </View>
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -418,6 +526,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, gap: 10,
   },
   catCardWrap: { width: '47.5%' },
+  themeList: { paddingHorizontal: 16, gap: 8, marginBottom: 6 },
+  themeRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: borderRadius.xl, borderWidth: 1, borderColor: colors.border, padding: 14 },
+  themeEmoji: { fontSize: 24 },
+  themeLabel: { fontSize: fontSize.base, fontWeight: '700', color: colors.text },
+  themeSub: { fontSize: fontSize.xs, color: colors.textMuted },
   catCard: {
     backgroundColor: colors.card,
     borderRadius: borderRadius['2xl'],
@@ -495,6 +608,7 @@ const styles = StyleSheet.create({
   // done
   doneContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   doneEmoji: { fontSize: 64, marginBottom: 12 },
+  doneArt: { width: 160, height: 160, marginBottom: 12 },
   doneTitle: { fontSize: fontSize['2xl'] ?? 24, fontWeight: '800', color: colors.text, marginBottom: 8 },
   doneScore: { fontSize: 44, fontWeight: '800', color: colors.primary },
   doneXp: { fontSize: fontSize.lg, fontWeight: '700', color: colors.secondary, marginTop: 4 },

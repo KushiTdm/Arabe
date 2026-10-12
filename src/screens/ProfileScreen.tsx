@@ -13,7 +13,8 @@ import { MAX_AI_CREDITS } from '../lib/useProfiles';
 import { levelLabel } from '../lib/pedagogy';
 import { computeBadges } from '../lib/badges';
 import { SUPPORTED_LANGUAGES } from '../lib/languages';
-import { LANGUAGE_IMAGES } from '../theme/images';
+import type { ImageSourcePropType } from 'react-native';
+import { LANGUAGE_IMAGES, ILLUSTRATIONS } from '../theme/images';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { Card, LoadingSpinner, ProgressBar } from '../components/RNComponents';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
@@ -399,7 +400,7 @@ JSON: {
         {activeSection === 'stats' && (
           <View>
             <View style={styles.statsGrid}>
-              <StatItem icon="flame"       value={progress?.streak_days            ?? 0} label="Jours"    color={colors.secondary} />
+              <StatItem icon="flame" image={ILLUSTRATIONS.streak} value={progress?.streak_days            ?? 0} label="Jours"    color={colors.secondary} />
               <StatItem icon="school"      value={progress?.lessons_completed       ?? 0} label="Unités"   color={colors.primary}   />
               <StatItem icon="chatbubbles" value={progress?.conversations_count     ?? 0} label="Convos"   color={colors.accent}    />
               <StatItem icon="help-circle" value={progress?.quizzes_completed      ?? 0} label="Quiz"     color={colors.secondary} />
@@ -421,7 +422,10 @@ JSON: {
               const earnedCount = badges.filter(b => b.earned).length;
               return (
                 <Card style={styles.achievementsCard}>
-                  <Text style={styles.sectionTitle}>🏆 Succès · {earnedCount}/{badges.length}</Text>
+                  <View style={styles.achievementsHeader}>
+                    <Image source={ILLUSTRATIONS.achievement} style={styles.achievementsIcon} resizeMode="contain" />
+                    <Text style={styles.sectionTitle}>Succès · {earnedCount}/{badges.length}</Text>
+                  </View>
                   <View style={styles.badgeGrid}>
                     {badges.map(badge => (
                       <View key={badge.id} style={[styles.badgeItem, !badge.earned && styles.badgeItemLocked]}>
@@ -486,7 +490,7 @@ JSON: {
           <View>
             {errorSummary.total_errors === 0 ? (
               <Card style={styles.emptyCard}>
-                <Text style={styles.emptyEmoji}>🌟</Text>
+                <Image source={ILLUSTRATIONS.success} style={styles.emptyArt} resizeMode="contain" />
                 <Text style={styles.emptyTitle}>Aucune erreur !</Text>
                 <Text style={styles.emptyBody}>Continue à pratiquer pour personnaliser tes exercices.</Text>
               </Card>
@@ -874,11 +878,13 @@ function errTypeColor(type: string) {
   return map[type] || colors.textMuted;
 }
 
-function StatItem({ icon, value, label, color }: { icon: string; value: number; label: string; color: string }) {
+function StatItem({ icon, image, value, label, color }: { icon: string; image?: ImageSourcePropType; value: number; label: string; color: string }) {
   return (
     <View style={styles.statItem}>
       <View style={[styles.statIcon, { backgroundColor: `${color}18` }]}>
-        <Ionicons name={icon as any} size={18} color={color} />
+        {image
+          ? <Image source={image} style={{ width: 24, height: 24 }} resizeMode="contain" />
+          : <Ionicons name={icon as any} size={18} color={color} />}
       </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
@@ -966,6 +972,9 @@ const styles = StyleSheet.create({
 
   emptyCard:      { alignItems: 'center', paddingVertical: 32 },
   emptyEmoji:     { fontSize: 36, marginBottom: 8 },
+  emptyArt:       { width: 96, height: 96, marginBottom: 8 },
+  achievementsHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  achievementsIcon:   { width: 32, height: 32 },
   emptyTitle:     { fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: 6 },
   emptyBody:      { fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
 
