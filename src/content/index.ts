@@ -6,10 +6,15 @@ import { AR_ORAL_A2 } from './ar/oral2';
 import { AR_ORAL_B1 } from './ar/oral3';
 import { simpleLesson, type SimpleUnit } from './simple';
 import { ES_UNITS } from './es/units';
+import { ES_A2, ES_B1 } from './es/units2';
 import { IT_UNITS } from './it/units';
+import { IT_A2, IT_B1 } from './it/units2';
 import { PT_UNITS } from './pt/units';
+import { PT_A2, PT_B1 } from './pt/units2';
 import { DE_UNITS } from './de/units';
+import { DE_A2, DE_B1 } from './de/units2';
 import { EN_UNITS } from './en/units';
+import { EN_A2, EN_B1 } from './en/units2';
 import { RU_READING, RU_UNITS } from './ru/units';
 import { KO_READING, KO_UNITS } from './ko/units';
 import { JA_READING, JA_UNITS } from './ja/units';
@@ -68,11 +73,11 @@ const BUILDERS: Record<string, () => Lesson[]> = {
   zh: () => buildScript(ZH_READING, ZH_UNITS),
   vi: () => buildScript(VI_READING, VI_UNITS),
   ar: buildArabic,
-  es: () => ES_UNITS.map(simpleLesson),
-  it: () => IT_UNITS.map(simpleLesson),
-  pt: () => PT_UNITS.map(simpleLesson),
-  de: () => DE_UNITS.map(simpleLesson),
-  en: () => EN_UNITS.map(simpleLesson),
+  es: () => [...ES_UNITS, ...ES_A2, ...ES_B1].map(simpleLesson),
+  it: () => [...IT_UNITS, ...IT_A2, ...IT_B1].map(simpleLesson),
+  pt: () => [...PT_UNITS, ...PT_A2, ...PT_B1].map(simpleLesson),
+  de: () => [...DE_UNITS, ...DE_A2, ...DE_B1].map(simpleLesson),
+  en: () => [...EN_UNITS, ...EN_A2, ...EN_B1].map(simpleLesson),
 };
 const cache = new Map<string, Lesson[]>();
 

@@ -78,3 +78,6 @@ export function simpleLesson(u: SimpleUnit): Lesson {
 }
 
 export { t };
+
+/** Fixe le niveau d'une série d'unités. */
+export const lv = (level: Lesson['level'], units: SimpleUnit[]): SimpleUnit[] => units.map(u => ({ ...u, level }));
