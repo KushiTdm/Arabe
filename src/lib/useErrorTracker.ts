@@ -174,11 +174,18 @@ export function useErrorTracker() {
     };
   };
 
-  /** Returns a structured string for AI prompts */
-  const getErrorsForAIPrompt = (): string => {
+  /**
+   * Contexte d'apprentissage structuré, à injecter dans les prompts IA.
+   * `userName` vient du profil actif : il était codé en dur ("Fatima"),
+   * reliquat de l'app mono-utilisateur — tout autre profil recevait donc un
+   * contexte parlant de quelqu'un d'autre.
+   */
+  const getErrorsForAIPrompt = (userName: string = "L'élève"): string => {
     const summary = getErrorSummary();
     if (summary.total_errors === 0 && summary.sessions_count === 0) {
-      return "Fatima commence tout juste son apprentissage. Propose des exercices adaptés aux débutants.";
+      // Pas de niveau prescrit ici : c'est le brief pédagogique (pedagogy.ts)
+      // qui calibre la difficulté, sinon il serait contredit.
+      return `${userName} n'a pas encore d'historique d'erreurs enregistré.`;
     }
 
     const recentSessions = sessions.slice(0, 5);
@@ -197,7 +204,7 @@ export function useErrorTracker() {
       )
       .join('\n');
 
-    return `=== Profil d'apprentissage de Fatima ===
+    return `=== Profil d'apprentissage de ${userName} ===
 Erreurs non résolues: ${summary.total_errors}
 Type d'erreur dominant: ${summary.most_common_type}
 Catégories faibles: ${summary.weak_categories.join(', ') || 'aucune identifiée'}
@@ -231,7 +238,7 @@ ${sessionDesc || '(aucune session récente)'}
     else if (totalCount > 4) difficulty = 'medium';
 
     const descriptions: Record<string, string> = {
-      writing: `Pratique l'écriture des lettres/mots que tu as manqués : ${targetErrors.join(', ')}`,
+      writing: `Revois la lecture des lettres/mots que tu as manqués : ${targetErrors.join(', ')}`,
       pronunciation: `Exercice de prononciation sur les mots difficiles : ${targetErrors.join(', ')}`,
       vocabulary: `Révise le vocabulaire raté : ${targetErrors.join(', ')}`,
       grammar: `Exercice de grammaire ciblé sur tes erreurs répétées`,

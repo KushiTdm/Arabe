@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useProfile } from '../lib/ProfileContext';
 import { MAX_AI_CREDITS } from '../lib/useProfiles';
+import { levelLabel } from '../lib/pedagogy';
 import { computeBadges } from '../lib/badges';
 import { SUPPORTED_LANGUAGES } from '../lib/languages';
 import { LANGUAGE_IMAGES } from '../theme/images';
@@ -24,6 +25,10 @@ import {
 import { CONTENT_WIDTH } from '../lib/dimensions';
 
 const SCREEN_WIDTH = CONTENT_WIDTH;
+// Hauteur bornée pour la liste de langues du modal Paramètres : le nombre de
+// langues (11) dépasse ce qui tient à l'écran, la liste doit rester
+// scrollable dans un espace fixe plutôt que déborder du modal.
+const LANG_PICKER_HEIGHT = Math.round(Dimensions.get('window').height * 0.5);
 
 const REPORT_KEY_PREFIX   = '@maa_ai_report_';
 const EXERCISES_KEY_PREFIX = '@maa_ai_exercises_';
@@ -197,7 +202,7 @@ export default function ProfileScreen() {
   const generateExercisesFromReport = async (report: AIReport) => {
     setGeneratingExercises(true);
     try {
-      const errorsCtx = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt(userName);
       const summary   = getErrorSummary();
       const res = await invokeAI<AIExercisesResponse>(
         `${language.aiSeedPrompt}
@@ -233,7 +238,7 @@ JSON: {
   const generateAIReport = async () => {
     setGeneratingReport(true);
     try {
-      const errorsCtx = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt(userName);
       const summary   = getErrorSummary();
       const res = await invokeAI<AIReport>(
         `${language.aiSeedPrompt}
@@ -242,10 +247,10 @@ Génère un rapport de progression détaillé pour ${userName} qui apprend le ${
 
 ${errorsCtx}
 Statistiques:
-- Niveau: ${progress?.level || 'débutant'}
+- Niveau: ${levelLabel(progress?.level ?? 'beginner')}
 - XP: ${progress?.xp_points || 0}
 - Conversations: ${progress?.conversations_count || 0}
-- Exercices d'écriture: ${progress?.writing_exercises_count || 0}
+- Unités du parcours terminées: ${progress?.lessons_completed || 0}
 - Mots appris: ${progress?.vocab_learned || 0}
 - Sessions totales: ${summary.sessions_count}
 
@@ -395,9 +400,9 @@ JSON: {
           <View>
             <View style={styles.statsGrid}>
               <StatItem icon="flame"       value={progress?.streak_days            ?? 0} label="Jours"    color={colors.secondary} />
-              <StatItem icon="book"        value={progress?.lessons_completed       ?? 0} label="Leçons"   color={colors.primary}   />
+              <StatItem icon="school"      value={progress?.lessons_completed       ?? 0} label="Unités"   color={colors.primary}   />
               <StatItem icon="chatbubbles" value={progress?.conversations_count     ?? 0} label="Convos"   color={colors.accent}    />
-              <StatItem icon="pencil"      value={progress?.writing_exercises_count ?? 0} label="Écriture" color={colors.secondary} />
+              <StatItem icon="help-circle" value={progress?.quizzes_completed      ?? 0} label="Quiz"     color={colors.secondary} />
               <StatItem icon="language"    value={progress?.vocab_learned           ?? 0} label="Mots"     color={colors.primary}   />
               <StatItem icon="flash"       value={creditsRemaining()}                     label="Crédits"  color={colors.accent}    />
             </View>
@@ -778,7 +783,11 @@ JSON: {
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Choisir une langue</Text>
-            <ScrollView>
+            {/* maxHeight explicite indispensable : le parent n'a qu'un maxHeight
+                (80%) et React Native ne fait pas hériter cette contrainte à un
+                enfant sans flex — avec 11 langues, la liste débordait de
+                l'écran et le bouton "Fermer" devenait inatteignable. */}
+            <ScrollView style={styles.langPickerScroll} showsVerticalScrollIndicator>
               {SUPPORTED_LANGUAGES.map(lang => (
                 <TouchableOpacity
                   key={lang.code}
@@ -824,7 +833,7 @@ JSON: {
               ))}
             </View>
             <Text style={[styles.label, { marginTop: 12 }]}>Langue</Text>
-            <ScrollView style={{ maxHeight: 160 }}>
+            <ScrollView style={{ maxHeight: 220 }}>
               {SUPPORTED_LANGUAGES.map(lang => (
                 <TouchableOpacity
                   key={lang.code}
@@ -1068,6 +1077,7 @@ const styles = StyleSheet.create({
   modalTitle:          { fontSize: fontSize.lg, fontWeight: '800', color: colors.text, marginBottom: 16 },
   modalClose:          { alignItems: 'center', paddingVertical: 14, borderTopWidth: 1, borderTopColor: colors.border, marginTop: 12 },
   modalCloseText:      { fontSize: fontSize.sm, fontWeight: '700', color: colors.textMuted },
+  langPickerScroll:    { maxHeight: LANG_PICKER_HEIGHT },
   langPickerItem:      { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: borderRadius.lg, marginBottom: 6, borderWidth: 1, borderColor: 'transparent' },
   langPickerItemActive:{ backgroundColor: `${colors.primary}08`, borderColor: colors.primary },
   langPickerFlag:      { fontSize: 28 },

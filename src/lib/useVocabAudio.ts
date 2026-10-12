@@ -10,6 +10,9 @@ export interface VocabAudioEntry {
   uri: string;
   duration: number; // secondes
   recorded_at: string;
+  /** Dernier score de prononciation (0-100) évalué par l'IA, si demandé. */
+  score?: number;
+  evaluated_at?: string;
 }
 
 const AUDIO_DIR = `${FileSystem.documentDirectory}vocab_audio/`;
@@ -86,5 +89,15 @@ export function useVocabAudio(storageKey: string) {
 
   const getAudio = (wordId: string): VocabAudioEntry | undefined => entries[wordId];
 
-  return { entries, loading, saveAudio, deleteAudio, getAudio, reload: load };
+  /** Mémorise le score du dernier essai évalué, pour suivre la progression. */
+  const setScore = async (wordId: string, score: number): Promise<void> => {
+    const existing = entries[wordId];
+    if (!existing) return;
+    await persist({
+      ...entries,
+      [wordId]: { ...existing, score, evaluated_at: new Date().toISOString() },
+    });
+  };
+
+  return { entries, loading, saveAudio, deleteAudio, getAudio, setScore, reload: load };
 }

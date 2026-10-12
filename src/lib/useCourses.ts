@@ -10,6 +10,11 @@ export const MAX_COURSES = 500;
 export type CourseSource = 'error' | 'conversation' | 'manual';
 export type CourseType = 'grammar' | 'pronunciation' | 'vocabulary' | 'writing' | 'culture';
 
+export interface CourseSection {
+  heading: string;  // sous-titre de la section (ex: "Formation", "Cas d'usage")
+  body: string;      // développement de la section, 2-4 phrases
+}
+
 export interface CourseLesson {
   id: string;
   title: string;
@@ -17,7 +22,9 @@ export interface CourseLesson {
   source: CourseSource;
   trigger_topic: string;    // Ce qui a déclenché la création du cours
   summary: string;          // Résumé en 1-2 phrases
-  explanation: string;      // Explication détaillée
+  explanation: string;      // Repli texte brut — conservé pour les cours déjà
+                             // enregistrés avant l'introduction de `sections`
+  sections?: CourseSection[]; // Explication structurée en sous-titres + paragraphes
   examples: CourseExample[];
   exercises: CourseExercise[];
   tips: string[];

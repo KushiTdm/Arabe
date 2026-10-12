@@ -11,7 +11,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
+import { levelBrief } from '../lib/pedagogy';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCourses, CourseLesson, CourseType } from '../lib/useCourses';
@@ -40,7 +41,8 @@ type FilterType = 'all' | CourseType | 'starred';
 type ViewType = 'list' | 'detail' | 'chat';
 
 export default function CoursScreen() {
-  const { activeProfile, language } = useProfile();
+  const { activeProfile, language, currentProgress } = useProfile();
+  const userName = activeProfile?.name ?? 'Apprenant';
   const coursKey = activeProfile
     ? `@maa_courses_${activeProfile.id}_${activeProfile.activeLanguageCode}`
     : '@maa_courses_v1';
@@ -60,14 +62,14 @@ export default function CoursScreen() {
   const [chatInput, setChatInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
-    { role: 'ai', text: `👋 Bonjour ${activeProfile?.name ?? ''} ! Demande-moi de créer un cours sur n'importe quel sujet en ${language.familiarName.toLowerCase()}. Par exemple : "Explique-moi comment former le pluriel" ou "Crée un cours sur les salutations formelles".` }
+    { role: 'ai', text: `👋 Bonjour ${userName} ! Demande-moi de créer un cours sur n'importe quel sujet en ${language.familiarName.toLowerCase()}. Par exemple : "Explique-moi comment former le pluriel" ou "Crée un cours sur les salutations formelles".` }
   ]);
 
   useFocusEffect(useCallback(() => { reload(); }, []));
 
-  const speakNative = (text: string) => {
-    Speech.speak(text, { language: language.ttsLang, rate: 0.8 });
-  };
+  const { say } = useSpeaker();
+  const brief = levelBrief(currentProgress?.level ?? 'beginner', language);
+  const speakNative = (text: string) => say(text);
 
   const openCourse = async (course: CourseLesson) => {
     setSelectedCourse(course);
@@ -108,13 +110,14 @@ export default function CoursScreen() {
     setIsGenerating(true);
 
     try {
-      const errorsCtx = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt(userName);
 
       interface CourseResponse {
         title: string;
         type: string;
         summary: string;
         explanation: string;
+        sections: { heading: string; body: string }[];
         arabic_words: { arabic: string; transliteration: string; meaning: string }[];
         examples: { arabic: string; transliteration: string; french: string; note?: string }[];
         tips: string[];
@@ -123,17 +126,20 @@ export default function CoursScreen() {
 
       const res = await invokeAI<CourseResponse>(
         `${language.aiSeedPrompt}
-L'élève ${activeProfile?.name ?? ''} te demande : "${text}"
+${brief}
+L'élève ${userName} te demande : "${text}"
 
 ${errorsCtx ? `Contexte d'apprentissage de l'élève:\n${errorsCtx.substring(0, 400)}` : ''}
 
 RÈGLES IMPORTANTES:
 - Les champs "arabic" contiennent les mots/phrases en ${language.familiarName} (nom de champ historique)
 - Translitérations / aides de prononciation en français
+- "sections" structure le cours en 2 à 4 blocs, CHACUN avec un sous-titre court (3-5 mots) et un développement de 2-4 phrases. Découpe par sous-thème (ex: "Formation", "Emploi", "Exceptions") — jamais un seul bloc fourre-tout.
+- "explanation" reste un résumé d'1-2 phrases (repli d'affichage), le contenu détaillé va dans "sections"
 
 Génère un cours complet.
 JSON (compact):
-{"title":"Titre du cours","type":"grammar","summary":"Résumé en 1 phrase","explanation":"Explication en 3-4 phrases claires","arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Traduire","type":"translate","question":"Bonjour","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
+{"title":"Titre du cours","type":"grammar","summary":"Résumé en 1 phrase","explanation":"Résumé en 1-2 phrases","sections":[{"heading":"Sous-titre 1","body":"Développement 2-4 phrases"},{"heading":"Sous-titre 2","body":"Développement 2-4 phrases"}],"arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Traduire","type":"translate","question":"Bonjour","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
         2048,
       );
 
@@ -188,7 +194,7 @@ JSON (compact):
     ]);
 
     try {
-      const errorsCtx = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt(userName);
       const dominant = summary.most_common_type || 'grammaire';
       const weakCats = summary.weak_categories.slice(0, 2).join(', ') || dominant;
 
@@ -197,6 +203,7 @@ JSON (compact):
         type: string;
         summary: string;
         explanation: string;
+        sections: { heading: string; body: string }[];
         arabic_words: { arabic: string; transliteration: string; meaning: string }[];
         examples: { arabic: string; transliteration: string; french: string; note?: string }[];
         tips: string[];
@@ -205,15 +212,17 @@ JSON (compact):
 
       const res = await invokeAI<CourseResponse>(
         `${language.aiSeedPrompt}
-Génère un cours CIBLÉ pour corriger les erreurs de l'élève ${activeProfile?.name ?? ''}.
+${brief}
+Génère un cours CIBLÉ pour corriger les erreurs de l'élève ${userName}.
 
 ${errorsCtx}
 
 Axe principal: ${dominant} dans ${weakCats}.
 RÈGLE: Les champs "arabic" contiennent les mots/phrases en ${language.familiarName} (nom de champ historique).
+"sections" structure le cours en 2 à 4 blocs, CHACUN avec un sous-titre court et un développement de 2-4 phrases, centrés sur l'erreur à corriger.
 
 JSON:
-{"title":"Titre ciblé sur ${dominant}","type":"${dominant === 'pronunciation' ? 'pronunciation' : dominant === 'writing' ? 'writing' : 'grammar'}","summary":"Résumé","explanation":"Explication","arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"note"}],"tips":["conseil 1"],"exercises":[{"instruction":"Exercice","type":"translate","question":"Q","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
+{"title":"Titre ciblé sur ${dominant}","type":"${dominant === 'pronunciation' ? 'pronunciation' : dominant === 'writing' ? 'writing' : 'grammar'}","summary":"Résumé","explanation":"Résumé en 1-2 phrases","sections":[{"heading":"Sous-titre 1","body":"Développement"},{"heading":"Sous-titre 2","body":"Développement"}],"arabic_words":[{"arabic":"mot en ${language.familiarName}","transliteration":"prononciation","meaning":"sens"}],"examples":[{"arabic":"phrase en ${language.familiarName}","transliteration":"prononciation","french":"traduction","note":"note"}],"tips":["conseil 1"],"exercises":[{"instruction":"Exercice","type":"translate","question":"Q","answer":"réponse en ${language.familiarName}","options":["4 choix en ${language.familiarName}"]}]}`,
         2048,
       );
 
@@ -395,10 +404,21 @@ JSON:
             <Text style={styles.bodyText}>{selectedCourse.summary}</Text>
           </Card>
 
-          {/* Explanation */}
+          {/* Explanation — sous-titres structurés si l'IA les a fournis,
+              repli sur le paragraphe unique pour les cours générés avant
+              l'introduction de "sections" (déjà en storage). */}
           <Card style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>📖 Explication</Text>
-            <Text style={styles.bodyText}>{selectedCourse.explanation}</Text>
+            {selectedCourse.sections && selectedCourse.sections.length > 0 ? (
+              selectedCourse.sections.map((sec, i) => (
+                <View key={i} style={i > 0 ? styles.explSection : undefined}>
+                  <Text style={styles.explHeading}>{sec.heading}</Text>
+                  <Text style={styles.bodyText}>{sec.body}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.bodyText}>{selectedCourse.explanation}</Text>
+            )}
           </Card>
 
           {/* Key words */}
@@ -728,6 +748,8 @@ const styles = StyleSheet.create({
   // Detail
   sectionCard: { marginBottom: 10 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginBottom: 12 },
+  explSection: { marginTop: 14 },
+  explHeading: { fontSize: 14, fontWeight: '700', color: colors.primary, marginBottom: 4 },
   bodyText: { fontSize: 15, color: colors.text, lineHeight: 24 },
 
   sourceBanner: {

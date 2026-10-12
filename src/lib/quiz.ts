@@ -4,7 +4,8 @@ import {
   getWordsForCategory,
   type VocabWord,
 } from '../data/multilingualVocab';
-import type { LanguageConfig } from './languages';
+import type { LanguageConfig, AlphabetLetter } from './languages';
+import { levelTag, type Level } from './pedagogy';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -116,11 +117,13 @@ interface AIQuizResponse {
 export async function generateAIQuiz(
   language: LanguageConfig,
   categoryLabel: string,
+  level: Level = 'beginner',
   size: number = QUIZ_SIZE,
 ): Promise<QuizQuestion[]> {
   const res = await invokeAI<AIQuizResponse>(
     `${language.aiSeedPrompt}
-Génère un QCM de ${size} questions de vocabulaire ${language.familiarName} pour un débutant, catégorie "${categoryLabel}".
+${levelTag(level, language)}
+Génère un QCM de ${size} questions de vocabulaire ${language.familiarName} à ce niveau, catégorie "${categoryLabel}".
 Chaque question teste un mot (sens ${language.familiarName}→français ou français→${language.familiarName}). 4 choix, un seul correct.
 JSON: {"questions":[{"question":"...","choices":["...","...","...","..."],"correctIndex":0,"explanation":"mot = traduction"}]}`,
     2048,
@@ -147,4 +150,52 @@ JSON: {"questions":[{"question":"...","choices":["...","...","...","..."],"corre
     throw new Error('Réponse IA invalide. Réessayez.');
   }
   return questions;
+}
+
+// ─── Test de lecture (lettres d'une unité du parcours) ───────────────────────
+// Local, sans IA ni crédit : on montre un signe, l'élève choisit sa lecture.
+
+export const LETTERS_CATEGORY = { id: 'letters', label: 'Lecture', emoji: '🔤' };
+
+function letterLabel(l: AlphabetLetter): string {
+  return l.sound ? `${l.name} · ${l.sound}` : l.name;
+}
+
+export function generateLetterQuiz(
+  language: LanguageConfig,
+  letters: string[],
+  size: number = QUIZ_SIZE,
+): QuizQuestion[] {
+  const all = language.alphabet;
+  const targets = all.filter(l => letters.includes(l.letter));
+  if (targets.length === 0) return [];
+
+  // Chaque signe est posé au moins une fois, puis on complète jusqu'à `size`.
+  const pool: AlphabetLetter[] = [];
+  while (pool.length < Math.min(size, Math.max(targets.length * 2, 4))) {
+    pool.push(...shuffle(targets));
+  }
+  const picked = pool.slice(0, Math.min(size, pool.length));
+
+  return picked.map(target => {
+    const correct = letterLabel(target);
+    const seen = new Set([correct]);
+    const distractors: string[] = [];
+    for (const other of shuffle(all)) {
+      const label = letterLabel(other);
+      if (!seen.has(label)) {
+        seen.add(label);
+        distractors.push(label);
+      }
+      if (distractors.length === 3) break;
+    }
+    const choices = shuffle([correct, ...distractors]);
+    return {
+      question: `Comment se lit « ${target.letter} » ?`,
+      speakText: target.letter,
+      choices,
+      correctIndex: choices.indexOf(correct),
+      explanation: `${target.letter} = ${correct}${target.example ? ` — ex. ${target.example}` : ''}`,
+    };
+  });
 }

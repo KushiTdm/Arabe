@@ -200,11 +200,9 @@ export function useProfiles() {
   const addXP = async (xp: number) => {
     const progress = getCurrentProgress();
     if (!progress) return;
-    const newXP = progress.xp_points + xp;
-    let newLevel: LanguageProgress['level'] = 'beginner';
-    if (newXP >= 1000) newLevel = 'advanced';
-    else if (newXP >= 300) newLevel = 'intermediate';
-    await updateProgress({ xp_points: newXP, level: newLevel });
+    // Le niveau n'est plus déduit de l'XP : il suit l'unité en cours du parcours
+    // (usePathProgress), seul reflet fiable de ce que l'élève sait faire.
+    await updateProgress({ xp_points: progress.xp_points + xp });
   };
 
   // ── AI credits (per language) ─────────────────────────────────────────
