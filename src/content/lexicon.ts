@@ -28,7 +28,7 @@ const THEME_BY_IMG: Record<string, string> = {
 const THEME_BY_UNIT: Record<string, string> = {
   'ar-O1': 'greetings', 'ar-O2': 'greetings', 'ar-O3': 'daily_life', 'ar-O4': 'numbers', 'ar-O5': 'places',
   'ar-O6': 'family', 'ar-O7': 'daily_life', 'ar-O8': 'daily_life', 'ar-O9': 'food', 'ar-O10': 'daily_life',
-  'ar-O11': 'body',
+  'ar-O11': 'body', 'ar-O12': 'discourse', 'ar-O13': 'discourse', 'ar-O14': 'discourse', 'ar-O15': 'discourse',
 };
 
 export const LEXICON_THEMES: Record<string, { label: string; emoji: string }> = {
@@ -42,6 +42,7 @@ export const LEXICON_THEMES: Record<string, { label: string; emoji: string }> = 
   body:       { label: 'Corps et santé',   emoji: '🫀' },
   nature:     { label: 'Nature',           emoji: '🌿' },
   objects:    { label: 'Objets',           emoji: '🗝️' },
+  discourse:  { label: 'Discours et avis', emoji: '💬' },
   reading:    { label: 'Mots de lecture',  emoji: '📖' },
 };
 

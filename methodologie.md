@@ -784,4 +784,4 @@ Le parcours d'une langue peut désormais s'appuyer sur des **leçons écrites à
 
 Une partie est validée à 70 % de réussite **au premier essai** ; les réponses fausses reviennent en fin de partie. Les autres langues gardent l'ancien parcours (vocabulaire + dialogue IA + quiz) jusqu'à la production de leur contenu.
 
-**Arabe — état :** 29 unités intégrées (L1-L18 et O1-O11), 59 photos réalistes, 28 mots-clés de lettres. L15-L17 retirent progressivement les voyelles (`ar/vowels.ts`) et ajoutent l'exercice « restaure la lecture » ; L18 traite les racines. **Reste :** unités orales B1 (O12-O15, encore appuyées sur l'IA), relecture par un arabophone, test sur téléphone.
+**Arabe — état :** 33 unités intégrées (L1-L18 et O1-O15, A1 à B1), 59 photos réalistes, 28 mots-clés de lettres. L15-L17 retirent progressivement les voyelles (`ar/vowels.ts`) et ajoutent l'exercice « restaure la lecture » ; L18 traite les racines. **Reste :** relecture par un arabophone, test sur téléphone. B1 : affichage presque nu (shadda et tanwīn conservés), audio voyellé.

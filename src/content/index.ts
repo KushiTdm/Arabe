@@ -3,6 +3,7 @@ import { readingLesson, oralLesson, fadingLesson } from './builders';
 import { AR_READING } from './ar/reading';
 import { AR_ORAL } from './ar/oral';
 import { AR_ORAL_A2 } from './ar/oral2';
+import { AR_ORAL_B1 } from './ar/oral3';
 import { AR_SIGNS, AR_FADING } from './ar/signs';
 
 // ─── Catalogue des leçons intégrées, par langue ──────────────────────────────
@@ -16,6 +17,7 @@ const AR_ORDER = [
   'ar-L7', 'ar-L8', 'ar-O4', 'ar-L9', 'ar-L10', 'ar-O5', 'ar-O6',
   'ar-L11', 'ar-L12', 'ar-L13', 'ar-L14',
   'ar-L15', 'ar-O7', 'ar-L16', 'ar-O8', 'ar-L17', 'ar-O9', 'ar-L18', 'ar-O10', 'ar-O11',
+  'ar-O12', 'ar-O13', 'ar-O14', 'ar-O15',
 ];
 
 function buildArabic(): Lesson[] {
@@ -26,7 +28,7 @@ function buildArabic(): Lesson[] {
     byId.set(lesson.id, lesson);
     known.push(...spec.words.filter(x => !x.fake));
   }
-  for (const spec of [...AR_ORAL, ...AR_ORAL_A2]) byId.set(spec.id, oralLesson(spec));
+  for (const spec of [...AR_ORAL, ...AR_ORAL_A2, ...AR_ORAL_B1]) byId.set(spec.id, oralLesson(spec));
   // Signes (L11-L14) : lettres déjà toutes connues, mots réels ; puis retrait du voyellage.
   for (const spec of AR_SIGNS) {
     const lesson = readingLesson({ ...spec, known: [...known] });

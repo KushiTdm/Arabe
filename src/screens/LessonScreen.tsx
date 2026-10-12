@@ -343,7 +343,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
                   <TouchableOpacity onPress={() => speaker.say(c.ar)} style={styles.bubbleLine}>
                     <Ionicons name="volume-medium" size={20} color={colors.primaryLight} />
                     <View>
-                      <Text style={styles.arabicMid}>{c.ar}</Text>
+                      <Text style={styles.arabicMid}>{c.show ?? c.ar}</Text>
                       <Text style={styles.optSub}>{c.tr}</Text>
                     </View>
                   </TouchableOpacity>
@@ -360,7 +360,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
                 onPress={() => { setPicked(i); if (o.tr) speaker.say(o.ar); onResolve(i === act.answer, answerText.tr ? `${answerText.ar}  ·  ${answerText.fr}` : answerText.fr); }}>
                 {o.tr ? (
                   <>
-                    <Text style={styles.optArabic}>{o.ar}</Text>
+                    <Text style={styles.optArabic}>{o.show ?? o.ar}</Text>
                     <Text style={styles.optSub}>{o.tr} — {o.fr}</Text>
                   </>
                 ) : <Text style={styles.optText}>{o.fr}</Text>}
@@ -544,7 +544,7 @@ function Order({ act, speaker, onResolve, locked }: {
       <View style={styles.answerRow}>
         {chosen.map((c, k) => (
           <TouchableOpacity key={k} disabled={locked} style={styles.tile} onPress={() => setChosen(chosen.filter((_, j) => j !== k))}>
-            <Text style={styles.arabicMid}>{act.words[c].ar}</Text>
+            <Text style={styles.arabicMid}>{act.words[c].show ?? act.words[c].ar}</Text>
           </TouchableOpacity>
         ))}
         {chosen.length === 0 && <Text style={styles.placeholder}>Touche les mots ci-dessous</Text>}
@@ -554,7 +554,7 @@ function Order({ act, speaker, onResolve, locked }: {
           <TouchableOpacity key={i} disabled={chosen.includes(i) || locked}
             style={[styles.tile, chosen.includes(i) && styles.tileUsed]}
             onPress={() => { setChosen([...chosen, i]); speaker.say(wd.ar); }}>
-            <Text style={styles.arabicMid}>{wd.ar}</Text>
+            <Text style={styles.arabicMid}>{wd.show ?? wd.ar}</Text>
             <Text style={styles.optSub}>{wd.tr}</Text>
           </TouchableOpacity>
         ))}

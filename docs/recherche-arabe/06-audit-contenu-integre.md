@@ -29,3 +29,6 @@ Un seul passage, sans second avis. Retenu : « kitābin » traduit « un livre (
 
 ## Troisième relecture — O7 à O11 (Gemini, 52 entrées)
 Retenu : subjonctif après أَنْ (نَخْرُجَ, nakhruja) ; « à cinq heures » = فِي السَّاعَة الخَامِسَة ; fatḥa finale de يُؤْلِمُكَ. Écarté : tanwīn sur « alam » (forme de pause voulue). Un seul avis, relecture par un arabophone toujours requise.
+
+## Quatrième relecture — O12 à O15, B1 (Gemini, 42 entrées)
+Retenu : « grâce à » = بِفَضْلِ (et non بِسَبَبِ, « à cause de ») ; مُمْتِع traduit « passionnant, plaisant » ; « Merci de votre attention » = شُكْراً لِحُسْنِ اسْتِمَاعِكُمْ (la version calquée sur le français est écartée). Écarté : désinences casuelles et tanwīn sur les prédicats (بَارِدٌ, الجِهَازُ…) — même choix de forme de pause qu'ailleurs ; l'accusatif après أَنَّ, lui, est noté, car il est indispensable. Un seul avis ; relecture par un arabophone requise.

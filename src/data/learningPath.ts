@@ -94,10 +94,6 @@ const RAW: Record<string, Raw[]> = {
     read(A1, 'Lettres X : ف ق', 'ف ق', 'Lire ف et ق et opposer ق à ك'),
     comm(A1, 'Lieux et directions', 'travel', 'Demander et comprendre un chemin simple'),
     comm(A1, 'Famille et besoins', 'family', 'Présenter sa famille et exprimer un besoin'),
-    comm(B1, 'Donner son avis', 'emotions', 'Défendre une opinion en cinq phrases'),
-    comm(B1, 'Cause et conséquence', 'emotions', 'Argumenter avec deux connecteurs'),
-    comm(B1, 'Raconter et réclamer', 'daily_life', 'Structurer un récit et gérer une réclamation'),
-    comm(B1, 'Exposé court', 'daily_life', 'Parler trois minutes sur un thème familier'),
   ],
 
   // ── Espagnol ─────────────────────────────────────────────────────────────
