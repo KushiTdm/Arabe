@@ -47,3 +47,14 @@ Puis renommer chaque cellule avec la clé du tableau et ajouter la clé dans
 ## Lexique illustré (planches 11 à 13)
 
 16 photos ajoutées pour les mots concrets du lexique : œufs, sel, mouton, gazelle, épée, cheveux, pied, bouche, mer, horloge, bibliothèque, université, encrier, enseignant, étudiant, ville. Deux images ont été écartées : une voiture (logo de marque et plaque visibles) et un avion (livrée d'une compagnie lisible). **Encore sans photo** : voiture, avion/aéroport, poche, voisin, café (lieu). Pour savoir ce qui manque : `imageCoverage('ar')` dans `src/content/lexicon.ts` (état actuel : 87 mots illustrés sur 266).
+
+## Prochaines planches (prêtes à lancer)
+
+À lancer dès que l'outil image-gen accepte de nouveau (compteur de session 15/15 le 13 oct.). Mêmes règles de style : photo réaliste, fond blanc cassé, lumière douce, sujet centré à 70 %, **aucun logo, texte, plaque ni livrée lisible**.
+
+| Planche | Fichier | Haut (gauche → droite) | Bas (gauche → droite) | Clés (`assets/images/vocab/`) |
+|---------|---------|------------------------|------------------------|------------------------------|
+| 14 Transports | `ar_sheet14_transport` | bus urbain neutre · train de voyageurs à quai · avion blanc en vol, sans marquage | vélo de ville contre un mur · taxi jaune générique, enseigne vierge · barque de pêche en bois | `bus`, `train`, `airplane`, `bicycle`, `taxi`, `boat` |
+| 15 Fruits et légumes | `ar_sheet15_produce` | tomates mûres sur la grappe · grappe de raisin sombre · fraises | orange entière et demi-orange · pommes de terre · deux oignons rouges | `tomato`, `grapes`, `strawberry`, `orange`, `potato`, `onion` |
+
+Mots à relier ensuite (`img:clé` dans les phrases, ou `IMG_KEY_BY_AR` pour l'arabe) : es-13 el tren / el avión ; en-13 bus, train ; ru-12 автобус, поезде ; zh-12 出租车, 自行车 ; vi-11 xe buýt, taxi, tàu hỏa ; ja ふね ; ko 토마토, 포도, 딸기 ; ja みかん.
