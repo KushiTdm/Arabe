@@ -16,10 +16,15 @@ import { DE_A2, DE_B1 } from './de/units2';
 import { EN_UNITS } from './en/units';
 import { EN_A2, EN_B1 } from './en/units2';
 import { RU_READING, RU_UNITS } from './ru/units';
+import { RU_A2, RU_B1 } from './ru/units2';
 import { KO_READING, KO_UNITS } from './ko/units';
+import { KO_A2, KO_B1 } from './ko/units2';
 import { JA_READING, JA_UNITS } from './ja/units';
+import { JA_A2, JA_B1 } from './ja/units2';
 import { ZH_READING, ZH_UNITS } from './zh/units';
+import { ZH_A2, ZH_B1 } from './zh/units2';
 import { VI_READING, VI_UNITS } from './vi/units';
+import { VI_A2, VI_B1 } from './vi/units2';
 import { AR_SIGNS, AR_FADING } from './ar/signs';
 
 // ─── Catalogue des leçons intégrées, par langue ──────────────────────────────
@@ -67,11 +72,11 @@ function buildScript(reading: Omit<ReadingSpec, 'known'>[], oral: SimpleUnit[]):
 }
 
 const BUILDERS: Record<string, () => Lesson[]> = {
-  ru: () => buildScript(RU_READING, RU_UNITS),
-  ko: () => buildScript(KO_READING, KO_UNITS),
-  ja: () => buildScript(JA_READING, JA_UNITS),
-  zh: () => buildScript(ZH_READING, ZH_UNITS),
-  vi: () => buildScript(VI_READING, VI_UNITS),
+  ru: () => buildScript(RU_READING, [...RU_UNITS, ...RU_A2, ...RU_B1]),
+  ko: () => buildScript(KO_READING, [...KO_UNITS, ...KO_A2, ...KO_B1]),
+  ja: () => buildScript(JA_READING, [...JA_UNITS, ...JA_A2, ...JA_B1]),
+  zh: () => buildScript(ZH_READING, [...ZH_UNITS, ...ZH_A2, ...ZH_B1]),
+  vi: () => buildScript(VI_READING, [...VI_UNITS, ...VI_A2, ...VI_B1]),
   ar: buildArabic,
   es: () => [...ES_UNITS, ...ES_A2, ...ES_B1].map(simpleLesson),
   it: () => [...IT_UNITS, ...IT_A2, ...IT_B1].map(simpleLesson),
