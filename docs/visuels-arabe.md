@@ -1,0 +1,49 @@
+# Visuels de l'arabe — 36 photos réalistes (généré, découpé, intégré)
+
+> **État : fait.** 6 planches générées (style photo réaliste, fond blanc cassé, lumière de fenêtre), découpées en carrés de 480 px dans `assets/images/vocab/` (36 fichiers, ≈ 1 Mo). `robe` et `street` ont été regénérées à l'unité (la 1re version montrait une chemise et une rue de Paris). Table mot → image : `src/content/imageKeys.ts` ; assets : `src/content/images.ts`. 
+> **Complément (planches 7 à 10)** : mots-clés des 13 lettres qui n'en avaient pas (renard, poule, or, tête, fleurs, faucon, grenouille, ongles, corbeau, citron, étoile, croissant, rose), 5 images de réserve non branchées (lion, banane, pomme, lait, jus — dans `assets/images/vocab/`), et 5 scènes (poignée de main, lever et coucher du soleil, argent, boire). La 6e scène (« manger ») a été écartée : elle montrait un verre de vin. Les 28 lettres ont un mot-clé illustré (`LETTER_IMG` dans `imageKeys.ts`).
+>
+> **Encore utile** : une scène « manger » sans alcool, des scènes pour les directions et le tout-droit, un aéroport, et des schémas de prononciation de ع ح ق خ (à faire dessiner ou valider par un phonéticien, pas à générer).
+
+Le texte ci-dessous est l'historique des prompts.
+
+Une planche = **un prompt = 6 illustrations** (grille 3 × 2), à découper ensuite
+en 6 fichiers carrés `assets/images/vocab/<clé>.png`. Les leçons affichent un
+emoji tant qu'une illustration n'existe pas (champ `emoji` de `content/`).
+
+Préfixe commun à chaque prompt :
+
+> A sticker sheet of exactly 6 separate flat vector illustrations arranged in a
+> clean 3 columns by 2 rows grid, each on its own plain white square cell with
+> generous empty margins between cells, no text, no letters, no labels, no
+> borders. Consistent friendly modern flat design style, soft warm colors (teal,
+> sand, terracotta, olive), thick rounded shapes, subtle shadow, mobile-app
+> vocabulary-card style.
+
+| Planche | Fichier | Haut (gauche → droite) | Bas (gauche → droite) |
+|---------|---------|------------------------|------------------------|
+| 1 Boire et manger | `ar_sheet1_food` | `water` verre d'eau · `tea` verre de thé à la menthe sur soucoupe · `bread` pain rond | `fig` figue coupée · `fish` poisson · `coffee` tasse de café arabe et dallah |
+| 2 Objets | `ar_sheet2_objects` | `door` porte · `book` livre · `pen` stylo | `key` clé · `table` table · `robe` thawb (vêtement long blanc) |
+| 3 Famille | `ar_sheet3_family` | `father` père · `mother` mère · `brother` frère | `sister` sœur · `boy` garçon · `girl` fille |
+| 4 Animaux | `ar_sheet4_animals` | `dog` chien · `camel` chameau · `elephant` éléphant | `horse` cheval · `bird` oiseau · `whale` baleine |
+| 5 Lieux | `ar_sheet5_places` | `house` maison · `school` école · `market` marché (souk) | `hospital` hôpital · `mosque` mosquée · `street` rue |
+| 6 Nature et corps | `ar_sheet6_nature` | `moon` lune · `sun` soleil · `tree` arbre | `eye` œil · `heart` cœur · `hand` main |
+
+Pour chaque planche, ajouter à la fin du prompt : « Top row left to right: 1) … 2) … 3) …
+Bottom row left to right: 4) … 5) … 6) … ».
+
+## Découpe
+
+```bash
+# 3 colonnes × 2 lignes ; W et H = taille de la planche
+for i in 0 1 2; do for j in 0 1; do
+  magick ar_sheet1_food.png -crop $((W/3))x$((H/2))+$((i*W/3))+$((j*H/2)) +repage cell_${j}_${i}.png
+done; done
+```
+
+Puis renommer chaque cellule avec la clé du tableau et ajouter la clé dans
+`src/content/images.ts` (à créer) pour que `Word.img` pointe vers l'asset.
+
+## Lexique illustré (planches 11 à 13)
+
+16 photos ajoutées pour les mots concrets du lexique : œufs, sel, mouton, gazelle, épée, cheveux, pied, bouche, mer, horloge, bibliothèque, université, encrier, enseignant, étudiant, ville. Deux images ont été écartées : une voiture (logo de marque et plaque visibles) et un avion (livrée d'une compagnie lisible). **Encore sans photo** : voiture, avion/aéroport, poche, voisin, café (lieu). Pour savoir ce qui manque : `imageCoverage('ar')` dans `src/content/lexicon.ts` (état actuel : 87 mots illustrés sur 266).
