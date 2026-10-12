@@ -1,5 +1,5 @@
 import type { Activity, Lesson, LessonPart, Word } from './types';
-import { IMG_KEY_BY_AR } from './imageKeys';
+import { IMG_KEY_BY_AR, imgForFrench } from './imageKeys';
 import { fade as fadeText, type FadeMode } from './ar/vowels';
 
 // ─── Outils de construction des leçons ───────────────────────────────────────
@@ -12,7 +12,8 @@ export function w(spec: string): Word {
   const fake = spec.startsWith('~');
   const [ar, tr, fr, emoji] = (fake ? spec.slice(1) : spec).split('|');
   const explicit = emoji?.startsWith('img:') ? emoji.slice(4) : undefined;
-  const img = explicit ?? IMG_KEY_BY_AR[ar];
+  // Lien explicite, puis table du mot, puis table de la traduction française (noms concrets seulement)
+  const img = explicit ?? IMG_KEY_BY_AR[ar] ?? (fake ? undefined : imgForFrench(fr));
   const color = emoji?.startsWith('#') ? emoji : undefined;
   return { ar, tr, fr, ...(emoji && !color && !explicit ? { emoji } : {}), ...(color ? { color } : {}), ...(img ? { img } : {}), ...(fake ? { fake: true } : {}) };
 }

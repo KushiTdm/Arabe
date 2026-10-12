@@ -52,6 +52,10 @@ Puis renommer chaque cellule avec la clé du tableau et ajouter la clé dans
 
 Transports (bus, train, avion, vélo, taxi, barque) et fruits et légumes (tomate, raisin, fraise, orange, pomme de terre, oignon) ont été générées, découpées et reliées aux phrases ; des mots de nourriture (tomate…oignon) ont été ajoutés dans les unités « restaurant » de chaque langue. Le dossier `assets/images/vocab/` contient maintenant 87 photos. Le texte ci-dessous est l'historique des prompts.
 
+## Planches 16 à 19 : faites (13 oct.)
+
+Personnes (grand-père, grand-mère, médecin, femme, homme, amis), objets et lieux (magasin, sac, voiture sans marque, chaise, viande ; la pharmacie a été écartée : enseigne au texte flou), corps et nature (chat, oreille, nez, pluie, neige, montagne), vêtements (chemise, pantalon, chaussures, casquette, manteau, lunettes). 110 photos au total. **Liaison automatique** : `IMG_KEY_BY_FR` dans `src/content/imageKeys.ts` associe la traduction française d'un nom concret à sa photo, pour toutes les langues — un mot qui s'appelle « chat » en français reçoit la photo du chat dans toutes les leçons, sans lien manuel. Pour illustrer un nouveau mot : ajouter la photo, l'entrée `images.ts` et l'entrée du tableau.
+
 ## Prochaines planches (prêtes à lancer)
 
 À lancer dès que l'outil image-gen accepte de nouveau (compteur de session 15/15 le 13 oct.). Mêmes règles de style : photo réaliste, fond blanc cassé, lumière douce, sujet centré à 70 %, **aucun logo, texte, plaque ni livrée lisible**.
