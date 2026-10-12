@@ -77,6 +77,12 @@ export const VI_UNITS: SimpleUnit[] = [
     phrases: [
       'Cho tôi một ly cà phê|Un café, s\'il vous plaît|img:coffee', 'Cho tôi một ly trà|Un thé, s\'il vous plaît|img:tea', 'Cho tôi nước|De l\'eau, s\'il vous plaît|img:water', 'phở|soupe phở|🍜', 'cơm|riz cuit|🍚',
       'bánh mì|pain, baguette|img:bread', 'cá|poisson|img:fish', 'Tôi thích cà phê|J\'aime le café', 'Ngon quá!|Délicieux !', 'Tính tiền|L\'addition, s\'il vous plaît', 'Tôi đói|J\'ai faim|🍽️', 'Tôi khát|J\'ai soif|img:drinking', 'Bạn muốn uống gì?|Que veux-tu boire ?',
+      'cà chua|tomate|img:tomato',
+      'nho|raisin|img:grapes',
+      'dâu tây|fraise|img:strawberry',
+      'cam|orange|img:orange',
+      'khoai tây|pomme de terre|img:potato',
+      'hành tây|oignon|img:onion',
     ],
     qa: [['Bạn muốn uống gì?', 'Cho tôi một ly cà phê', 'bánh mì', 'cá']],
   },

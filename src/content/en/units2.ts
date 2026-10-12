@@ -58,8 +58,8 @@ export const EN_A2: SimpleUnit[] = lv('intermediate', [
     id: 'en-13', theme: 'places', title: 'Voyager',
     goal: 'Poser des questions en voyage',
     phrases: [
-      'Where is the train station?|Où est la gare ?|🚉', 'What time does the train leave?|À quelle heure part le train ?|🚆', 'How much is a ticket to London?|Combien coûte un billet pour Londres ?|🎫', 'Which platform?|Quel quai ?',
-      'Does this bus go to the airport?|Ce bus va-t-il à l\'aéroport ?|🚌', 'Can you help me, please?|Pouvez-vous m\'aider, s\'il vous plaît ?', 'I\'d like a single ticket|Je voudrais un aller simple', 'Is it far?|Est-ce loin ?', 'It leaves at ten|Il part à dix heures',
+      'Where is the train station?|Où est la gare ?|img:train', 'What time does the train leave?|À quelle heure part le train ?|img:train', 'How much is a ticket to London?|Combien coûte un billet pour Londres ?|🎫', 'Which platform?|Quel quai ?',
+      'Does this bus go to the airport?|Ce bus va-t-il à l\'aéroport ?|img:bus', 'Can you help me, please?|Pouvez-vous m\'aider, s\'il vous plaît ?', 'I\'d like a single ticket|Je voudrais un aller simple', 'Is it far?|Est-ce loin ?', 'It leaves at ten|Il part à dix heures',
     ],
     qa: [['What time does the train leave?', 'It leaves at ten', 'Which platform?', 'Is it far?']],
   },

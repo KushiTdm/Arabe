@@ -70,7 +70,7 @@ export const ZH_A2: SimpleUnit[] = lv('intermediate', [
     tip: { title: 'Aller et venir', body: '去 (qù) = aller, s\'éloigner du locuteur ; 来 (lái) = venir, se rapprocher. « 我去学校 » (je vais à l\'école), « 他来我家 » (il vient chez moi). Moyen de transport : 坐 + transport + 去/来 (« 坐地铁去 »).' },
     phrases: [
       '我要去学校|wǒ yào qù xuéxiào|Je vais aller à l\'école|img:school', '你去哪儿？|nǐ qù nǎr|Où vas-tu ?', '他来我家|tā lái wǒ jiā|Il vient chez moi|img:house', '请进来|qǐng jìnlái|Entrez, je vous prie', '我回家|wǒ huí jiā|Je rentre à la maison',
-      '我们坐地铁去|wǒmen zuò dìtiě qù|Nous y allons en métro|🚇', '我骑自行车来|wǒ qí zìxíngchē lái|Je viens à vélo|🚲', '出租车|chūzūchē|taxi|🚕', '机场|jīchǎng|aéroport|✈️',
+      '我们坐地铁去|wǒmen zuò dìtiě qù|Nous y allons en métro|🚇', '我骑自行车来|wǒ qí zìxíngchē lái|Je viens à vélo|img:bicycle', '出租车|chūzūchē|taxi|img:taxi', '机场|jīchǎng|aéroport|img:airplane',
     ],
     tokens: { '我们坐地铁去': ['我们|wǒmen', '坐|zuò', '地铁|dìtiě', '去|qù'], '我骑自行车来': ['我|wǒ', '骑|qí', '自行车|zìxíngchē', '来|lái'] },
     orders: ['我们坐地铁去', '我骑自行车来'],

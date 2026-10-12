@@ -27,7 +27,7 @@ export const JA_READING: Omit<ReadingSpec, 'known'>[] = [
     goal: 'Lire les rangées な et は',
     letters: ['な', 'に', 'ぬ', 'ね', 'の', 'は', 'ひ', 'ふ', 'へ', 'ほ'],
     intro: [{ title: 'は et へ, deux cas particuliers', body: 'Comme particules, は se lit « wa » et へ se lit « e ». Dans un mot (はな, へそ), ils se lisent « ha » et « he ». ふ est entre « fu » et « hu ».' }],
-    words: ws(['さかな|sakana|poisson|img:fish', 'ねこ|neko|chat', 'にく|niku|viande', 'はな|hana|fleur|img:flowers', 'ひと|hito|personne', 'ほし|hoshi|étoile|img:star', 'なつ|natsu|été', 'ふね|fune|bateau', 'はし|hashi|baguettes', 'あなた|anata|vous, tu', 'へそ|heso|nombril']),
+    words: ws(['さかな|sakana|poisson|img:fish', 'ねこ|neko|chat', 'にく|niku|viande', 'はな|hana|fleur|img:flowers', 'ひと|hito|personne', 'ほし|hoshi|étoile|img:star', 'なつ|natsu|été', 'ふね|fune|bateau|img:boat', 'はし|hashi|baguettes', 'あなた|anata|vous, tu', 'へそ|heso|nombril']),
   },
   {
     id: 'ja-K4', theme: 'reading', title: 'Hiragana IV : ま や',
@@ -129,6 +129,12 @@ export const JA_UNITS: SimpleUnit[] = [
     phrases: [
       'すしがすきです|sushi ga suki desu|J\'aime les sushis', 'コーヒーがすきです|kōhī ga suki desu|J\'aime le café|img:coffee', 'さかながすきです|sakana ga suki desu|J\'aime le poisson|img:fish', 'にくはすきじゃありません|niku wa suki ja arimasen|Je n\'aime pas la viande',
       'おいしいです|oishii desu|C\'est délicieux', 'なにがすきですか|nani ga suki desu ka|Qu\'est-ce que vous aimez ?', 'みずをください|mizu o kudasai|De l\'eau, s\'il vous plaît|img:water',
+      'トマト|tomato|tomate|img:tomato',
+      'ぶどう|budō|raisin|img:grapes',
+      'いちご|ichigo|fraise|img:strawberry',
+      'オレンジ|orenji|orange|img:orange',
+      'じゃがいも|jagaimo|pomme de terre|img:potato',
+      'たまねぎ|tamanegi|oignon|img:onion',
     ],
     tokens: {
       'すしがすきです': ['すし|sushi', 'が|ga', 'すき|suki', 'です|desu'],

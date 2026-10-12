@@ -32,14 +32,14 @@ export const KO_READING: Omit<ReadingSpec, 'known'>[] = [
     goal: 'Lire ㅋ ㅌ ㅍ ㅊ et les opposer aux simples',
     letters: ['ㅋ', 'ㅌ', 'ㅍ', 'ㅊ'],
     intro: [{ title: 'Avec un souffle', body: 'ㅋ ㅌ ㅍ ㅊ sont des consonnes aspirées : un souffle d\'air les accompagne (comme « k », « t », « p » anglais devant une voyelle). Mets la main devant ta bouche : tu dois sentir l\'air.' }],
-    words: ws(['코|ko|nez', '커피|keopi|café|img:coffee', '토마토|tomato|tomate', '파티|pati|fête', '차|cha|thé ; voiture', '치마|chima|jupe', '카메라|kamera|appareil photo', '피자|pija|pizza', '포도|podo|raisin', '타다|tada|monter (dans)', '키|ki|taille', '치즈|chijeu|fromage']),
+    words: ws(['코|ko|nez', '커피|keopi|café|img:coffee', '토마토|tomato|tomate|img:tomato', '파티|pati|fête', '차|cha|thé ; voiture', '치마|chima|jupe', '카메라|kamera|appareil photo', '피자|pija|pizza', '포도|podo|raisin|img:grapes', '타다|tada|monter (dans)', '키|ki|taille', '치즈|chijeu|fromage']),
   },
   {
     id: 'ko-H5', theme: 'reading', title: 'Hangeul V : consonnes tendues',
     goal: 'Lire ㄲ ㄸ ㅃ ㅆ ㅉ : la triple opposition',
     letters: ['ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ'],
     intro: [{ title: 'Doubles = tendues', body: 'ㄲ ㄸ ㅃ ㅆ ㅉ sont des consonnes « tendues » : gorge serrée, sans souffle, comme un « k » ou « p » bien sec. La triple opposition g / k / kk (ㄱ ㅋ ㄲ) est la difficulté du coréen.' }],
-    words: ws(['아빠|appa|papa|img:father', '엄마|eomma|maman|img:mother', '오빠|oppa|grand frère (d\'une fille)|img:brother', '아저씨|ajeossi|monsieur', '까치|kkachi|pie', '토끼|tokki|lapin', '쓰다|sseuda|écrire', '뽀뽀|ppoppo|bisou', '딸기|ttalgi|fraise', '싸다|ssada|être bon marché']),
+    words: ws(['아빠|appa|papa|img:father', '엄마|eomma|maman|img:mother', '오빠|oppa|grand frère (d\'une fille)|img:brother', '아저씨|ajeossi|monsieur', '까치|kkachi|pie', '토끼|tokki|lapin', '쓰다|sseuda|écrire', '뽀뽀|ppoppo|bisou', '딸기|ttalgi|fraise|img:strawberry', '싸다|ssada|être bon marché']),
   },
   {
     id: 'ko-H6', theme: 'reading', title: 'Hangeul VI : voyelles composées',
@@ -110,6 +110,9 @@ export const KO_UNITS: SimpleUnit[] = [
     phrases: [
       '저는 커피를 좋아해요|jeoneun keopireul joahaeyo|J\'aime le café|img:coffee', '저는 사과를 좋아해요|jeoneun sagwareul joahaeyo|J\'aime les pommes|img:apple', '저는 우유를 안 좋아해요|jeoneun uyureul an joahaeyo|Je n\'aime pas le lait|img:milk',
       '좋아요|joayo|C\'est bien, j\'aime', '싫어요|sireoyo|Je n\'aime pas, je ne veux pas', '예뻐요|yeppeoyo|C\'est joli', '커요|keoyo|C\'est grand', '작아요|jagayo|C\'est petit', '이 집은 커요|i jibeun keoyo|Cette maison est grande|img:house', '뭘 좋아해요?|mwol joahaeyo|Qu\'est-ce que vous aimez ?',
+      '감자|gamja|pomme de terre|img:potato',
+      '양파|yangpa|oignon|img:onion',
+      '오렌지|orenji|orange|img:orange',
     ],
     qa: [['뭘 좋아해요?', '저는 커피를 좋아해요', '커요', '작아요']],
   },

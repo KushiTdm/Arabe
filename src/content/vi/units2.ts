@@ -47,8 +47,8 @@ export const VI_A2: SimpleUnit[] = lv('intermediate', [
     id: 'vi-11', theme: 'places', title: 'Se déplacer',
     goal: 'Prendre un transport et demander sa direction',
     phrases: [
-      'Tôi muốn đi sân bay|Je voudrais aller à l\'aéroport|✈️', 'Đi xe buýt số mấy?|Quel numéro de bus ?|🚌', 'Cho tôi một vé|Un billet, s\'il vous plaît|🎫', 'Bao nhiêu tiền một vé?|Combien coûte un billet ?|img:money', 'Tôi đi bằng taxi|Je vais en taxi|🚕',
-      'Xin dừng ở đây|Arrêtez-vous ici, s\'il vous plaît', 'Ga tàu ở đâu?|Où est la gare ?|🚉', 'Đi thẳng rồi rẽ phải|Allez tout droit puis tournez à droite|⬆️', 'tàu hỏa|train|🚆',
+      'Tôi muốn đi sân bay|Je voudrais aller à l\'aéroport|img:airplane', 'Đi xe buýt số mấy?|Quel numéro de bus ?|img:bus', 'Cho tôi một vé|Un billet, s\'il vous plaît|🎫', 'Bao nhiêu tiền một vé?|Combien coûte un billet ?|img:money', 'Tôi đi bằng taxi|Je vais en taxi|img:taxi',
+      'Xin dừng ở đây|Arrêtez-vous ici, s\'il vous plaît', 'Ga tàu ở đâu?|Où est la gare ?|🚉', 'Đi thẳng rồi rẽ phải|Allez tout droit puis tournez à droite|⬆️', 'tàu hỏa|train|img:train',
     ],
     qa: [['Ga tàu ở đâu?', 'Đi thẳng rồi rẽ phải', 'tàu hỏa', 'Cho tôi một vé']],
   },

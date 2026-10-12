@@ -50,7 +50,7 @@ export const RU_A2: SimpleUnit[] = lv('intermediate', [
     tip: { title: 'Aller à pied ou en transport, une fois ou souvent', body: 'Deux verbes pour « aller » à pied : « идти » (un trajet précis, maintenant) et « ходить » (habitude, aller-retour). En véhicule : « ехать » et « ездить ».' },
     phrases: [
       'Я иду в школу|ia idou v chkolou|Je vais à l\'école (maintenant)|img:school', 'Я хожу в школу каждый день|ia khajou v chkolou kajdyï dién\'|Je vais à l\'école chaque jour', 'Мы едем в Москву|my iédim v maskvou|Nous allons à Moscou', 'Я часто езжу в Москву|ia tchasta iéjjou v maskvou|Je vais souvent à Moscou',
-      'Куда ты идёшь?|kouda ty idiôch|Où vas-tu ?', 'Он едет на поезде|on iédiet na paiézdié|Il voyage en train|🚆', 'автобус|aftobous|autobus|🚌', 'остановка|astanofka|arrêt', 'Я иду пешком|ia idou pichkom|J\'y vais à pied',
+      'Куда ты идёшь?|kouda ty idiôch|Où vas-tu ?', 'Он едет на поезде|on iédiet na paiézdié|Il voyage en train|img:train', 'автобус|aftobous|autobus|img:bus', 'остановка|astanofka|arrêt', 'Я иду пешком|ia idou pichkom|J\'y vais à pied',
     ],
     qa: [['Куда ты идёшь?', 'Я иду в школу', 'автобус', 'остановка']],
   },

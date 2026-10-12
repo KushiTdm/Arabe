@@ -48,6 +48,10 @@ Puis renommer chaque cellule avec la clé du tableau et ajouter la clé dans
 
 16 photos ajoutées pour les mots concrets du lexique : œufs, sel, mouton, gazelle, épée, cheveux, pied, bouche, mer, horloge, bibliothèque, université, encrier, enseignant, étudiant, ville. Deux images ont été écartées : une voiture (logo de marque et plaque visibles) et un avion (livrée d'une compagnie lisible). **Encore sans photo** : voiture, avion/aéroport, poche, voisin, café (lieu). Pour savoir ce qui manque : `imageCoverage('ar')` dans `src/content/lexicon.ts` (état actuel : 87 mots illustrés sur 266).
 
+## Planches 14 et 15 : faites (13 oct.)
+
+Transports (bus, train, avion, vélo, taxi, barque) et fruits et légumes (tomate, raisin, fraise, orange, pomme de terre, oignon) ont été générées, découpées et reliées aux phrases ; des mots de nourriture (tomate…oignon) ont été ajoutés dans les unités « restaurant » de chaque langue. Le dossier `assets/images/vocab/` contient maintenant 87 photos. Le texte ci-dessous est l'historique des prompts.
+
 ## Prochaines planches (prêtes à lancer)
 
 À lancer dès que l'outil image-gen accepte de nouveau (compteur de session 15/15 le 13 oct.). Mêmes règles de style : photo réaliste, fond blanc cassé, lumière douce, sujet centré à 70 %, **aucun logo, texte, plaque ni livrée lisible**.

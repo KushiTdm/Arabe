@@ -64,7 +64,7 @@ export const ES_A2: SimpleUnit[] = lv('intermediate', [
     phrases: [
       'Este hotel es más barato que aquel|Cet hôtel est moins cher que celui-là', 'Mi casa es más grande que la tuya|Ma maison est plus grande que la tienne|img:house', 'Es el mejor restaurante de la ciudad|C\'est le meilleur restaurant de la ville',
       'Es tan caro como el otro|Il est aussi cher que l\'autre', '¿Para quién es este regalo?|Pour qui est ce cadeau ?', 'Es para ti|C\'est pour toi', 'Salgo para Madrid mañana|Je pars pour Madrid demain', 'Gracias por tu ayuda|Merci pour ton aide',
-      'Compré el billete por internet|J\'ai acheté le billet sur internet', 'el billete|le billet|🎫', 'el tren|le train|🚆', 'el avión|l\'avion|✈️',
+      'Compré el billete por internet|J\'ai acheté le billet sur internet', 'el billete|le billet|🎫', 'el tren|le train|img:train', 'el avión|l\'avion|img:airplane',
     ],
     qa: [['¿Para quién es este regalo?', 'Es para ti', 'el tren', 'el avión']],
   },

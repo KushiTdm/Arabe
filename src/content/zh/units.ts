@@ -102,6 +102,12 @@ export const ZH_UNITS: SimpleUnit[] = [
     phrases: [
       '水|shuǐ|eau|img:water', '茶|chá|thé|img:tea', '咖啡|kāfēi|café|img:coffee', '米饭|mǐfàn|riz|🍚', '面包|miànbāo|pain|img:bread', '鱼|yú|poisson|img:fish', '苹果|píngguǒ|pomme|img:apple', '鸡蛋|jīdàn|œuf|img:eggs',
       '你想喝什么？|nǐ xiǎng hē shénme|Que veux-tu boire ?', '我想喝茶|wǒ xiǎng hē chá|J\'aimerais du thé', '我要一杯咖啡|wǒ yào yì bēi kāfēi|Je prends un café', '我很饿|wǒ hěn è|J\'ai faim|🍽️', '我很渴|wǒ hěn kě|J\'ai soif|img:drinking', '买单|mǎidān|L\'addition, s\'il vous plaît',
+      '西红柿|xīhóngshì|tomate|img:tomato',
+      '葡萄|pútao|raisin|img:grapes',
+      '草莓|cǎoméi|fraise|img:strawberry',
+      '橙子|chéngzi|orange|img:orange',
+      '土豆|tǔdòu|pomme de terre|img:potato',
+      '洋葱|yángcōng|oignon|img:onion',
     ],
     tokens: {
       '我想喝茶': ['我|wǒ', '想|xiǎng', '喝|hē', '茶|chá'],

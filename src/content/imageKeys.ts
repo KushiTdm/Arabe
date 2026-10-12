@@ -25,6 +25,8 @@ export const IMG_KEY_BY_AR: Record<string, string> = {
   'قَدَم': 'foot', 'فَم': 'mouth', 'بَحْر': 'sea', 'سَاعَة': 'clock', 'مَكْتَبَة': 'library',
   'جَامِعَة': 'university', 'حِبْر': 'ink', 'مُعَلِّم': 'teacher', 'أُسْتَاذ': 'teacher', 'مُدَرِّس': 'teacher',
   'طَالِب': 'student', 'أَنَا طَالِب': 'student', 'مَدِينَة': 'city',
+  'طَمَاطِم': 'tomato', 'عِنَب': 'grapes', 'فَرَاوِلَة': 'strawberry', 'بُرْتُقَال': 'orange', 'بَطَاطَا': 'potato', 'بَصَل': 'onion',
+  'مَطَار': 'airplane',
   // Scènes des unités orales
   'السَّلَامُ عَلَيْكُمْ': 'handshake', 'صَبَاحُ الخَيْر': 'sunrise', 'مَسَاءُ الخَيْر': 'sunset',
   'بِكَمْ هٰذَا؟': 'money', 'خَمْسَةُ يُورُو': 'money', 'أَنَا عَطْشَان': 'drinking',

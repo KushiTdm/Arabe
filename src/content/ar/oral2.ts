@@ -80,6 +80,7 @@ export const AR_ORAL_A2: OralSpec[] = [
       'سَاخِن|sākhin|chaud',
       'بَارِد|bārid|froid',
       'مَاء مِنْ فَضْلِكَ|māʾ min faḍlika|De l\'eau, s\'il vous plaît',
+      'طَمَاطِم|ṭamāṭim|tomates', 'عِنَب|ʿinab|raisin', 'فَرَاوِلَة|farāwila|fraises', 'بُرْتُقَال|burtuqāl|orange', 'بَطَاطَا|baṭāṭā|pommes de terre', 'بَصَل|baṣal|oignon',
       'الحِسَاب مِنْ فَضْلِكَ|al-ḥisāb min faḍlika|L\'addition, s\'il vous plaît',
     ]),
     orders: [

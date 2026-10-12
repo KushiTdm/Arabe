@@ -21,6 +21,8 @@ const THEME_BY_IMG: Record<string, string> = {
   eggs: 'food', salt: 'food', sheep: 'animals', gazelle: 'animals', sword: 'objects', hair: 'body', foot: 'body',
   mouth: 'body', sea: 'nature', clock: 'objects', library: 'places', university: 'places', ink: 'objects',
   teacher: 'places', student: 'places', city: 'places',
+  bus: 'transport', train: 'transport', airplane: 'transport', bicycle: 'transport', taxi: 'transport', boat: 'transport',
+  tomato: 'food', grapes: 'food', strawberry: 'food', orange: 'food', potato: 'food', onion: 'food',
   door: 'objects', book: 'objects', pen: 'objects', key: 'objects', table: 'objects', robe: 'objects', gold: 'objects',
 };
 
@@ -42,6 +44,7 @@ export const LEXICON_THEMES: Record<string, { label: string; emoji: string }> = 
   body:       { label: 'Corps et santé',   emoji: '🫀' },
   nature:     { label: 'Nature',           emoji: '🌿' },
   objects:    { label: 'Objets',           emoji: '🗝️' },
+  transport:  { label: 'Transports',       emoji: '🚌' },
   discourse:  { label: 'Discours et avis', emoji: '💬' },
   reading:    { label: 'Mots de lecture',  emoji: '📖' },
 };
