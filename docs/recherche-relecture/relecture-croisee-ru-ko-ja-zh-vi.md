@@ -43,3 +43,6 @@ Gemini et Grok ont échoué sur de longues listes (refus, répétition de la con
 - **Retenu :** arabe « أَحْسَنْتَ، عَمَلٌ جَيِّد » (Bravo, bon travail) à la place de « Merci, bon travail » ; russe « Сколько вам нужно ? » et « Что вы желаете ? » ; coréen 안녕하세요, 다음에 봐요, 잘 모르겠어요, 아니에요, 또 필요한 거 있으세요?, 도와드릴까요? ; japonais どちらから, ほかになにか, おてつだいしましょうか, ごちゅうもんはおきまりですか ; mandarin 请问您想要什么？, 请问医院在哪儿？
 - **Écarté :** « ごユーロ ne prend pas ご » (faux : ご est le chiffre 5), « フランスからきました veut です » (naturel sans), les écritures en chiffres (3ユーロ) pour des apprenants qui lisent les kana.
 - Les conversations en espagnol, italien, portugais, allemand, anglais et vietnamien n'ont pas été relues par IA.
+
+## Packs de vocabulaire (13 oct., Perplexity)
+Couleurs, jours, vêtements, transports, nature et métiers (40 mots par langue). **Retenu :** coréen 경찰관 (policier, et non « police »), mandarin 公交车 (bus) et 外套 (manteau), arabe قَارِب (bateau). **Écarté :** les romanisations « à l'anglaise » proposées pour le russe (krasnyy, zelyonyy…), la romanisation française est un choix délibéré ; лодка conservé car la photo montre une barque.

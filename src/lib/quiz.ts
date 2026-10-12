@@ -21,6 +21,7 @@ export interface QuizQuestion {
   /** Photo du mot (clé de content/images.ts) ou emoji de repli, affichée au-dessus de la question. */
   image?: string;
   emoji?: string;
+  color?: string;
   /** Question à l'oreille : lire `speakText` automatiquement. */
   listen?: boolean;
 }
@@ -266,7 +267,7 @@ export function generateWordsQuiz(words: VocabWord[], pool: VocabWord[], size: n
 
   return shuffle(usable).slice(0, size).map((word, i) => {
     const kinds: Array<'nf' | 'fn' | 'listen' | 'img'> = ['nf', 'fn', 'listen'];
-    if (word.img || word.emoji) kinds.push('img', 'img');
+    if (word.img || word.emoji || word.color) kinds.push('img', 'img');
     const kind = kinds[(i + Math.floor(Math.random() * kinds.length)) % kinds.length];
 
     const toFrench = () => {
@@ -282,8 +283,8 @@ export function generateWordsQuiz(words: VocabWord[], pool: VocabWord[], size: n
 
     if (kind === 'img') {
       return {
-        question: 'Comment dit-on ceci ?',
-        image: word.img, emoji: word.emoji, ...toNative(), explanation: explanationFor(word),
+        question: word.color ? 'Comment dit-on cette couleur ?' : 'Comment dit-on ceci ?',
+        image: word.img, emoji: word.emoji, color: word.color, ...toNative(), explanation: explanationFor(word),
       };
     }
     if (kind === 'listen') {

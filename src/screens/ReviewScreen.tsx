@@ -155,6 +155,7 @@ export default function ReviewScreen() {
             meaning={card.french_translation}
             img={card.img}
             emoji={card.emoji}
+            color={card.color}
             rtl={language.rtl}
             flipped={showAnswer}
             onFlip={() => setShowAnswer(true)}
@@ -265,7 +266,7 @@ export default function ReviewScreen() {
               .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
               .map(card => (
                 <View key={card.id} style={styles.deckRow}>
-                  {(!!card.img || !!card.emoji) && <WordPic img={card.img} emoji={card.emoji} size={44} />}
+                  {(!!card.img || !!card.emoji || !!card.color) && <WordPic img={card.img} emoji={card.emoji} color={card.color} size={44} />}
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.deckNative, language.rtl && styles.rtlText]}>{card.native_word}</Text>
                     <Text style={styles.deckFrench}>{card.french_translation}</Text>

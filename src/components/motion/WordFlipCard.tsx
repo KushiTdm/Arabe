@@ -16,6 +16,7 @@ export interface WordFlipCardProps extends MotionTheme {
   meaning: string;
   img?: string;
   emoji?: string;
+  color?: string;
   rtl?: boolean;
   /** true = face arrière visible. */
   flipped: boolean;
@@ -25,7 +26,7 @@ export interface WordFlipCardProps extends MotionTheme {
 }
 
 export function WordFlipCard({
-  native, translit, meaning, img, emoji, rtl, flipped, onFlip, hint = 'Toucher pour voir la réponse', children, ...theme
+  native, translit, meaning, img, emoji, color, rtl, flipped, onFlip, hint = 'Toucher pour voir la réponse', children, ...theme
 }: WordFlipCardProps) {
   const { speed } = { ...DEFAULT_THEME, ...theme };
   const t = useMotionTiming(speed);
@@ -44,13 +45,13 @@ export function WordFlipCard({
     transform: [{ perspective: 1000 }, { rotateY: `${interpolate(p.value, [0, 1], [180, 360])}deg` }] as any,
     opacity: p.value >= 0.5 ? 1 : 0,
   }));
-  const hasPic = !!img || !!emoji;
+  const hasPic = !!img || !!emoji || !!color;
 
   return (
     <View style={styles.wrap}>
       {/* La face arrière donne la hauteur (elle contient le plus de contenu) */}
       <Animated.View style={[styles.face, styles.sizer, back]} pointerEvents={flipped ? 'auto' : 'none'}>
-        {hasPic && <View style={{ marginBottom: 8 }}><WordPic img={img} emoji={emoji} size={96} /></View>}
+        {hasPic && <View style={{ marginBottom: 8 }}><WordPic img={img} emoji={emoji} color={color} size={96} /></View>}
         <Text style={[styles.native, rtl && styles.rtl]}>{native}</Text>
         {!!translit && <Text style={styles.translit}>{translit}</Text>}
         <Text style={styles.meaning}>{meaning}</Text>
@@ -58,7 +59,7 @@ export function WordFlipCard({
       </Animated.View>
       <Animated.View style={[styles.face, StyleSheet.absoluteFill, front]} pointerEvents={flipped ? 'none' : 'auto'}>
         <Pressable style={styles.frontPress} onPress={onFlip}>
-          {hasPic && <View style={{ marginBottom: 14 }}><WordPic img={img} emoji={emoji} size={150} /></View>}
+          {hasPic && <View style={{ marginBottom: 14 }}><WordPic img={img} emoji={emoji} color={color} size={150} /></View>}
           <Text style={[styles.native, rtl && styles.rtl]}>{native}</Text>
           <Text style={styles.hint}>{hint}</Text>
         </Pressable>

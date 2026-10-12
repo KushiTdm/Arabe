@@ -786,6 +786,8 @@ Une partie est validée à 70 % de réussite **au premier essai** ; les réponse
 
 **Arabe — état :** 33 unités intégrées (L1-L18 et O1-O15, A1 à B1), 59 photos réalistes, 28 mots-clés de lettres. L15-L17 retirent progressivement les voyelles (`ar/vowels.ts`) et ajoutent l'exercice « restaure la lecture » ; L18 traite les racines. **Toutes les langues, A1 à B1 :** 226 leçons intégrées (ar 33, es 19, it 17, pt 18, de 19, en 19, ru 22, ko 20, ja 21, zh 20, vi 18), plus aucune unité du parcours ne dépend de l'IA. Les 10 langues autres que l'arabe sont écrites avec le format compact `src/content/simple.ts` (phrases, questions-réponses, note de grammaire) et réutilisent les mêmes photos. Seul l'arabe a été relu par IA ; aucune de ces langues n'a été relue par un locuteur natif. A2 et B1 des autres langues : phrases courtes illustrant la grammaire visée, pas de textes longs ni de production libre notée.
 
+**Packs de vocabulaire :** couleurs (pastilles), jours, vêtements, transports, nature et météo, métiers — 40 mots par langue (`src/content/packs.ts`, `packData.ts`), intégrés au lexique, au Quiz et à la révision. **Conversations guidées illustrées :** 52 scénarios (`src/content/conversations.ts`, écrans `Dialogues` et `Dialogue`).
+
 **Quiz :** pour toutes les langues, thèmes tirés du lexique des leçons (par thème, par unité, « mon paquet », « tout mélangé »), avec questions en images et à l'oreille, sans IA ni crédit (`src/lib/quiz.ts`). **Relecture croisée par IA** du russe, coréen, japonais, mandarin et vietnamien : `docs/recherche-relecture/`.
 
 **Reste :** relecture par un arabophone, test sur téléphone. B1 : affichage presque nu (shadda et tanwīn conservés), audio voyellé.

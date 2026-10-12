@@ -228,6 +228,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
             meaning={word.french_translation}
             img={word.img}
             emoji={word.emoji}
+            color={word.color}
             rtl={language.rtl}
             flipped={showAnswer}
             onFlip={() => setShowAnswer(true)}
@@ -332,7 +333,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
               const isAI = word.id.startsWith('ai_');
               return (
                 <View key={word.id} style={[styles.wordRow, isMastered && styles.wordRowMastered]}>
-                  {(!!word.img || !!word.emoji) && <WordPic img={word.img} emoji={word.emoji} size={52} />}
+                  {(!!word.img || !!word.emoji || !!word.color) && <WordPic img={word.img} emoji={word.emoji} color={word.color} size={52} />}
                   <View style={styles.wordLeft}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={[styles.wordNative, language.rtl && styles.rtlText]}>

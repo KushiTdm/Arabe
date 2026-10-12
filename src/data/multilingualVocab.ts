@@ -868,6 +868,7 @@ export interface VocabWord {
   /** Illustration (clé de content/images.ts) ou emoji de repli. */
   img?: string;
   emoji?: string;
+  color?: string;
   /** Unité de leçon d'origine (langues au contenu intégré). */
   unit?: string;
 }

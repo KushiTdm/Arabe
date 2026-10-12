@@ -2,6 +2,7 @@ import type { VocabWord } from '../data/multilingualVocab';
 import { getLessons } from './index';
 import type { Activity, Word } from './types';
 import { LETTER_IMG } from './imageKeys';
+import { getPacks } from './packs';
 
 // ─── Lexique construit à partir des leçons ───────────────────────────────────
 // Pour une langue au contenu intégré, le vocabulaire (écran « Vocab », mot du
@@ -51,6 +52,9 @@ export const LEXICON_THEMES: Record<string, { label: string; emoji: string }> = 
   transport:  { label: 'Transports',       emoji: '🚌' },
   people:     { label: 'Personnes',        emoji: '🧑' },
   clothes:    { label: 'Vêtements',        emoji: '👕' },
+  colors:     { label: 'Couleurs',         emoji: '🎨' },
+  time:       { label: 'Jours et temps',   emoji: '📅' },
+  jobs:       { label: 'Métiers',          emoji: '💼' },
   discourse:  { label: 'Discours et avis', emoji: '💬' },
   reading:    { label: 'Mots de lecture',  emoji: '📖' },
 };
@@ -91,6 +95,26 @@ export function getLexicon(code: string): VocabWord[] {
         img: w.img,
         emoji: w.emoji,
         unit: lesson.id,
+      });
+    }
+  }
+  // Packs thématiques : un mot déjà enseigné dans une leçon n'est pas répété ; une couleur reste distincte d'un fruit.
+  const seenFr = new Set(out.map(x => `${x.native_word}|${x.french_translation}`));
+  for (const pack of getPacks(code)) {
+    for (const w of pack.words) {
+      const key = `${w.ar}|${w.fr}`;
+      // Une couleur déjà enseignée dans une leçon (あか, красный…) reçoit sa pastille au lieu d'être répétée.
+      if (w.color) {
+        const ex = out.find(o => o.native_word === w.ar && o.french_translation === w.fr);
+        if (ex) { ex.color = w.color; ex.img = undefined; ex.emoji = undefined; }
+      }
+      if (!w.fr || seenFr.has(key) || (!w.color && out.some(o => o.native_word === w.ar && !o.unit?.includes('pack') && o.french_translation.replace(/^(le |la |l'|les )/, '') === w.fr.replace(/^(le |la |l'|les )/, '')))) continue;
+      seenFr.add(key);
+      out.push({
+        id: `lex:${code}:${pack.theme}:${w.ar}`,
+        native_word: w.ar, transliteration: w.tr, french_translation: w.fr,
+        category: pack.theme, mastered: false, practice_count: 0,
+        img: w.img, emoji: w.emoji, color: w.color, unit: pack.id,
       });
     }
   }

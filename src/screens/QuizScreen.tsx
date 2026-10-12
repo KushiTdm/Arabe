@@ -84,7 +84,7 @@ export default function QuizScreen() {
   const deckWords: VocabWord[] = React.useMemo(() => deck.cards.map(c => ({
     id: c.id, native_word: c.native_word, transliteration: c.transliteration,
     french_translation: c.french_translation, category: c.category, mastered: false,
-    practice_count: c.practice_count, img: c.img, emoji: c.emoji,
+    practice_count: c.practice_count, img: c.img, emoji: c.emoji, color: c.color,
   })), [deck.cards]);
 
   const { say } = useSpeaker();
@@ -310,7 +310,7 @@ export default function QuizScreen() {
 
           <ScrollView contentContainerStyle={styles.playContent} showsVerticalScrollIndicator={false}>
             <View style={styles.questionCard}>
-              {(!!q.image || !!q.emoji) && <View style={{ marginBottom: 10 }}><WordPic img={q.image} emoji={q.emoji} size={130} /></View>}
+              {(!!q.image || !!q.emoji || !!q.color) && <View style={{ marginBottom: 10 }}><WordPic img={q.image} emoji={q.emoji} color={q.color} size={130} /></View>}
               <Text style={[styles.questionText, language.rtl && q.speakText && styles.rtlText]}>
                 {q.question}
               </Text>
