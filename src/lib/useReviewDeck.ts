@@ -14,6 +14,8 @@ export interface ReviewCard {
   transliteration: string;
   french_translation: string;
   category: string;
+  img?: string;
+  emoji?: string;
   box: number;
   nextDue: string; // YYYY-MM-DD
   practice_count: number;
@@ -60,7 +62,7 @@ export function useReviewDeck(storageKey: string) {
   // ── Deck management ───────────────────────────────────────────────────
   const has = (wordId: string): boolean => cards.some(c => c.id === wordId);
 
-  const addWord = async (word: Pick<VocabWord, 'id' | 'native_word' | 'transliteration' | 'french_translation' | 'category'>) => {
+  const addWord = async (word: Pick<VocabWord, 'id' | 'native_word' | 'transliteration' | 'french_translation' | 'category' | 'img' | 'emoji'>) => {
     if (has(word.id)) return;
     const card: ReviewCard = {
       id: word.id,
@@ -68,6 +70,8 @@ export function useReviewDeck(storageKey: string) {
       transliteration: word.transliteration,
       french_translation: word.french_translation,
       category: word.category,
+      img: word.img,
+      emoji: word.emoji,
       box: 1,
       nextDue: todayStr(),
       practice_count: 0,
@@ -75,7 +79,7 @@ export function useReviewDeck(storageKey: string) {
     await persist([...cards, card]);
   };
 
-  const addWords = async (words: Array<Pick<VocabWord, 'id' | 'native_word' | 'transliteration' | 'french_translation' | 'category'>>) => {
+  const addWords = async (words: Array<Pick<VocabWord, 'id' | 'native_word' | 'transliteration' | 'french_translation' | 'category' | 'img' | 'emoji'>>) => {
     const existing = new Set(cards.map(c => c.id));
     const fresh = words
       .filter(w => !existing.has(w.id))
@@ -85,6 +89,8 @@ export function useReviewDeck(storageKey: string) {
         transliteration: w.transliteration,
         french_translation: w.french_translation,
         category: w.category,
+        img: w.img,
+        emoji: w.emoji,
         box: 1,
         nextDue: todayStr(),
         practice_count: 0,

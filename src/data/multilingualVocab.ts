@@ -1,3 +1,6 @@
+import { hasIntegratedCourse } from '../content';
+import { getLexicon, getLexiconCategories, getLexiconWords } from '../content/lexicon';
+
 // Vocabulaire statique par langue (code ISO → catégorie → mots)
 // native_word  = mot dans la langue cible
 // transliteration = romanisation (vide pour langues latines)
@@ -862,6 +865,11 @@ export interface VocabWord {
   category: string;
   mastered: boolean;
   practice_count: number;
+  /** Illustration (clé de content/images.ts) ou emoji de repli. */
+  img?: string;
+  emoji?: string;
+  /** Unité de leçon d'origine (langues au contenu intégré). */
+  unit?: string;
 }
 
 export function getVocabForLanguage(langCode: string): LangVocab {
@@ -869,6 +877,7 @@ export function getVocabForLanguage(langCode: string): LangVocab {
 }
 
 export function getWordsForCategory(langCode: string, category: string): VocabWord[] {
+  if (hasIntegratedCourse(langCode)) return getLexiconWords(langCode, category);
   const langVocab = VOCAB_BY_LANG[langCode] ?? {};
   const words = langVocab[category] ?? [];
   return words.map((w, i) => ({
@@ -880,10 +889,12 @@ export function getWordsForCategory(langCode: string, category: string): VocabWo
 }
 
 export function getAvailableCategories(langCode: string): string[] {
+  if (hasIntegratedCourse(langCode)) return getLexiconCategories(langCode);
   return Object.keys(VOCAB_BY_LANG[langCode] ?? {});
 }
 
 export function getTotalWords(langCode: string): number {
+  if (hasIntegratedCourse(langCode)) return getLexicon(langCode).length;
   const langVocab = VOCAB_BY_LANG[langCode] ?? {};
   return Object.values(langVocab).reduce((acc, words) => acc + words.length, 0);
 }

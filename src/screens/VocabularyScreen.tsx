@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useRoute } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -11,10 +12,13 @@ import {
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
+import { WordPic } from '../components/WordPic';
+import { WordFlipCard, SpeakingWaves } from '../components/motion';
+import { LEXICON_THEMES } from '../content/lexicon';
 import { Card } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
 import { CATEGORY_IMAGES } from '../theme/images';
@@ -45,6 +49,7 @@ const CATEGORY_META: Record<string, { label: string; emoji: string }> = {
   emotions:   { label: 'Émotions',         emoji: '😊' },
   religion:   { label: 'Religion',         emoji: '☪️' },
   work:       { label: 'Travail',          emoji: '💼' },
+  ...LEXICON_THEMES,
 };
 
 // ─── Main screen ─────────────────────────────────────────────────────────────
@@ -59,7 +64,19 @@ export default function VocabularyScreen() {
   const totalWords = getTotalWords(langCode);
   const hasVocab = availableCategories.length > 0;
 
+  const route = useRoute<any>();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Lancement depuis le parcours : ouvre directement la catégorie de l'unité
+  const launchId = route.params?.launchId;
+  React.useEffect(() => {
+    const cat: string | undefined = route.params?.categoryId;
+    if (launchId && cat && availableCategories.includes(cat)) {
+      setSelectedCategory(cat);
+      setMode('browse');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [launchId]);
   const [mode, setMode] = useState<'browse' | 'flashcard'>('browse');
   const [flashcardIndex, setFlashcardIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
@@ -93,9 +110,8 @@ export default function VocabularyScreen() {
     setGenError(null);
   }, [langCode, selectedCategory]);
 
-  const speakWord = (text: string) => {
-    Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
-  };
+  const { say, saySlow, speakingId, voiceWarning } = useSpeaker();
+  const speakWord = (text: string) => say(text);
 
   const toggleMastered = async (id: string) => {
     const updated = new Set(masteredIds);
@@ -206,35 +222,42 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
             <View style={[styles.progressFill, { width: `${((flashcardIndex + 1) / words.length) * 100}%` as any }]} />
           </View>
 
-          <TouchableOpacity
-            style={styles.flashCard}
-            onPress={() => setShowAnswer(true)}
-            activeOpacity={0.85}
+          <WordFlipCard
+            native={word.native_word}
+            translit={word.transliteration}
+            meaning={word.french_translation}
+            img={word.img}
+            emoji={word.emoji}
+            rtl={language.rtl}
+            flipped={showAnswer}
+            onFlip={() => setShowAnswer(true)}
           >
-            {!showAnswer ? (
-              <>
-                <Text style={[styles.flashNative, language.rtl && styles.rtlText]}>{word.native_word}</Text>
-                <Text style={styles.flashHint}>Toucher pour voir la réponse</Text>
-              </>
-            ) : (
-              <>
-                <Text style={[styles.flashNative, language.rtl && styles.rtlText]}>{word.native_word}</Text>
-                {!!word.transliteration && (
-                  <Text style={styles.flashTranslit}>{word.transliteration}</Text>
-                )}
-                <Text style={styles.flashFrench}>{word.french_translation}</Text>
-                <TouchableOpacity onPress={() => speakWord(word.native_word)} style={styles.speakBtn}>
-                  <Ionicons name="volume-high" size={20} color={colors.primary} />
-                </TouchableOpacity>
-                <VocabAudioRecorder
-                  wordId={word.id}
-                  audio={vocabAudio.getAudio(word.id)}
-                  onSave={vocabAudio.saveAudio}
-                  onDelete={vocabAudio.deleteAudio}
-                />
-              </>
-            )}
-          </TouchableOpacity>
+            <View style={styles.speakRow}>
+              <TouchableOpacity onPress={() => speakWord(word.native_word)} style={styles.speakBtn}>
+                <Ionicons name="volume-high" size={20} color={speakingId === word.native_word ? colors.secondary : colors.primary} />
+              </TouchableOpacity>
+              <SpeakingWaves active={speakingId === word.native_word} bars={4} height={22} color={colors.secondary} />
+              {/* Vitesse lente : la fonction d'écoute la plus utile pour
+                  isoler un son ou un ton avant de le reproduire. */}
+              <TouchableOpacity onPress={() => saySlow(word.native_word)} style={styles.slowBtn}>
+                <Ionicons name="play-outline" size={14} color={colors.primary} />
+                <Text style={styles.slowBtnText}>Lent</Text>
+              </TouchableOpacity>
+            </View>
+            {!!voiceWarning && <Text style={styles.voiceWarning}>{voiceWarning}</Text>}
+            <VocabAudioRecorder
+              wordId={word.id}
+              audio={vocabAudio.getAudio(word.id)}
+              onSave={vocabAudio.saveAudio}
+              onDelete={vocabAudio.deleteAudio}
+              target={{
+                native: word.native_word,
+                transliteration: word.transliteration,
+                meaning: word.french_translation,
+              }}
+              onScored={vocabAudio.setScore}
+            />
+          </WordFlipCard>
 
           {showAnswer && (
             <View style={styles.flashActions}>
@@ -309,6 +332,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
               const isAI = word.id.startsWith('ai_');
               return (
                 <View key={word.id} style={[styles.wordRow, isMastered && styles.wordRowMastered]}>
+                  {(!!word.img || !!word.emoji) && <WordPic img={word.img} emoji={word.emoji} size={52} />}
                   <View style={styles.wordLeft}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Text style={[styles.wordNative, language.rtl && styles.rtlText]}>
@@ -560,6 +584,18 @@ const styles = StyleSheet.create({
   flashTranslit: { fontSize: fontSize.lg, color: colors.primary, fontStyle: 'italic', marginBottom: 8 },
   flashFrench: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text, marginBottom: 16 },
   flashHint: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 16 },
+  speakRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  slowBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: `${colors.primary}0d`,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: borderRadius.full,
+  },
+  slowBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
+  voiceWarning: {
+    fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center',
+    marginTop: 8, lineHeight: 15, paddingHorizontal: 8,
+  },
   speakBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: `${colors.primary}12`,

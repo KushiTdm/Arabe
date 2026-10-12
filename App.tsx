@@ -10,10 +10,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from './src/theme';
 import { ProfileProvider, useProfile } from './src/lib/ProfileContext';
 import { useCourses } from './src/lib/useCourses';
+import { configureAudioForPlayback } from './src/lib/speech';
 
 import HomeScreen       from './src/screens/HomeScreen';
 import ConversationScreen from './src/screens/ConversationScreen';
-import WritingScreen    from './src/screens/WritingScreen';
 import VocabularyScreen from './src/screens/VocabularyScreen';
 import CoursScreen      from './src/screens/Coursscreen';
 import AlphabetScreen   from './src/screens/AlphabetScreen';
@@ -21,6 +21,8 @@ import ProfileScreen    from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import QuizScreen       from './src/screens/QuizScreen';
 import ReviewScreen     from './src/screens/ReviewScreen';
+import LessonScreen from './src/screens/LessonScreen';
+import PathScreen       from './src/screens/PathScreen';
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -56,7 +58,6 @@ function HomeTabs() {
           switch (route.name) {
             case 'Home':         iconName = focused ? 'home'        : 'home-outline';        break;
             case 'Conversation': iconName = focused ? 'chatbubbles' : 'chatbubbles-outline'; break;
-            case 'Writing':      iconName = focused ? 'pencil'      : 'pencil-outline';      break;
             case 'Vocabulary':   iconName = focused ? 'book'        : 'book-outline';        break;
             case 'Profile':      iconName = focused ? 'person'      : 'person-outline';      break;
             default:             iconName = 'help-outline';
@@ -78,10 +79,9 @@ function HomeTabs() {
       })}
     >
       <Tab.Screen name="Home"         component={HomeScreen}         options={{ tabBarLabel: 'Accueil' }} />
-      <Tab.Screen name="Conversation" component={ConversationScreen} options={{ tabBarLabel: 'Parler'  }} />
-      <Tab.Screen name="Writing"      component={WritingScreen}      options={{ tabBarLabel: 'Écrire'  }} />
+      <Tab.Screen name="Conversation" component={ConversationScreen} options={{ tabBarLabel: 'Discuter IA'}} />
       <Tab.Screen name="Vocabulary"   component={VocabularyScreen}   options={{ tabBarLabel: 'Vocab'   }} />
-      <Tab.Screen name="Cours"        component={CoursScreen}        options={{ tabBarLabel: 'Cours'   }} />
+      <Tab.Screen name="Cours"        component={CoursScreen}        options={{ tabBarLabel: 'Cours IA'}} />
       <Tab.Screen name="Profile"      component={ProfileScreen}      options={{ tabBarLabel: 'Profil'  }} />
     </Tab.Navigator>
   );
@@ -110,6 +110,8 @@ function RootStack() {
           <Stack.Screen name="Alphabet" component={AlphabetScreen} />
           <Stack.Screen name="Quiz"     component={QuizScreen} />
           <Stack.Screen name="Review"   component={ReviewScreen} />
+          <Stack.Screen name="Path"     component={PathScreen} />
+          <Stack.Screen name="Lesson"   component={LessonScreen} />
         </>
       )}
     </Stack.Navigator>
@@ -131,6 +133,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  // Session audio en mode lecture dès le démarrage. Sans playsInSilentModeIOS,
+  // toute la synthèse vocale est muette quand l'interrupteur latéral de
+  // l'iPhone est sur silencieux — et l'utilisateur croit l'app cassée.
+  React.useEffect(() => { configureAudioForPlayback(); }, []);
+
   return (
     <SafeAreaProvider>
       <ProfileProvider>

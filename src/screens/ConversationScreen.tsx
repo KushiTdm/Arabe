@@ -6,10 +6,16 @@ import {
 import { Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
+import { levelBrief } from '../lib/pedagogy';
+import {
+  VOICE_RECORDING_OPTIONS, checkDuration, rejectionMessage, mimeTypeForUri,
+} from '../lib/audioCapture';
 import { Audio } from 'expo-av';
 import * as FileSystem from 'expo-file-system';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRoute } from '@react-navigation/native';
+import { markStepDone, pathStorageKey } from '../lib/usePathProgress';
 import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
 import { useCourses } from '../lib/useCourses';
@@ -26,6 +32,7 @@ interface Topic {
   label: string;    // in target language
   fr: string;       // in French
   emoji: string;
+  task?: boolean; // objectif du parcours : jeu de rôle plutôt que thème libre
 }
 
 interface Message {
@@ -64,6 +71,7 @@ interface AICourse {
   type: string;
   summary: string;
   explanation: string;
+  sections: { heading: string; body: string }[];
   native_words: { native: string; transliteration: string; meaning: string }[];
   examples: { native: string; transliteration: string; french: string; note?: string }[];
   tips: string[];
@@ -82,6 +90,9 @@ export default function ConversationScreen() {
   const [courseNotif, setCourseNotif] = useState<string | null>(null);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const route = useRoute<any>();
+  // Tours de l'élève dans la conversation en cours (validation d'une étape du parcours)
+  const userTurnsRef = useRef(0);
   const recordingRef = useRef<Audio.Recording | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -101,9 +112,12 @@ export default function ConversationScreen() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, []);
 
-  const speakArabic = (text: string) => {
-    Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
-  };
+  const { say } = useSpeaker();
+  const speakNative = (text: string) => say(text);
+
+  // Calibrage du contenu sur le niveau atteint (i+1) : sans ça, un élève
+  // à 1 500 XP recevait le même contenu qu'au premier jour.
+  const brief = levelBrief(progress?.level ?? 'beginner', language);
 
   // Build topics dynamically from language categories + an exercise topic
   const TOPICS: Topic[] = [
@@ -125,6 +139,7 @@ export default function ConversationScreen() {
 
   const buildSimplePrompt = (topic: string, history: string, errorsCtx: string, userMessage: string, isVoice = false) =>
     `${language.aiSeedPrompt}
+${brief}
 Thème: "${topic}". Élève: ${userName}.
 ${history ? `Historique récent de la conversation:\n${history}\n` : ''}
 Message de ${userName}: ${userMessage}
@@ -148,11 +163,13 @@ Réponds avec ce JSON (COMPACT, sans espaces inutiles):
 
       const res = await invokeAI<AICourse>(
         `${language.aiSeedPrompt}
+${brief}
 Génère un mini-cours sur: "${title}" pour ${userName} qui apprend le ${language.familiarName}.
 Type: ${type}. Contexte: conversation sur "${topic}".
+"sections" structure l'explication en 2 à 3 blocs, CHACUN avec un sous-titre court (3-5 mots) et un développement de 2-4 phrases — jamais un seul bloc fourre-tout.
 
 JSON:
-{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Explication claire en 3-4 phrases","native_words":[{"native":"exemple","transliteration":"","meaning":"exemple"}],"examples":[{"native":"phrase","transliteration":"","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Instruction","type":"translate","question":"question","answer":"réponse","options":["réponse","option2","option3","option4"]}]}`,
+{"title":"${title}","type":"${type}","summary":"Résumé en 1 phrase","explanation":"Résumé en 1-2 phrases","sections":[{"heading":"Sous-titre 1","body":"Développement 2-4 phrases"},{"heading":"Sous-titre 2","body":"Développement 2-4 phrases"}],"native_words":[{"native":"exemple","transliteration":"","meaning":"exemple"}],"examples":[{"native":"phrase","transliteration":"","french":"traduction","note":"conseil"}],"tips":["conseil 1","conseil 2"],"exercises":[{"instruction":"Instruction","type":"translate","question":"question","answer":"réponse","options":["réponse","option2","option3","option4"]}]}`,
         2048,
       );
       return res;
@@ -180,6 +197,7 @@ JSON:
             title: courseContent.title,
             summary: courseContent.summary,
             explanation: courseContent.explanation,
+            sections: courseContent.sections || [],
             tips: courseContent.tips || [],
             source: 'conversation' as const,
             trigger_topic: topicFr,
@@ -242,10 +260,19 @@ JSON:
       });
     }
 
-    setTimeout(() => speakArabic(res.native_text), 300);
+    setTimeout(() => speakNative(res.native_text), 300);
+  };
+
+  const countTurnForPath = async () => {
+    const step = route.params?.pathStep;
+    userTurnsRef.current += 1;
+    if (step && userTurnsRef.current >= 2) {
+      await markStepDone(pathStorageKey(activeProfile?.id, language.code), step.unitId, step.stepIdx);
+    }
   };
 
   const startConversation = async (topic: Topic) => {
+    userTurnsRef.current = 0;
     setSelectedTopic(topic);
     setMessages([]);
     setAiError(null);
@@ -254,16 +281,20 @@ JSON:
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-      const errorsCtx = getErrorsForAIPrompt();
+      const errorsCtx = getErrorsForAIPrompt(userName);
       const isExercise = topic.id === 'exercise';
 
       const prompt = isExercise
         ? `${language.aiSeedPrompt}
-Lance un exercice adapté pour ${userName} (débutant en ${language.familiarName}).
+${brief}
+Lance un exercice adapté pour ${userName}.
 ${errorsCtx ? errorsCtx.substring(0, 300) : ''}
 JSON: {"native_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"Exercice: ...","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`
         : `${language.aiSeedPrompt}
-Lance une conversation sur le thème "${topic.fr}" avec ${userName} (débutant en ${language.familiarName}).
+${brief}
+${topic.task
+  ? `Lance un jeu de rôle réaliste. Objectif de ${userName} : "${topic.fr}". Joue l'interlocuteur et amène ${userName} à accomplir cet objectif, une réplique à la fois.`
+  : `Lance une conversation sur le thème "${topic.fr}" avec ${userName}.`}
 JSON: {"native_text":"...","transliteration":"...","french_translation":"...","suggestion":"...","exercise":"","error_type":null,"error_category":"","correct_form":"","should_create_course":false,"course_topic_title":"","course_type":"grammar"}`;
 
       const res = await invokeAI<AIMessage>(prompt, 1024);
@@ -277,7 +308,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
         suggestion: res.suggestion,
         exercise: res.exercise,
       }]);
-      setTimeout(() => speakArabic(res.native_text), 300);
+      setTimeout(() => speakNative(res.native_text), 300);
     } catch (err: any) {
       setAiError(err?.message || 'Erreur IA. Vérifiez votre clé API dans Profil.');
     } finally {
@@ -296,13 +327,14 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
       const ok = await incrementCredits();
       if (!ok) return;
       const res = await invokeAI<AIMessage>(
-        buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(), text),
+        buildSimplePrompt(selectedTopic.fr, buildHistory(), getErrorsForAIPrompt(userName), text),
         1024,
       );
       if (!res?.native_text) throw new Error('Réponse IA vide.');
       await handleAIResponse(res, selectedTopic.fr);
       await addXP(5);
       await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
+      await countTurnForPath();
       await addSession({ type: 'conversation', topic: selectedTopic.fr, duration_minutes: 1, errors_count: res.error_type ? 1 : 0, xp_earned: 5 });
     } catch (err: any) {
       setAiError(err?.message || 'Erreur IA.');
@@ -316,7 +348,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
       const perm = await Audio.requestPermissionsAsync();
       if (!perm.granted) { Alert.alert('Permission', "Autorise l'accès au micro !"); return; }
       await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      const { recording } = await Audio.Recording.createAsync(VOICE_RECORDING_OPTIONS);
       recordingRef.current = recording;
       setIsRecording(true);
       setRecordingDuration(0);
@@ -328,10 +360,19 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
     if (!recordingRef.current) return;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false);
+    const seconds = recordingDuration;
     try {
       await recordingRef.current.stopAndUnloadAsync();
       const uri = recordingRef.current.getURI();
       recordingRef.current = null;
+      // Repasser en mode lecture. Sans ça, iOS garde la session audio en
+      // enregistrement et toute la synthèse vocale suivante sort dans
+      // l'écouteur au lieu du haut-parleur : la voix devient inaudible pour
+      // le reste de la conversation.
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
+
+      const rejection = checkDuration(seconds);
+      if (rejection) { setAiError(rejectionMessage(rejection)); return; }
       if (uri) await processVoice(uri);
     } catch { recordingRef.current = null; }
   };
@@ -347,11 +388,11 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
         buildSimplePrompt(
           selectedTopic.fr,
           buildHistory(),
-          getErrorsForAIPrompt(),
+          getErrorsForAIPrompt(userName),
           '(audio joint — à transcrire)',
           true,
         ),
-        audioBase64, 'audio/m4a',
+        audioBase64, mimeTypeForUri(audioUri),
       );
       if (!res?.native_text) throw new Error('Réponse IA vide.');
       // La transcription entre dans le fil ET dans l'historique des prochains
@@ -365,12 +406,23 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
       await handleAIResponse(res, selectedTopic.fr);
       await addXP(5);
       await updateProgress({ conversations_count: (progress?.conversations_count || 0) + 1 });
+      await countTurnForPath();
     } catch (err: any) {
       setAiError(err?.message || 'Erreur IA.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // ── Lancement depuis le parcours d'apprentissage ───────────────────────
+  const launchId = route.params?.launchId;
+  useEffect(() => {
+    if (!launchId) return;
+    const task: string | undefined = route.params?.task;
+    if (!task) return;
+    startConversation({ id: route.params?.categoryId ?? 'task', label: task, fr: task, emoji: '🎯', task: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [launchId]);
 
   // ── TOPIC SELECTION ────────────────────────────────────────────────────
   if (!selectedTopic) {
@@ -496,7 +548,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
             </View>
           )}
           {messages.map((msg, i) => (
-            <MessageBubble key={i} message={msg} onSpeak={speakArabic} rtl={language.rtl} />
+            <MessageBubble key={i} message={msg} onSpeak={speakNative} rtl={language.rtl} />
           ))}
           {messages.length > 0 && isLoading && (
             <View style={styles.loadingRow}>

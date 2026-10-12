@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,10 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
 import { useProfile } from '../lib/ProfileContext';
@@ -25,7 +25,11 @@ import {
   hasLocalQuiz,
   generateLocalQuiz,
   generateAIQuiz,
+  generateLetterQuiz,
+  LETTERS_CATEGORY,
 } from '../lib/quiz';
+import { markStepDone, pathStorageKey } from '../lib/usePathProgress';
+import { QUIZ_PASS_PCT, READQUIZ_PASS_PCT } from '../data/learningPath';
 
 type Phase = 'setup' | 'playing' | 'done';
 
@@ -40,9 +44,10 @@ function haptic(type: 'success' | 'error') {
 
 export default function QuizScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
   const {
     language, currentProgress, canUseAI, incrementCredits,
-    updateProgress, addXP, updateStreak,
+    updateProgress, addXP, updateStreak, activeProfile,
   } = useProfile();
 
   const [phase, setPhase] = useState<Phase>('setup');
@@ -53,12 +58,15 @@ export default function QuizScreen() {
   const [correctCount, setCorrectCount] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+  // Parcours : test de lecture sur des lettres, et résultat de l'étape lancée
+  const [letterSet, setLetterSet] = useState<string[] | null>(null);
+  const [stepResult, setStepResult] = useState<'passed' | 'failed' | null>(null);
+  const pathStep: { unitId: string; stepIdx: number } | undefined = route.params?.pathStep;
 
   const bestScore = currentProgress?.quiz_best_score ?? 0;
 
-  const speak = (text: string) => {
-    Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
-  };
+  const { say } = useSpeaker();
+  const speak = (text: string) => say(text);
 
   const startQuiz = async (cat: VocabCategory) => {
     setGenError(null);
@@ -83,7 +91,7 @@ export default function QuizScreen() {
     try {
       const ok = await incrementCredits();
       if (!ok) return;
-      const qs = await generateAIQuiz(language, cat.label);
+      const qs = await generateAIQuiz(language, cat.label, currentProgress?.level ?? 'beginner');
       setQuestions(qs);
       setCurrent(0);
       setSelected(null);
@@ -94,6 +102,23 @@ export default function QuizScreen() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const startLetterQuiz = (letters: string[]) => {
+    const qs = generateLetterQuiz(language, letters);
+    if (qs.length === 0) {
+      setGenError('Aucun signe à tester pour cette unité.');
+      return;
+    }
+    setGenError(null);
+    setLetterSet(letters);
+    setCategory(LETTERS_CATEGORY);
+    setQuestions(qs);
+    setCurrent(0);
+    setSelected(null);
+    setCorrectCount(0);
+    setStepResult(null);
+    setPhase('playing');
   };
 
   const answer = (index: number) => {
@@ -118,6 +143,19 @@ export default function QuizScreen() {
       + (finalCorrect === questions.length ? XP_PERFECT_BONUS : 0);
     if (xp > 0) await addXP(xp);
     await updateStreak();
+
+    // Étape du parcours : validée au-dessus du seuil de réussite
+    if (pathStep) {
+      const threshold = letterSet ? READQUIZ_PASS_PCT : QUIZ_PASS_PCT;
+      if (pct >= threshold) {
+        await markStepDone(
+          pathStorageKey(activeProfile?.id, language.code), pathStep.unitId, pathStep.stepIdx,
+        );
+        setStepResult('passed');
+      } else {
+        setStepResult('failed');
+      }
+    }
     setPhase('done');
   };
 
@@ -129,6 +167,21 @@ export default function QuizScreen() {
       finishQuiz(correctCount);
     }
   };
+
+  // ── Lancement depuis le parcours d'apprentissage ──────────────────────
+  const launchId = route.params?.launchId;
+  useEffect(() => {
+    if (!launchId) return;
+    const letters: string[] | undefined = route.params?.letters;
+    const categoryId: string | undefined = route.params?.categoryId;
+    if (letters?.length) {
+      startLetterQuiz(letters);
+    } else if (categoryId) {
+      const cat = language.categories.find(c => c.id === categoryId);
+      if (cat) { setLetterSet(null); setStepResult(null); startQuiz(cat); }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [launchId]);
 
   // ── DONE ──────────────────────────────────────────────────────────────
   if (phase === 'done') {
@@ -145,7 +198,21 @@ export default function QuizScreen() {
           </Text>
           <Text style={styles.doneScore}>{correctCount} / {total}</Text>
           <Text style={styles.doneXp}>+{xpEarned} XP</Text>
-          {pct >= (currentProgress?.quiz_best_score ?? 0) && pct > 0 && (
+          {stepResult === 'passed' && (
+            <View style={[styles.bestBadge, { backgroundColor: colors.successLight }]}>
+              <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+              <Text style={[styles.bestBadgeText, { color: colors.success }]}>Étape du parcours validée</Text>
+            </View>
+          )}
+          {stepResult === 'failed' && (
+            <View style={[styles.bestBadge, { backgroundColor: colors.destructiveLight }]}>
+              <Ionicons name="refresh-circle" size={14} color={colors.destructive} />
+              <Text style={[styles.bestBadgeText, { color: colors.destructive }]}>
+                {letterSet ? READQUIZ_PASS_PCT : QUIZ_PASS_PCT} % requis pour valider l'étape — réessaie !
+              </Text>
+            </View>
+          )}
+          {!stepResult && pct >= (currentProgress?.quiz_best_score ?? 0) && pct > 0 && (
             <View style={styles.bestBadge}>
               <Ionicons name="trophy" size={14} color={colors.secondary} />
               <Text style={styles.bestBadgeText}>Nouveau record !</Text>
@@ -154,13 +221,13 @@ export default function QuizScreen() {
           <View style={styles.doneActions}>
             <TouchableOpacity
               style={styles.doneBtnSecondary}
-              onPress={() => { setPhase('setup'); setCategory(null); }}
+              onPress={() => { setPhase('setup'); setCategory(null); setLetterSet(null); setStepResult(null); }}
             >
               <Text style={styles.doneBtnSecondaryText}>Autre catégorie</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.doneBtnPrimary}
-              onPress={() => category && startQuiz(category)}
+              onPress={() => { if (letterSet) startLetterQuiz(letterSet); else if (category) startQuiz(category); }}
             >
               <Ionicons name="refresh" size={16} color={colors.white} />
               <Text style={styles.doneBtnPrimaryText}>Rejouer</Text>

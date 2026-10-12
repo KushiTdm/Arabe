@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { WordPic } from '../components/WordPic';
+import { WordFlipCard } from '../components/motion';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { colors, borderRadius, fontSize } from '../theme';
@@ -45,9 +47,8 @@ export default function ReviewScreen() {
   const [knownCount, setKnownCount] = useState(0);
   const savedRef = useRef(false);
 
-  const speak = (text: string) => {
-    Speech.speak(text, { language: language.ttsLang, rate: 0.85 });
-  };
+  const { say, saySlow } = useSpeaker();
+  const speak = (text: string) => say(text);
 
   // Persist session results once when the summary appears
   useEffect(() => {
@@ -146,32 +147,38 @@ export default function ReviewScreen() {
             <View style={[styles.progressFill, { width: `${((pos + 1) / sessionIds.length) * 100}%` as any }]} />
           </View>
 
-          <TouchableOpacity
-            style={styles.flashCard}
-            onPress={() => setShowAnswer(true)}
-            activeOpacity={0.85}
+          <WordFlipCard
+            native={card.native_word}
+            translit={card.transliteration}
+            meaning={card.french_translation}
+            img={card.img}
+            emoji={card.emoji}
+            rtl={language.rtl}
+            flipped={showAnswer}
+            onFlip={() => setShowAnswer(true)}
           >
-            <Text style={[styles.flashNative, language.rtl && styles.rtlText]}>{card.native_word}</Text>
-            {!showAnswer ? (
-              <Text style={styles.flashHint}>Toucher pour voir la réponse</Text>
-            ) : (
-              <>
-                {!!card.transliteration && (
-                  <Text style={styles.flashTranslit}>{card.transliteration}</Text>
-                )}
-                <Text style={styles.flashFrench}>{card.french_translation}</Text>
-                <TouchableOpacity onPress={() => speak(card.native_word)} style={styles.speakBtn}>
-                  <Ionicons name="volume-high" size={20} color={colors.primary} />
-                </TouchableOpacity>
-                <VocabAudioRecorder
-                  wordId={card.id}
-                  audio={vocabAudio.getAudio(card.id)}
-                  onSave={vocabAudio.saveAudio}
-                  onDelete={vocabAudio.deleteAudio}
-                />
-              </>
-            )}
-          </TouchableOpacity>
+            <View style={styles.speakRow}>
+              <TouchableOpacity onPress={() => speak(card.native_word)} style={styles.speakBtn}>
+                <Ionicons name="volume-high" size={20} color={colors.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => saySlow(card.native_word)} style={styles.slowBtn}>
+                <Ionicons name="play-outline" size={14} color={colors.primary} />
+                <Text style={styles.slowBtnText}>Lent</Text>
+              </TouchableOpacity>
+            </View>
+            <VocabAudioRecorder
+              wordId={card.id}
+              audio={vocabAudio.getAudio(card.id)}
+              onSave={vocabAudio.saveAudio}
+              onDelete={vocabAudio.deleteAudio}
+              target={{
+                native: card.native_word,
+                transliteration: card.transliteration,
+                meaning: card.french_translation,
+              }}
+              onScored={vocabAudio.setScore}
+            />
+          </WordFlipCard>
 
           {showAnswer && (
             <View style={styles.flashActions}>
@@ -256,6 +263,7 @@ export default function ReviewScreen() {
               .sort((a, b) => a.nextDue.localeCompare(b.nextDue))
               .map(card => (
                 <View key={card.id} style={styles.deckRow}>
+                  {(!!card.img || !!card.emoji) && <WordPic img={card.img} emoji={card.emoji} size={44} />}
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.deckNative, language.rtl && styles.rtlText]}>{card.native_word}</Text>
                     <Text style={styles.deckFrench}>{card.french_translation}</Text>
@@ -378,6 +386,14 @@ const styles = StyleSheet.create({
   flashTranslit: { fontSize: fontSize.lg, color: colors.primary, fontStyle: 'italic', marginBottom: 8 },
   flashFrench: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text, marginBottom: 16 },
   flashHint: { fontSize: fontSize.sm, color: colors.textMuted, marginTop: 16 },
+  speakRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
+  slowBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: `${colors.primary}0d`,
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: borderRadius.full,
+  },
+  slowBtnText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
   speakBtn: {
     width: 44, height: 44, borderRadius: 22,
     backgroundColor: `${colors.primary}12`,

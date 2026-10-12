@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -7,22 +8,26 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
+import { useSpeaker } from '../lib/useSpeaker';
 import { Card, Button } from '../components/RNComponents';
 import { useProfile } from '../lib/ProfileContext';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
 export default function AlphabetScreen() {
   const { language } = useProfile();
-  const alphabet = language.alphabet;
+  const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  // Depuis le parcours : seuls les signes de l'unité sont affichés
+  const unitLetters: string[] | undefined = route.params?.letters;
+  const unitTitle: string | undefined = route.params?.title;
+  const filtered = unitLetters?.length
+    ? language.alphabet.filter(l => unitLetters.includes(l.letter))
+    : [];
+  const alphabet = filtered.length > 0 ? filtered : language.alphabet;
   const [selectedLetter, setSelectedLetter] = useState<any>(null);
 
-  const speakLetter = (text: string) => {
-    Speech.speak(text, {
-      language: language.ttsLang,
-      rate: 0.85,
-    });
-  };
+  const { say, saySlow, speakingId, voiceWarning } = useSpeaker();
+  const speakLetter = (text: string) => say(text);
 
   if (selectedLetter) {
     const idx = alphabet.findIndex(l => l.letter === selectedLetter.letter);
@@ -47,6 +52,25 @@ export default function AlphabetScreen() {
             <Text style={styles.letterName}>{selectedLetter.name}</Text>
             <Text style={styles.letterSound}>Prononciation: {selectedLetter.sound}</Text>
           </View>
+
+          {/* Deux vitesses : une lettre isolée s'analyse au ralenti, mais doit
+              aussi s'entendre au débit réel pour être reconnue en contexte. */}
+          <View style={styles.speedRow}>
+            <TouchableOpacity onPress={() => speakLetter(selectedLetter.letter)} style={styles.speedBtn}>
+              <Ionicons
+                name="volume-high"
+                size={16}
+                color={speakingId === selectedLetter.letter ? colors.secondary : colors.primary}
+              />
+              <Text style={styles.speedBtnText}>Normal</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => saySlow(selectedLetter.letter)} style={styles.speedBtn}>
+              <Ionicons name="play-outline" size={16} color={colors.primary} />
+              <Text style={styles.speedBtnText}>Lent</Text>
+            </TouchableOpacity>
+          </View>
+
+          {!!voiceWarning && <Text style={styles.voiceWarning}>{voiceWarning}</Text>}
 
           {!!selectedLetter.example && (
             <View style={styles.exampleContainer}>
@@ -110,8 +134,15 @@ export default function AlphabetScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{language.flag} {language.script}</Text>
-        <Text style={styles.headerSubtitle}>{alphabet.length} lettres / sons à découvrir</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>
+          {unitTitle ?? `${language.flag} ${language.script}`}
+        </Text>
+        <Text style={styles.headerSubtitle}>
+          {alphabet.length} {filtered.length > 0 ? 'signes de l\'unité — touche pour écouter' : 'lettres / sons à découvrir'}
+        </Text>
       </View>
 
       <View style={styles.alphabetGrid}>
@@ -154,6 +185,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   backButton: {
+    alignSelf: 'flex-start',
     padding: 8,
     marginRight: 12,
     borderRadius: borderRadius.lg,
@@ -197,6 +229,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     textAlign: 'center',
+  },
+  speedRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 12 },
+  speedBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: `${colors.primary}0d`,
+    paddingHorizontal: 14, paddingVertical: 8,
+    borderRadius: borderRadius.full,
+  },
+  speedBtnText: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
+  voiceWarning: {
+    fontSize: fontSize.xs, color: colors.textMuted, textAlign: 'center',
+    marginTop: 10, lineHeight: 15,
   },
   letterInfo: {
     alignItems: 'center',
