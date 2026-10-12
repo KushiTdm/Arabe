@@ -20,6 +20,7 @@ export interface WordRevealProps extends MotionTheme {
   meaning?: string;
   img?: string;
   emoji?: string;
+  color?: string;
   rtl?: boolean;
   /** Taille de la photo (0 = pas de photo). */
   picSize?: number;
@@ -32,7 +33,7 @@ export interface WordRevealProps extends MotionTheme {
 }
 
 export function WordRevealMotion({
-  native, translit, meaning, img, emoji, rtl, picSize = 130, nativeSize = 44, replayKey, hideDetails, ...theme
+  native, translit, meaning, img, emoji, color, rtl, picSize = 130, nativeSize = 44, replayKey, hideDetails, ...theme
 }: WordRevealProps) {
   const { accent, speed } = { ...DEFAULT_THEME, ...theme };
   const t = useMotionTiming(speed);
@@ -58,11 +59,11 @@ export function WordRevealMotion({
   const trStyle = useAnimatedStyle(() => ({ opacity: tr.value, transform: [{ translateY: (1 - tr.value) * 8 }] as any }));
   const frStyle = useAnimatedStyle(() => ({ opacity: fr.value, transform: [{ translateY: (1 - fr.value) * 12 }] as any }));
 
-  const hasPic = picSize > 0 && (!!img || !!emoji);
+  const hasPic = picSize > 0 && (!!img || !!emoji || !!color);
 
   return (
     <View style={styles.root}>
-      {hasPic && <Animated.View style={[{ marginBottom: 12 }, picStyle]}><WordPic img={img} emoji={emoji} size={picSize} /></Animated.View>}
+      {hasPic && <Animated.View style={[{ marginBottom: 12 }, picStyle]}><WordPic img={img} emoji={emoji} color={color} size={picSize} /></Animated.View>}
       <Animated.Text style={[styles.native, { fontSize: nativeSize }, rtl && styles.rtl, wordStyle]}>{native}</Animated.Text>
       <View style={[styles.lineBg, { alignItems: rtl ? 'flex-end' : 'flex-start' }]}>
         <Animated.View style={[styles.line, { backgroundColor: accent }, lineStyle]} />

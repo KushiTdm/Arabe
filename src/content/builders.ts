@@ -11,11 +11,13 @@ import { fade as fadeText, type FadeMode } from './ar/vowels';
 export function w(spec: string): Word {
   const fake = spec.startsWith('~');
   const [ar, tr, fr, emoji] = (fake ? spec.slice(1) : spec).split('|');
-  const img = IMG_KEY_BY_AR[ar];
-  return { ar, tr, fr, ...(emoji ? { emoji } : {}), ...(img ? { img } : {}), ...(fake ? { fake: true } : {}) };
+  const explicit = emoji?.startsWith('img:') ? emoji.slice(4) : undefined;
+  const img = explicit ?? IMG_KEY_BY_AR[ar];
+  const color = emoji?.startsWith('#') ? emoji : undefined;
+  return { ar, tr, fr, ...(emoji && !color && !explicit ? { emoji } : {}), ...(color ? { color } : {}), ...(img ? { img } : {}), ...(fake ? { fake: true } : {}) };
 }
 /** Réplique ou option en français seul (pas d'audio). */
-export const t = (text: string): Word => ({ ar: text, tr: '', fr: text });
+export const t = (text: string): Word => ({ ar: text, tr: '', fr: text, plain: true });
 export const ws = (specs: string[]): Word[] => specs.map(w);
 
 /** `n` mots différents de la cible, pris dans `pool` à partir de la position de la cible. */
@@ -44,6 +46,7 @@ const chunk = <T,>(arr: T[], size: number): T[][] => {
 
 export interface ReadingSpec {
   id: string;
+  theme?: string;
   level?: Lesson['level'];
   /** Lettres ou signes nouveaux sans carte propre (hamza, ة…). */
   extraLetters?: string[];
@@ -100,7 +103,7 @@ export function readingLesson(s: ReadingSpec): Lesson {
   ];
 
   return {
-    id: s.id, level: s.level ?? 'beginner', title: s.title, goal: s.goal, reading: true, letters: s.letters,
+    id: s.id, level: s.level ?? 'beginner', title: s.title, goal: s.goal, reading: true, letters: s.letters, theme: s.theme,
     parts: [
       { title: 'Découvrir', activities: discover },
       { title: 'Lire', activities: practise },
@@ -113,6 +116,9 @@ export function readingLesson(s: ReadingSpec): Lesson {
 
 export interface OralSpec {
   id: string;
+  theme?: string;
+  /** Affichage dégradé (B1 : texte presque nu) ; l'audio reste lu en voyellé. */
+  fade?: FadeMode;
   level?: Lesson['level'];
   title: string;
   goal: string;
@@ -125,7 +131,8 @@ export interface OralSpec {
   intro?: { title: string; body: string };
 }
 
-export function oralLesson(s: OralSpec): Lesson {
+export function oralLesson(spec: OralSpec): Lesson {
+  const s = spec.fade ? applyFade(spec, spec.fade) : spec;
   const P = s.phrases;
   const groups = chunk(P, 4);
 
@@ -167,7 +174,7 @@ export function oralLesson(s: OralSpec): Lesson {
     { title: 'S\'entraîner', activities: practise },
     { title: 'Bilan', activities: review },
   ];
-  return { id: s.id, level: s.level ?? 'beginner', title: s.title, goal: s.goal, reading: false, parts };
+  return { id: s.id, level: s.level ?? 'beginner', title: s.title, goal: s.goal, reading: false, theme: s.theme, parts };
 }
 
 // ─── Unité de retrait du voyellage (arabe L15-L18) ───────────────────────────
@@ -215,5 +222,16 @@ export function fadingLesson(s: FadingSpec): Lesson {
       { title: 'Lire', activities: practise },
       { title: 'Bilan', activities: review },
     ],
+  };
+}
+
+/** Applique l'affichage dégradé aux mots ayant une translittération (pas aux répliques en français). */
+function applyFade(s: OralSpec, mode: FadeMode): OralSpec {
+  const f = (x: Word): Word => (x.plain ? x : faded(x, mode));
+  return {
+    ...s,
+    phrases: s.phrases.map(f),
+    orders: s.orders.map(o => ({ ...o, words: o.words.map(f) })),
+    dialogues: s.dialogues.map(d => ({ ...d, context: d.context.map(f), options: d.options.map(f) })),
   };
 }

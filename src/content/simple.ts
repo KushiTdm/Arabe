@@ -1,0 +1,72 @@
+import { oralLesson, w, t, type OralSpec } from './builders';
+import type { Lesson, Word } from './types';
+
+// ─── Format d'écriture compact pour les langues sans translittération ────────
+// Une unité = quelques phrases, des questions-réponses et une note de grammaire.
+// Les exercices (écoute, lecture, choix, ordre, répliques, répétition) en sont
+// dérivés par oralLesson. Les tuiles d'une phrase à remettre en ordre sont ses
+// mots (séparés par des espaces).
+//
+// Phrase : 'texte|français|emoji-ou-img:clé'  (le 3e champ est facultatif)
+//   avec `romanized: true` : 'texte|romanisation|français|emoji-ou-img:clé'
+//
+// qa : [question, bonne réponse, leurre 1, leurre 2] — des indices dans `phrases`.
+// Les leurres doivent être des phrases qui ne répondent PAS à la question.
+
+/** Indice dans `phrases`, ou texte exact de la phrase (plus sûr à écrire). */
+type Ref = number | string;
+
+export interface SimpleUnit {
+  id: string;
+  level?: Lesson['level'];
+  theme: string;
+  title: string;
+  goal: string;
+  tip?: { title: string; body: string };
+  romanized?: boolean;
+  phrases: string[];
+  qa: [Ref, Ref, Ref, Ref][];
+  /** Phrases à remettre en ordre (par défaut : les 3 premières de 3 à 7 mots). */
+  orders?: Ref[];
+  /** Séparateur des mots d'une phrase (espace par défaut ; '' pour découper par caractère). */
+  split?: string;
+  /** Texte de la question posée avant les options de réplique. */
+  replyPrompt?: string;
+}
+
+function parse(spec: string, romanized?: boolean): Word {
+  const f = spec.split('|');
+  return romanized ? w(`${f[0]}|${f[1] ?? ''}|${f[2] ?? ''}|${f[3] ?? ''}`.replace(/\|+$/, '')) : w(`${f[0]}||${f[1] ?? ''}|${f[2] ?? ''}`.replace(/\|+$/, ''));
+}
+
+export function simpleLesson(u: SimpleUnit): Lesson {
+  const P = u.phrases.map(s => parse(s, u.romanized));
+  const tokens = (x: Word) => (u.split === undefined ? x.ar.split(' ') : Array.from(x.ar)).filter(Boolean);
+  const at = (r: Ref): number => {
+    if (typeof r === 'number') return r;
+    const i = P.findIndex(p => p.ar === r);
+    if (i < 0) throw new Error(`${u.id} : phrase introuvable « ${r} »`);
+    return i;
+  };
+  const orderIdx = (u.orders ?? []).map(at).length ? (u.orders ?? []).map(at) : P.map((p, i) => ({ i, n: tokens(p).length })).filter(o => o.n >= 3 && o.n <= 7).slice(0, 3).map(o => o.i);
+
+  const spec: OralSpec = {
+    id: u.id, level: u.level, theme: u.theme, title: u.title, goal: u.goal, intro: u.tip,
+    phrases: P,
+    orders: orderIdx.map(i => ({
+      fr: P[i].fr,
+      words: tokens(P[i]).map((tok, k) => ({ ar: tok, tr: u.romanized ? (P[i].tr.split(' ')[k] ?? '') : '', fr: '' })),
+    })),
+    dialogues: u.qa.map(refs => {
+      const [q, a, d1, d2] = refs.map(at);
+      const opts = [P[a], P[d1], P[d2]];
+      const answer = (q + a) % 3;                       // position déterministe de la bonne réponse
+      const arranged = [P[d1], P[d2]];
+      arranged.splice(answer, 0, P[a]);
+      return { context: [P[q]], prompt: u.replyPrompt ?? 'Que réponds-tu ?', options: arranged.length === opts.length ? arranged : opts, answer };
+    }),
+  };
+  return oralLesson(spec);
+}
+
+export { t };

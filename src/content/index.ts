@@ -4,6 +4,12 @@ import { AR_READING } from './ar/reading';
 import { AR_ORAL } from './ar/oral';
 import { AR_ORAL_A2 } from './ar/oral2';
 import { AR_ORAL_B1 } from './ar/oral3';
+import { simpleLesson } from './simple';
+import { ES_UNITS } from './es/units';
+import { IT_UNITS } from './it/units';
+import { PT_UNITS } from './pt/units';
+import { DE_UNITS } from './de/units';
+import { EN_UNITS } from './en/units';
 import { AR_SIGNS, AR_FADING } from './ar/signs';
 
 // ─── Catalogue des leçons intégrées, par langue ──────────────────────────────
@@ -39,7 +45,14 @@ function buildArabic(): Lesson[] {
   return AR_ORDER.map(id => byId.get(id)).filter((l): l is Lesson => !!l);
 }
 
-const BUILDERS: Record<string, () => Lesson[]> = { ar: buildArabic };
+const BUILDERS: Record<string, () => Lesson[]> = {
+  ar: buildArabic,
+  es: () => ES_UNITS.map(simpleLesson),
+  it: () => IT_UNITS.map(simpleLesson),
+  pt: () => PT_UNITS.map(simpleLesson),
+  de: () => DE_UNITS.map(simpleLesson),
+  en: () => EN_UNITS.map(simpleLesson),
+};
 const cache = new Map<string, Lesson[]>();
 
 export function getLessons(code: string): Lesson[] {

@@ -68,9 +68,9 @@ export function getLexicon(code: string): VocabWord[] {
   const out: VocabWord[] = [];
   for (const lesson of getLessons(code)) {
     for (const part of lesson.parts) for (const act of part.activities) for (const w of wordsOf(act)) {
-      if (w.fake || !w.tr || !w.fr || seen.has(w.ar)) continue;
+      if (w.fake || w.plain || !w.fr || seen.has(w.ar)) continue;
       seen.add(w.ar);
-      const theme = (w.img && THEME_BY_IMG[w.img]) || THEME_BY_UNIT[lesson.id] || 'reading';
+      const theme = (w.img && THEME_BY_IMG[w.img]) || lesson.theme || THEME_BY_UNIT[lesson.id] || 'reading';
       out.push({
         id: `lex:${code}:${w.ar}`,
         native_word: w.ar,

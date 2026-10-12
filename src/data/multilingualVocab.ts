@@ -876,27 +876,32 @@ export function getVocabForLanguage(langCode: string): LangVocab {
   return VOCAB_BY_LANG[langCode] ?? {};
 }
 
+/** Langues dont le vocabulaire vient uniquement des leçons (l'ancienne liste statique est abandonnée). */
+const LESSONS_ONLY = new Set(['ar']);
+
+function staticWords(langCode: string, category: string): VocabWord[] {
+  const words = (VOCAB_BY_LANG[langCode] ?? {})[category] ?? [];
+  return words.map((w, i) => ({ ...w, id: `${langCode}_${category}_${i}`, mastered: false, practice_count: 0 }));
+}
+
 export function getWordsForCategory(langCode: string, category: string): VocabWord[] {
-  if (hasIntegratedCourse(langCode)) return getLexiconWords(langCode, category);
-  const langVocab = VOCAB_BY_LANG[langCode] ?? {};
-  const words = langVocab[category] ?? [];
-  return words.map((w, i) => ({
-    ...w,
-    id: `${langCode}_${category}_${i}`,
-    mastered: false,
-    practice_count: 0,
-  }));
+  if (!hasIntegratedCourse(langCode)) return staticWords(langCode, category);
+  const lesson = getLexiconWords(langCode, category);
+  if (LESSONS_ONLY.has(langCode)) return lesson;
+  // Leçons d'abord (avec photos), puis la liste statique sans doublon.
+  const known = new Set(lesson.map(w => w.native_word.toLowerCase()));
+  return [...lesson, ...staticWords(langCode, category).filter(w => !known.has(w.native_word.toLowerCase()))];
 }
 
 export function getAvailableCategories(langCode: string): string[] {
-  if (hasIntegratedCourse(langCode)) return getLexiconCategories(langCode);
-  return Object.keys(VOCAB_BY_LANG[langCode] ?? {});
+  if (!hasIntegratedCourse(langCode)) return Object.keys(VOCAB_BY_LANG[langCode] ?? {});
+  const lesson = getLexiconCategories(langCode);
+  if (LESSONS_ONLY.has(langCode)) return lesson;
+  return [...lesson, ...Object.keys(VOCAB_BY_LANG[langCode] ?? {}).filter(c => !lesson.includes(c))];
 }
 
 export function getTotalWords(langCode: string): number {
-  if (hasIntegratedCourse(langCode)) return getLexicon(langCode).length;
-  const langVocab = VOCAB_BY_LANG[langCode] ?? {};
-  return Object.values(langVocab).reduce((acc, words) => acc + words.length, 0);
+  return getAvailableCategories(langCode).reduce((n, c) => n + getWordsForCategory(langCode, c).length, 0);
 }
 
 // Mot du jour : choix déterministe (même mot toute la journée pour une langue)

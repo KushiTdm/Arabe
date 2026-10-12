@@ -17,6 +17,10 @@ export interface Word {
   emoji?: string;
   /** Clé d'illustration (imageKeys.ts → images.ts). */
   img?: string;
+  /** Texte en français seul (réplique, option) : pas d'audio ni de translittération. */
+  plain?: boolean;
+  /** Pastille de couleur (hex) quand le mot est une couleur : tient lieu d'image. */
+  color?: string;
   /** Affichage dégradé (voyelles retirées) ; `ar` reste la forme complète lue à voix haute. */
   show?: string;
   /** Mot inventé, pour s'exercer au décodage. */
@@ -57,6 +61,8 @@ export interface Lesson {
   goal: string;
   /** Unité de lecture (lettres) ou communicative. */
   reading: boolean;
+  /** Thème lexical des mots de l'unité (écran Vocab). */
+  theme?: string;
   /** Lettres travaillées (pour l'écran de découverte). */
   letters?: string[];
   parts: LessonPart[];
@@ -64,3 +70,42 @@ export interface Lesson {
 
 /** Part des activités notées à réussir pour valider une partie. */
 export const PART_PASS_RATIO = 0.7;
+
+// ─── Conversations guidées ───────────────────────────────────────────────────
+// Un scénario illustré : un personnage parle, l'élève choisit la bonne réplique.
+// Pas d'IA : tout est écrit à l'avance, jouable hors ligne.
+
+export interface ConversationTurn {
+  /** Ce que dit le personnage. */
+  npc: Word;
+  /** Image de la question (ex. photo d'un parent : « Qui est-ce ? »). */
+  img?: string;
+  emoji?: string;
+  /** Répliques proposées à l'élève, dont une seule convient. */
+  options: Word[];
+  answer: number;
+  /** Explication brève si l'élève se trompe. */
+  why?: string;
+}
+
+export interface Conversation {
+  id: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  title: string;
+  /** Situation, en français. */
+  situation: string;
+  /** Qui parle (ex. « le vendeur »). */
+  npcRole: string;
+  /** Image de la scène. */
+  scene: { img?: string; emoji: string };
+  /** Mots clés illustrés, présentés avant la conversation. */
+  keyWords: Word[];
+  turns: ConversationTurn[];
+}
+
+/** Lot de vocabulaire thématique, indépendant d'une leçon. */
+export interface VocabPack {
+  id: string;
+  theme: string;
+  words: Word[];
+}

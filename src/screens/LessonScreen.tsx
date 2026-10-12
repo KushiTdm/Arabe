@@ -44,6 +44,10 @@ function shuffled<T>(items: T[], seed: string): T[] {
 
 interface Verdict { ok: boolean; answer?: string }
 
+/** « mot  ·  translittération » (la translittération manque pour les langues latines). */
+const gloss = (w: Word) => [w.ar, w.tr].filter(Boolean).join('  ·  ');
+const glossFr = (w: Word) => [w.tr, w.fr].filter(Boolean).join(' — ');
+
 export default function LessonScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
@@ -223,7 +227,7 @@ function Listen({ word, speaker, big }: { word: Word; speaker: Speaker; big?: bo
   );
 }
 
-const Pic = ({ word, size }: { word: Word; size: number }) => <WordPic img={word.img} emoji={word.emoji} size={size} />;
+const Pic = ({ word, size }: { word: Word; size: number }) => <WordPic img={word.img} emoji={word.emoji} color={word.color} size={size} />;
 
 function optionLabel(o: Word, as: 'fr' | 'tr' | 'ar'): { main: string; arabic: boolean } {
   if (as === 'ar') return { main: o.show ?? o.ar, arabic: true };
@@ -232,6 +236,8 @@ function optionLabel(o: Word, as: 'fr' | 'tr' | 'ar'): { main: string; arabic: b
 }
 
 function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
+  const { language } = useProfile();
+  const rtlLang = language.rtl;
   const [picked, setPicked] = useState<number | null>(null);
 
   // Lecture automatique de l'énoncé audio (écoute, paire proche).
@@ -261,7 +267,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
       const ok = (o: Word) => o.ar === act.target.ar;
       const correctLabel = (() => {
         const l = optionLabel(act.target, as);
-        return as === 'ar' ? `${act.target.ar}  ·  ${act.target.tr}` : l.main;
+        return as === 'ar' ? gloss(act.target) : l.main;
       })();
       return (
         <View>
@@ -290,7 +296,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
 <PressableScale disabled={locked} style={[styles.option, state === 1 && styles.optOk, state === 2 && styles.optKo]}
                 onPress={() => { setPicked(i); if (as === 'ar') speaker.say(o.ar); onResolve(ok(o), correctLabel); }}>
                 <Text style={[label.arabic ? styles.optArabic : styles.optText]}>{label.main}</Text>
-                {label.arabic && picked !== null && <Text style={styles.optSub}>{o.tr}</Text>}
+                {label.arabic && picked !== null && !!o.tr && <Text style={styles.optSub}>{o.tr}</Text>}
               </PressableScale>
 </AnswerMotion>
             );
@@ -313,9 +319,9 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
               return (
                 <AnswerMotion key={it.k} status={state === 1 ? 'correct' : state === 2 ? 'wrong' : null}>
 <PressableScale disabled={locked} style={[styles.pairCard, state === 1 && styles.optOk, state === 2 && styles.optKo]}
-                  onPress={() => { setPicked(i); onResolve(right, `${heardWord.ar}  ·  ${heardWord.tr}`); }}>
+                  onPress={() => { setPicked(i); onResolve(right, gloss(heardWord)); }}>
                   <Text style={styles.arabicBig}>{it.w.ar}</Text>
-                  {picked !== null && <Text style={styles.optSub}>{it.w.tr}</Text>}
+                  {picked !== null && !!it.w.tr && <Text style={styles.optSub}>{it.w.tr}</Text>}
                 </PressableScale>
 </AnswerMotion>
               );
@@ -339,12 +345,12 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
           <View style={styles.bubble}>
             {act.context.map((c, i) => (
               <View key={i}>
-                {c.tr ? (
+                {!c.plain ? (
                   <TouchableOpacity onPress={() => speaker.say(c.ar)} style={styles.bubbleLine}>
                     <Ionicons name="volume-medium" size={20} color={colors.primaryLight} />
                     <View>
                       <Text style={styles.arabicMid}>{c.show ?? c.ar}</Text>
-                      <Text style={styles.optSub}>{c.tr}</Text>
+                      {!!c.tr && <Text style={styles.optSub}>{c.tr}</Text>}
                     </View>
                   </TouchableOpacity>
                 ) : <Text style={styles.frBig}>{c.fr}</Text>}
@@ -357,11 +363,11 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
             return (
               <AnswerMotion key={i} status={state === 1 ? 'correct' : state === 2 ? 'wrong' : null}>
 <PressableScale disabled={locked} style={[styles.option, state === 1 && styles.optOk, state === 2 && styles.optKo]}
-                onPress={() => { setPicked(i); if (o.tr) speaker.say(o.ar); onResolve(i === act.answer, answerText.tr ? `${answerText.ar}  ·  ${answerText.fr}` : answerText.fr); }}>
-                {o.tr ? (
+                onPress={() => { setPicked(i); if (!o.plain) speaker.say(o.ar); onResolve(i === act.answer, !answerText.plain ? `${answerText.ar}  ·  ${answerText.fr}` : answerText.fr); }}>
+                {!o.plain ? (
                   <>
                     <Text style={styles.optArabic}>{o.show ?? o.ar}</Text>
-                    <Text style={styles.optSub}>{o.tr} — {o.fr}</Text>
+                    <Text style={styles.optSub}>{glossFr(o)}</Text>
                   </>
                 ) : <Text style={styles.optText}>{o.fr}</Text>}
               </PressableScale>
@@ -387,9 +393,9 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
             return (
               <AnswerMotion key={o.ar} status={state === 1 ? 'correct' : state === 2 ? 'wrong' : null}>
 <PressableScale disabled={locked} style={[styles.option, state === 1 && styles.optOk, state === 2 && styles.optKo]}
-                onPress={() => { setPicked(i); speaker.say(o.ar); onResolve(right, `${act.target.ar}  ·  ${act.target.tr} — ${act.target.fr}`); }}>
+                onPress={() => { setPicked(i); speaker.say(o.ar); onResolve(right, `${act.target.ar}  ·  ${glossFr(act.target)}`); }}>
                 <Text style={styles.optArabic}>{o.ar}</Text>
-                {picked !== null && <Text style={styles.optSub}>{o.tr} — {o.fr}</Text>}
+                {picked !== null && <Text style={styles.optSub}>{glossFr(o)}</Text>}
               </PressableScale>
 </AnswerMotion>
             );
@@ -404,7 +410,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
           <Text style={styles.ask}>Écoute, puis répète à voix haute</Text>
           <View style={styles.stage}>
             <WordRevealMotion native={act.target.ar} translit={act.target.tr} meaning={act.target.fr}
-              img={act.target.img} emoji={act.target.emoji} rtl picSize={110} nativeSize={40} replayKey={act.target.ar} />
+              img={act.target.img} emoji={act.target.emoji} color={act.target.color} rtl={rtlLang} picSize={110} nativeSize={40} replayKey={act.target.ar} />
           </View>
           <Listen word={act.target} speaker={speaker} big />
           <PressableScale style={styles.cta} onPress={() => onResolve(true)}>
@@ -455,7 +461,7 @@ function Teach({ act, speaker, onNext }: { act: Extract<Activity, { type: 'teach
               <Pic word={wd} size={64} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.arabicMid}>{wd.show ?? wd.ar}</Text>
-                <Text style={styles.trLine}>{wd.tr}</Text>
+                {!!wd.tr && <Text style={styles.trLine}>{wd.tr}</Text>}
                 <Text style={styles.frLine}>{wd.fr}</Text>
               </View>
               <Ionicons name="volume-high" size={22} color={colors.primaryLight} />
@@ -526,6 +532,8 @@ function Order({ act, speaker, onResolve, locked }: {
   act: Extract<Activity, { type: 'order' }>; speaker: Speaker; locked: boolean;
   onResolve: (ok: boolean, answer?: string) => void;
 }) {
+  const { language } = useProfile();
+  const dir = language.rtl ? 'row-reverse' : 'row';
   const bank = useMemo(() => shuffled(act.words.map((w, i) => ({ w, i })), act.fr), [act]);
   const [chosen, setChosen] = useState<number[]>([]);
   const sentence = act.words.map(x => x.ar).join(' ');
@@ -533,15 +541,15 @@ function Order({ act, speaker, onResolve, locked }: {
   const check = () => {
     const ok = chosen.every((c, k) => c === k) && chosen.length === act.words.length;
     speaker.say(sentence);
-    onResolve(ok, `${sentence}  ·  ${act.words.map(x => x.tr).join(' ')}`);
+    onResolve(ok, [sentence, act.words.map(x => x.tr).filter(Boolean).join(' ')].filter(Boolean).join('  ·  '));
   };
 
   return (
     <View>
       <Text style={styles.ask}>Remets la phrase dans l'ordre</Text>
       <View style={styles.stage}><Text style={styles.frBig}>{act.fr}</Text></View>
-      <Text style={styles.hint}>L'arabe se lit de droite à gauche</Text>
-      <View style={styles.answerRow}>
+      {language.rtl && <Text style={styles.hint}>Cette langue se lit de droite à gauche</Text>}
+      <View style={[styles.answerRow, { flexDirection: dir }]}>
         {chosen.map((c, k) => (
           <TouchableOpacity key={k} disabled={locked} style={styles.tile} onPress={() => setChosen(chosen.filter((_, j) => j !== k))}>
             <Text style={styles.arabicMid}>{act.words[c].show ?? act.words[c].ar}</Text>
@@ -549,13 +557,13 @@ function Order({ act, speaker, onResolve, locked }: {
         ))}
         {chosen.length === 0 && <Text style={styles.placeholder}>Touche les mots ci-dessous</Text>}
       </View>
-      <View style={styles.bankRow}>
+      <View style={[styles.bankRow, { flexDirection: dir }]}>
         {bank.map(({ w: wd, i }) => (
           <TouchableOpacity key={i} disabled={chosen.includes(i) || locked}
             style={[styles.tile, chosen.includes(i) && styles.tileUsed]}
             onPress={() => { setChosen([...chosen, i]); speaker.say(wd.ar); }}>
             <Text style={styles.arabicMid}>{wd.show ?? wd.ar}</Text>
-            <Text style={styles.optSub}>{wd.tr}</Text>
+            {!!wd.tr && <Text style={styles.optSub}>{wd.tr}</Text>}
           </TouchableOpacity>
         ))}
       </View>
