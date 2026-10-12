@@ -174,7 +174,8 @@ export default function HomeScreen() {
               onPress={() => navigation.navigate('Review')}
             />
             <Chip icon="help-circle" label="Quiz" color={colors.secondary} onPress={() => navigation.navigate('Quiz')} />
-            <Chip icon="eye" label="Lecture" color={colors.accent} onPress={() => navigation.navigate('Alphabet')} />
+            <Chip icon="chatbubbles" label="Dialogues" color={colors.accent} onPress={() => navigation.navigate('Dialogues')} />
+            <Chip icon="eye" label="Lecture" color={colors.primaryLight} onPress={() => navigation.navigate('Alphabet')} />
           </Animated.View>
         </View>
       </ScrollView>

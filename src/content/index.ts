@@ -1,4 +1,16 @@
-import type { Lesson, Word } from './types';
+import type { Lesson, Word, Conversation } from './types';
+import { buildConversation, type ConvSpec } from './conversations';
+import { AR_CONVERSATIONS } from './ar/conversations';
+import { ES_CONVERSATIONS } from './es/conversations';
+import { IT_CONVERSATIONS } from './it/conversations';
+import { PT_CONVERSATIONS } from './pt/conversations';
+import { DE_CONVERSATIONS } from './de/conversations';
+import { EN_CONVERSATIONS } from './en/conversations';
+import { RU_CONVERSATIONS } from './ru/conversations';
+import { KO_CONVERSATIONS } from './ko/conversations';
+import { JA_CONVERSATIONS } from './ja/conversations';
+import { ZH_CONVERSATIONS } from './zh/conversations';
+import { VI_CONVERSATIONS } from './vi/conversations';
 import { readingLesson, oralLesson, fadingLesson, type ReadingSpec } from './builders';
 import { AR_READING } from './ar/reading';
 import { AR_ORAL } from './ar/oral';
@@ -98,4 +110,37 @@ export const hasIntegratedCourse = (code: string): boolean => code in BUILDERS;
 
 export function getLesson(code: string, id: string): Lesson | undefined {
   return getLessons(code).find(l => l.id === id);
+}
+
+
+// ─── Conversations guidées ───────────────────────────────────────────────────
+
+const CONVERSATIONS: Record<string, ConvSpec[]> = {
+  ar: AR_CONVERSATIONS,
+  es: ES_CONVERSATIONS,
+  it: IT_CONVERSATIONS,
+  pt: PT_CONVERSATIONS,
+  de: DE_CONVERSATIONS,
+  en: EN_CONVERSATIONS,
+  ru: RU_CONVERSATIONS,
+  ko: KO_CONVERSATIONS,
+  ja: JA_CONVERSATIONS,
+  zh: ZH_CONVERSATIONS,
+  vi: VI_CONVERSATIONS,
+};
+
+const convCache = new Map<string, Conversation[]>();
+
+export function getConversations(code: string): Conversation[] {
+  const hit = convCache.get(code);
+  if (hit) return hit;
+  const built = (CONVERSATIONS[code] ?? []).map(buildConversation);
+  convCache.set(code, built);
+  return built;
+}
+
+export const hasConversations = (code: string): boolean => (CONVERSATIONS[code]?.length ?? 0) > 0;
+
+export function getConversation(code: string, id: string): Conversation | undefined {
+  return getConversations(code).find(c => c.id === id);
 }

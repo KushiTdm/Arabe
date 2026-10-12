@@ -22,6 +22,8 @@ import OnboardingScreen from './src/screens/OnboardingScreen';
 import QuizScreen       from './src/screens/QuizScreen';
 import ReviewScreen     from './src/screens/ReviewScreen';
 import LessonScreen from './src/screens/LessonScreen';
+import DialoguesScreen from './src/screens/DialoguesScreen';
+import DialogueScreen from './src/screens/DialogueScreen';
 import PathScreen       from './src/screens/PathScreen';
 
 const Tab   = createBottomTabNavigator();
@@ -112,6 +114,8 @@ function RootStack() {
           <Stack.Screen name="Review"   component={ReviewScreen} />
           <Stack.Screen name="Path"     component={PathScreen} />
           <Stack.Screen name="Lesson"   component={LessonScreen} />
+          <Stack.Screen name="Dialogues" component={DialoguesScreen} />
+          <Stack.Screen name="Dialogue" component={DialogueScreen} />
         </>
       )}
     </Stack.Navigator>

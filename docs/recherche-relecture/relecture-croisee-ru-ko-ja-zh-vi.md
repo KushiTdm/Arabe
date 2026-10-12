@@ -37,3 +37,9 @@ Date : 13 octobre 2026. Gemini (demande reformulée en « fiches de révision po
 ## À faire (non appliqué)
 - **Japonais : espaces entre les mots.** Gemini estime que l'absence d'espaces gêne nettement un débutant en hiragana. Les manuels d'apprentissage insèrent des espaces (分かち書き). Non fait : les clés des exercices d'ordre en dépendent, il faudrait réécrire les ~110 phrases.
 - **Relecture par des natifs** de toutes les langues, A1 comme B1.
+
+## Conversations guidées (13 oct., Perplexity)
+Gemini et Grok ont échoué sur de longues listes (refus, répétition de la consigne) ; Perplexity a relu les phrases nouvelles des conversations arabes, russes, coréennes, japonaises et chinoises.
+- **Retenu :** arabe « أَحْسَنْتَ، عَمَلٌ جَيِّد » (Bravo, bon travail) à la place de « Merci, bon travail » ; russe « Сколько вам нужно ? » et « Что вы желаете ? » ; coréen 안녕하세요, 다음에 봐요, 잘 모르겠어요, 아니에요, 또 필요한 거 있으세요?, 도와드릴까요? ; japonais どちらから, ほかになにか, おてつだいしましょうか, ごちゅうもんはおきまりですか ; mandarin 请问您想要什么？, 请问医院在哪儿？
+- **Écarté :** « ごユーロ ne prend pas ご » (faux : ご est le chiffre 5), « フランスからきました veut です » (naturel sans), les écritures en chiffres (3ユーロ) pour des apprenants qui lisent les kana.
+- Les conversations en espagnol, italien, portugais, allemand, anglais et vietnamien n'ont pas été relues par IA.
