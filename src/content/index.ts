@@ -1,15 +1,20 @@
 import type { Lesson, Word } from './types';
-import { readingLesson, oralLesson, fadingLesson } from './builders';
+import { readingLesson, oralLesson, fadingLesson, type ReadingSpec } from './builders';
 import { AR_READING } from './ar/reading';
 import { AR_ORAL } from './ar/oral';
 import { AR_ORAL_A2 } from './ar/oral2';
 import { AR_ORAL_B1 } from './ar/oral3';
-import { simpleLesson } from './simple';
+import { simpleLesson, type SimpleUnit } from './simple';
 import { ES_UNITS } from './es/units';
 import { IT_UNITS } from './it/units';
 import { PT_UNITS } from './pt/units';
 import { DE_UNITS } from './de/units';
 import { EN_UNITS } from './en/units';
+import { RU_READING, RU_UNITS } from './ru/units';
+import { KO_READING, KO_UNITS } from './ko/units';
+import { JA_READING, JA_UNITS } from './ja/units';
+import { ZH_READING, ZH_UNITS } from './zh/units';
+import { VI_READING, VI_UNITS } from './vi/units';
 import { AR_SIGNS, AR_FADING } from './ar/signs';
 
 // ─── Catalogue des leçons intégrées, par langue ──────────────────────────────
@@ -45,7 +50,23 @@ function buildArabic(): Lesson[] {
   return AR_ORDER.map(id => byId.get(id)).filter((l): l is Lesson => !!l);
 }
 
+/** Langue à écriture non latine : unités de lecture d'abord, puis oral (lecture cumulée pour varier les leurres). */
+function buildScript(reading: Omit<ReadingSpec, 'known'>[], oral: SimpleUnit[]): Lesson[] {
+  const known: Word[] = [];
+  const out: Lesson[] = [];
+  for (const spec of reading) {
+    out.push(readingLesson({ ...spec, known: [...known] }));
+    known.push(...spec.words.filter(x => !x.fake));
+  }
+  return [...out, ...oral.map(simpleLesson)];
+}
+
 const BUILDERS: Record<string, () => Lesson[]> = {
+  ru: () => buildScript(RU_READING, RU_UNITS),
+  ko: () => buildScript(KO_READING, KO_UNITS),
+  ja: () => buildScript(JA_READING, JA_UNITS),
+  zh: () => buildScript(ZH_READING, ZH_UNITS),
+  vi: () => buildScript(VI_READING, VI_UNITS),
   ar: buildArabic,
   es: () => ES_UNITS.map(simpleLesson),
   it: () => IT_UNITS.map(simpleLesson),

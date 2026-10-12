@@ -427,7 +427,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
 function Teach({ act, speaker, onNext }: { act: Extract<Activity, { type: 'teach' }>; speaker: Speaker; onNext: () => void }) {
   const { language } = useProfile();
   const letter = act.letter ? language.alphabet.find(l => l.letter === act.letter) : undefined;
-  const example = letter?.example?.split(' (')[0];
+  const example = letter?.example?.split(/[ (]/)[0];
 
   return (
     <View>
@@ -438,8 +438,10 @@ function Teach({ act, speaker, onNext }: { act: Extract<Activity, { type: 'teach
             letter={letter.letter}
             name={letter.name}
             sound={letter.sound}
-            forms={([['Isolée', letter.isolated], ['Début', letter.initial], ['Milieu', letter.medial], ['Fin', letter.final]] as [string, string | undefined][])
-              .map(([k, v]) => [k, v ?? letter.letter] as [string, string])}
+            forms={letter.initial || letter.medial || letter.final
+              ? ([['Isolée', letter.isolated], ['Début', letter.initial], ['Milieu', letter.medial], ['Fin', letter.final]] as [string, string | undefined][])
+                  .map(([k, v]) => [k, v ?? letter.letter] as [string, string])
+              : []}
             img={language.code === 'ar' ? LETTER_IMG[letter.letter] : undefined}
             keyword={example ? letter.example : undefined}
             replayKey={letter.letter}

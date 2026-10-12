@@ -28,8 +28,8 @@ export interface SimpleUnit {
   qa: [Ref, Ref, Ref, Ref][];
   /** Phrases à remettre en ordre (par défaut : les 3 premières de 3 à 7 mots). */
   orders?: Ref[];
-  /** Séparateur des mots d'une phrase (espace par défaut ; '' pour découper par caractère). */
-  split?: string;
+  /** Mots d'une phrase sans espaces (japonais, chinois) : texte exact de la phrase → ['mot|romanisation', …]. */
+  tokens?: Record<string, string[]>;
   /** Texte de la question posée avant les options de réplique. */
   replyPrompt?: string;
 }
@@ -41,21 +41,29 @@ function parse(spec: string, romanized?: boolean): Word {
 
 export function simpleLesson(u: SimpleUnit): Lesson {
   const P = u.phrases.map(s => parse(s, u.romanized));
-  const tokens = (x: Word) => (u.split === undefined ? x.ar.split(' ') : Array.from(x.ar)).filter(Boolean);
+  const tokenList = (x: Word): { ar: string; tr: string }[] => {
+    const custom = u.tokens?.[x.ar];
+    if (custom) return custom.map(t0 => { const [a, b = ''] = t0.split('|'); return { ar: a, tr: b }; });
+    const trs = x.tr.split(' ');
+    return x.ar.split(' ').filter(Boolean).map((a, k) => ({ ar: a, tr: u.romanized ? (trs[k] ?? '') : '' }));
+  };
   const at = (r: Ref): number => {
     if (typeof r === 'number') return r;
     const i = P.findIndex(p => p.ar === r);
     if (i < 0) throw new Error(`${u.id} : phrase introuvable « ${r} »`);
     return i;
   };
-  const orderIdx = (u.orders ?? []).map(at).length ? (u.orders ?? []).map(at) : P.map((p, i) => ({ i, n: tokens(p).length })).filter(o => o.n >= 3 && o.n <= 7).slice(0, 3).map(o => o.i);
+  // `orders` absent : 3 premières phrases de 3 à 7 mots ; `orders: []` : aucune.
+  const orderIdx = u.orders !== undefined
+    ? u.orders.map(at)
+    : P.map((p, i) => ({ i, n: tokenList(p).length })).filter(o => o.n >= 3 && o.n <= 7).slice(0, 3).map(o => o.i);
 
   const spec: OralSpec = {
     id: u.id, level: u.level, theme: u.theme, title: u.title, goal: u.goal, intro: u.tip,
     phrases: P,
     orders: orderIdx.map(i => ({
       fr: P[i].fr,
-      words: tokens(P[i]).map((tok, k) => ({ ar: tok, tr: u.romanized ? (P[i].tr.split(' ')[k] ?? '') : '', fr: '' })),
+      words: tokenList(P[i]).map(tok => ({ ar: tok.ar, tr: tok.tr, fr: '' })),
     })),
     dialogues: u.qa.map(refs => {
       const [q, a, d1, d2] = refs.map(at);

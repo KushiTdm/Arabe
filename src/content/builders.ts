@@ -46,6 +46,8 @@ const chunk = <T,>(arr: T[], size: number): T[][] => {
 
 export interface ReadingSpec {
   id: string;
+  /** La translittération n'est pas une lecture (vietnamien : c'est le ton) : pas d'exercice « comment se lit ». */
+  skipTr?: boolean;
   theme?: string;
   level?: Lesson['level'];
   /** Lettres ou signes nouveaux sans carte propre (hamza, ة…). */
@@ -79,10 +81,10 @@ export function readingLesson(s: ReadingSpec): Lesson {
   ];
 
   const practise: Activity[] = [
-    ...s.words.map(t => ({
+    ...(s.skipTr ? [] : s.words.map(t => ({
       type: 'read' as const, target: t, options: withTarget(t, pool), as: 'tr' as const,
-    })),
-    ...(meaningful ? take(real, 3).map(t => ({
+    }))),
+    ...(meaningful ? take(real, s.skipTr ? 8 : 3).map(t => ({
       type: 'read' as const, target: t, options: withTarget(t, real.length >= 4 ? real : pool), as: 'fr' as const,
     })) : []),
     ...(s.pairs ?? []).map(([a, b, note], i) => ({
