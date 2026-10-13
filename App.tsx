@@ -18,6 +18,7 @@ import VocabularyScreen from './src/screens/VocabularyScreen';
 import CoursScreen      from './src/screens/Coursscreen';
 import AlphabetScreen   from './src/screens/AlphabetScreen';
 import ReadingScreen    from './src/screens/ReadingScreen';
+import { IntroOverlay } from './src/components/IntroOverlay';
 import ProfileScreen    from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import QuizScreen       from './src/screens/QuizScreen';
@@ -143,6 +144,7 @@ export default function App() {
   // toute la synthèse vocale est muette quand l'interrupteur latéral de
   // l'iPhone est sur silencieux — et l'utilisateur croit l'app cassée.
   React.useEffect(() => { configureAudioForPlayback(); }, []);
+  const [intro, setIntro] = React.useState(true);
 
   return (
     <SafeAreaProvider>
@@ -152,6 +154,7 @@ export default function App() {
             <StatusBar style="dark" />
             <RootStack />
           </NavigationContainer>
+          {intro && <IntroOverlay onDone={() => setIntro(false)} />}
         </AppShell>
       </ProfileProvider>
     </SafeAreaProvider>

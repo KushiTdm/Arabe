@@ -9,7 +9,7 @@ import { getReadingLevels, hasLetters, READ_PASS_PCT, READ_SESSION, type ReadIte
 import { useReadingProgress, readingStorageKey, saveReadingScore } from '../lib/useReadingProgress';
 import { WordPic } from '../components/WordPic';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
-import { AnswerMotion, AnimatedBar } from '../components/motion';
+import { AnswerMotion, AnimatedBar, ProgressRing, PopIn, PulseHint, CountUp } from '../components/motion';
 import { colors, borderRadius, fontSize } from '../theme';
 
 // ─── Lecture : des lettres aux dialogues ─────────────────────────────────────
@@ -72,18 +72,22 @@ export default function ReadingScreen() {
           const best = progress.scores[l.id];
           const ok = progress.passed(l.id);
           const isLetters = l.id === 'letters';
+          const isNext = prevOk && !ok && !isLetters && levels.findIndex(x => x.id !== 'letters' && !progress.passed(x.id)) === i;
           return (
             <Animated.View key={l.id} entering={FadeInDown.delay(i * 50).springify().damping(16)}>
+              <PulseHint active={isNext} radius={borderRadius.xl} color={colors.accent} style={{ marginBottom: 12 }}>
               <PressableScale
                 disabled={!prevOk}
-                style={[styles.card, !prevOk && styles.locked, ok && styles.cardDone]}
+                style={[styles.card, { marginBottom: 0 }, !prevOk && styles.locked, ok && styles.cardDone]}
                 onPress={() => (isLetters ? navigation.navigate('Alphabet') : setActive(l))}
               >
-                <View style={[styles.num, ok && { backgroundColor: colors.success }]}>
-                  {ok ? <Ionicons name="checkmark" size={22} color={colors.white} />
-                    : !prevOk ? <Ionicons name="lock-closed" size={20} color={colors.textMuted} />
-                    : <Text style={styles.numText}>{i + 1}</Text>}
-                </View>
+                <ProgressRing value={(best ?? 0) / 100} size={50} stroke={5} accent={ok ? colors.success : colors.accent}>
+                  <PopIn triggerKey={ok}>
+                    {ok ? <Ionicons name="checkmark" size={22} color={colors.success} />
+                      : !prevOk ? <Ionicons name="lock-closed" size={18} color={colors.textMuted} />
+                      : <Text style={styles.numText}>{i + 1}</Text>}
+                  </PopIn>
+                </ProgressRing>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.cardTitle}>{l.title}</Text>
                   <Text style={styles.cardDesc}>{l.desc}</Text>
@@ -91,6 +95,7 @@ export default function ReadingScreen() {
                 </View>
                 <Ionicons name={l.icon as any} size={22} color={prevOk ? colors.primary : colors.textLight} />
               </PressableScale>
+              </PulseHint>
             </Animated.View>
           );
         })}
@@ -120,7 +125,7 @@ function Drill({ level, romanized, storageKey, onExit }: { level: ReadLevel; rom
       <SafeAreaView style={[styles.safe, styles.center]}>
         <Text style={styles.bigEmoji}>{ok ? '🎉' : '💪'}</Text>
         <Text style={styles.endTitle}>{ok ? 'Palier réussi' : 'Presque !'}</Text>
-        <Text style={styles.endScore}>{pct} %</Text>
+        <CountUp value={pct} suffix=" %" style={styles.endScore} />
         <Text style={styles.sub}>{ok ? 'Le palier suivant est ouvert.' : `Il faut ${READ_PASS_PCT} % pour débloquer la suite.`}</Text>
         <View style={styles.endActions}>
           <PressableScale style={[styles.cta, { backgroundColor: colors.secondary }]} onPress={restart}><Text style={styles.ctaText}>Rejouer</Text></PressableScale>

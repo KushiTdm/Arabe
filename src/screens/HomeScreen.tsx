@@ -10,7 +10,7 @@ import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
 import { usePathProgress } from '../lib/usePathProgress';
 import { getWordOfTheDay } from '../data/multilingualVocab';
 import { LEVEL_LABEL, STEP_ICON } from '../data/learningPath';
-import { AnimatedBar } from '../components/motion';
+import { AnimatedBar, CountUp, FlameFlicker, PulseHint } from '../components/motion';
 import { LoadingSpinner } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
 import { LANGUAGE_IMAGES, ILLUSTRATIONS } from '../theme/images';
@@ -126,7 +126,8 @@ export default function HomeScreen() {
 
               <AnimatedBar value={pct / 100} height={6} trackColor="rgba(255,255,255,0.18)" accent={colors.accentLight} />
 
-              <PressableScale
+              <PulseHint active={!path.finished} radius={borderRadius.xl} color={colors.white}>
+                <PressableScale
                 style={styles.cta}
                 onPress={() => path.launch(navigation, unit, nextIdx)}
               >
@@ -135,6 +136,7 @@ export default function HomeScreen() {
                 </Text>
                 <Ionicons name="arrow-forward" size={18} color={colors.white} />
               </PressableScale>
+              </PulseHint>
             </Animated.View>
           )}
 
@@ -191,9 +193,9 @@ function Stat({ icon, image, color, value, label }: { icon: string; image?: Imag
   return (
     <View style={styles.stat}>
       {image
-        ? <Image source={image} style={{ width: 20, height: 20 }} resizeMode="contain" />
+        ? <FlameFlicker intensity={Math.min(1, value / 14)}><Image source={image} style={{ width: 20, height: 20 }} resizeMode="contain" /></FlameFlicker>
         : <Ionicons name={icon as any} size={16} color={color} />}
-      <Text style={styles.statValue}>{value}</Text>
+      <CountUp value={value} style={styles.statValue} />
       <Text style={styles.statLabel}>{label}</Text>
     </View>
   );

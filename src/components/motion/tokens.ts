@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'react-native-reanimated';
 import { colors } from '../../theme';
 
@@ -27,3 +28,23 @@ export function useMotionTiming(speed = 1) {
 }
 
 export const CONFETTI_COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6', '#14b8a6'];
+
+/** Valeur qui glisse vers `target` (nombre réel), utile pour les compteurs et les anneaux. */
+export function useTween(target: number, ms: number): number {
+  const [v, setV] = useState(0);
+  const from = useRef(0);
+  useEffect(() => {
+    if (ms <= 0) { from.current = target; setV(target); return; }
+    const start = from.current; const t0 = Date.now(); let raf = 0;
+    const tick = () => {
+      const p = Math.min(1, (Date.now() - t0) / ms);
+      const e = 1 - Math.pow(1 - p, 3);
+      const cur = start + (target - start) * e;
+      from.current = cur; setV(cur);
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return v;
+}

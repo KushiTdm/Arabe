@@ -10,7 +10,7 @@ import { VOCAB_IMAGES } from '../content/images';
 import type { Word } from '../content/types';
 import { WordPic } from '../components/WordPic';
 import { PressableScale } from '../components/anim';
-import { AnswerMotion, LessonIntroMotion, CelebrationMotion, AnimatedBar, SpeakingWaves } from '../components/motion';
+import { AnswerMotion, LessonIntroMotion, CelebrationMotion, AnimatedBar, SpeakingWaves, BubbleIn } from '../components/motion';
 import { saveConversationScore, conversationStorageKey, CONVERSATION_XP, CONVERSATION_PASS_PCT } from '../lib/useConversationProgress';
 import { colors, borderRadius, fontSize } from '../theme';
 
@@ -160,11 +160,11 @@ export default function DialogueScreen() {
 
   // ─── Échange ────────────────────────────────────────────────────────────
   const bubble = (l: Line, i: number) => (
-    <View key={i} style={[styles.bubble, l.who === 'me' ? styles.bubbleMe : styles.bubbleNpc]}>
+    <BubbleIn key={i} from={l.who === 'me' ? 'right' : 'left'} style={[styles.bubble, l.who === 'me' ? styles.bubbleMe : styles.bubbleNpc]}>
       <Text style={[styles.bAr, language.rtl && styles.rtl]}>{l.word.ar}</Text>
       {!!l.word.tr && help && <Text style={styles.bTr}>{l.word.tr}</Text>}
       {help && <Text style={styles.bFr}>{l.word.fr}</Text>}
-    </View>
+    </BubbleIn>
   );
 
   return (
@@ -188,7 +188,8 @@ export default function DialogueScreen() {
                 {turn.img && VOCAB_IMAGES[turn.img] ? <Image source={VOCAB_IMAGES[turn.img]} style={styles.qPicImg} /> : <WordPic emoji={turn.emoji} size={110} />}
               </View>
             )}
-            <TouchableOpacity activeOpacity={0.8} style={[styles.bubble, styles.bubbleNpc, styles.bubbleCurrent]} onPress={() => speaker.say(turn.npc.ar, { id: 'npc' })}>
+            <BubbleIn key={`npc-${step}`} from="left" style={[styles.bubble, styles.bubbleNpc, styles.bubbleCurrent]}>
+            <TouchableOpacity activeOpacity={0.8} onPress={() => speaker.say(turn.npc.ar, { id: 'npc' })}>
               <View style={styles.bRow}>
                 <Ionicons name="volume-medium" size={18} color={colors.primaryLight} />
                 <SpeakingWaves active={speaker.speakingId === 'npc'} bars={4} height={16} />
@@ -197,6 +198,7 @@ export default function DialogueScreen() {
               {!!turn.npc.tr && help && <Text style={styles.bTr}>{turn.npc.tr}</Text>}
               {help && <Text style={styles.bFr}>{turn.npc.fr}</Text>}
             </TouchableOpacity>
+            </BubbleIn>
 
             <Text style={styles.prompt}>Ta réplique :</Text>
             {turn.options.map((o, i) => {

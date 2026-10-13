@@ -10,7 +10,7 @@ import { getLesson } from '../content';
 import { getLexiconForUnit, getLessonCover } from '../content/lexicon';
 import { LEVEL_LABEL } from '../data/learningPath';
 import { UNIT_XP } from '../lib/usePathProgress';
-import { LessonIntroMotion, CelebrationMotion, AnswerMotion, SpeakingWaves, AnimatedBar, LetterRevealMotion, WordRevealMotion } from '../components/motion';
+import { LessonIntroMotion, CelebrationMotion, AnswerMotion, SpeakingWaves, AnimatedBar, LetterRevealMotion, WordRevealMotion, FloatingXP } from '../components/motion';
 import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
 import { PART_PASS_RATIO, type Activity, type Word } from '../content/types';
 import { VOCAB_IMAGES } from '../content/images';
@@ -73,6 +73,8 @@ export default function LessonScreen() {
   const [scoredTotal, setScoredTotal] = useState(0);
   const saved = useRef(false);
   const [intro, setIntro] = useState(true);
+  const [combo, setCombo] = useState(0);
+  const [comboTick, setComboTick] = useState(0);
 
   useEffect(() => () => speaker.stop(), []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -108,7 +110,11 @@ export default function LessonScreen() {
       if (ok) setFirstTry(n => n + 1);
     }
     if (!ok && scored && !current.retry) setQueue(q => [...q, { act: current.act, retry: true }]);
-    if (scored) setVerdict({ ok, answer });
+    if (scored) {
+      setCombo(c => (ok ? c + 1 : 0));
+      if (ok) setComboTick(n => n + 1);
+      setVerdict({ ok, answer });
+    }
     else next();
   };
 
@@ -121,7 +127,7 @@ export default function LessonScreen() {
   const restart = () => {
     saved.current = false;
     setQueue(part.activities.map(act => ({ act, retry: false })));
-    setPos(0); setFirstTry(0); setScoredTotal(0); setVerdict(null);
+    setPos(0); setFirstTry(0); setScoredTotal(0); setVerdict(null); setCombo(0); setComboTick(0);
   };
 
   // ─── Fin de partie ─────────────────────────────────────────────────────────
@@ -186,6 +192,12 @@ export default function LessonScreen() {
           {...getLessonCover(language.code, lesson.id)}
           onDone={() => setIntro(false)}
         />
+      )}
+
+      {verdict?.ok && (
+        <View pointerEvents="none" style={styles.comboLayer}>
+          <FloatingXP trigger={comboTick} label={combo >= 3 ? `🔥 ×${combo}` : combo === 2 ? '✨ ×2' : '✓'} color={colors.success} fontSize={combo >= 3 ? 30 : 24} rise={90} />
+        </View>
       )}
 
       {verdict && (
@@ -647,6 +659,7 @@ const styles = StyleSheet.create({
   ctaOff: { opacity: 0.4 },
   ctaGhost: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
   ctaText: { color: colors.white, fontWeight: '800', fontSize: fontSize.base },
+  comboLayer: { position: 'absolute', left: 0, right: 0, bottom: 110, alignItems: 'center' },
   feedback: { position: 'absolute', left: 0, right: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderTopWidth: 1 },
   fbOk: { backgroundColor: colors.successLight, borderTopColor: colors.success },
   fbKo: { backgroundColor: colors.destructiveLight, borderTopColor: colors.destructive },
