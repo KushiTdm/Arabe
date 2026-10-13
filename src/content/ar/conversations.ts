@@ -152,4 +152,52 @@ export const AR_CONVERSATIONS: ConvSpec[] = [
       { npc: 'أَحْسَنْتَ، عَمَلٌ جَيِّد|aḥsanta, ʿamalun jayyid|Bravo, bon travail', ok: 'شُكْراً لِحُسْنِ اسْتِمَاعِكُمْ|shukran li-ḥusni stimāʿikum|Merci de votre attention', bad: ['عِنْدِي أَخ وَأُخْت|ʿindī akh wa-ukht|J\'ai un frère et une sœur', 'بِكَمْ هٰذَا؟|bikam hādhā|Combien ça coûte ?'] },
     ],
   },
+  {
+    id: 'ar-C13', title: 'À la gare', romanized: true, scene: 'station', npcRole: 'l\'employé du guichet',
+    situation: 'Tu achètes un billet de train à la gare. Dis où tu vas, demande un billet et paie.',
+    key: ['مَحَطَّة|maḥaṭṭa|la gare|img:station', 'تَذْكِرَة|tadhkira|le billet|img:ticket', 'قِطَار|qiṭār|le train|img:train', 'حَقِيبَة سَفَر|ḥaqībat safar|la valise|img:suitcase'],
+    turns: [
+      { npc: 'مَرْحَباً، إِلَى أَيْنَ تَذْهَب؟|marḥaban, ilā ayna tadhhab|Bonjour, où allez-vous ?', ok: 'أَذْهَبُ إِلَى وَسَطِ المَدِينَة|adhhabu ilā wasaṭi l-madīna|Je vais en ville', bad: ['أَنَا طَالِب|ana ṭālib|Je suis étudiant', 'شُكْراً|shukran|Merci'] },
+      { npc: 'تَذْكِرَة وَاحِدَة أَمْ اثْنَتَان؟|tadhkira wāḥida am ithnatān|Un billet ou deux ?', img: 'ticket', ok: 'تَذْكِرَة وَاحِدَة، مِنْ فَضْلِكَ|tadhkira wāḥida, min faḍlika|Un billet, s\'il vous plaît|img:ticket', bad: ['أُرِيد مَاء|urīd māʾ|Je veux de l\'eau', 'اِسْمِي آنَّا|ismī ānnā|Je m\'appelle Anna'] },
+      { npc: 'عِشْرُونَ يُورُو|ʿishrūna yūrū|Ça fait vingt euros', ok: 'تَفَضَّلْ|tafaḍḍal|Voilà', bad: ['بِكَمْ هٰذَا؟|bikam hādhā|Combien ça coûte ?', 'أُحِبُّ القَهْوَة|uḥibbu l-qahwa|J\'aime le café'] },
+      { npc: 'القِطَارُ يَنْطَلِقُ فِي السَّاعَةِ الخَامِسَة|al-qiṭāru yanṭaliqu fī s-sāʿati l-khāmisa|Le train part à cinq heures', ok: 'حَسَناً، شُكْراً|ḥasanan, shukran|D\'accord, merci', bad: ['ضَاعَتْ حَقِيبَتِي|ḍāʿat ḥaqībatī|J\'ai perdu mon sac', 'أَنَا مَرِيض|ana marīḍ|Je suis malade'] },
+      { npc: 'رِحْلَة سَعِيدَة|riḥla saʿīda|Bon voyage !', ok: 'شُكْراً، مَعَ السَّلَامَة|shukran, maʿa s-salāma|Merci, au revoir', bad: ['مَرْحَباً|marḥaban|Bonjour', 'لَا أَفْهَم|lā afham|Je ne comprends pas'] },
+    ],
+  },
+  {
+    id: 'ar-C14', level: 'intermediate', title: 'À l\'hôtel', romanized: true, scene: 'hotel', npcRole: 'le réceptionniste',
+    situation: 'Tu arrives à l\'hôtel. Annonce ta réservation, donne ton nom, écoute les consignes.',
+    key: ['فُنْدُق|funduq|l\'hôtel|img:hotel', 'غُرْفَة|ghurfa|la chambre|img:bed', 'مِفْتَاح|miftāḥ|la clé|img:key', 'فُطُور|futūr|le petit-déjeuner'],
+    turns: [
+      { npc: 'مَرْحَباً، أَهْلاً بِكَ فِي الفُنْدُق|marḥaban, ahlan bika fī l-funduq|Bonjour, bienvenue à l\'hôtel', ok: 'مَرْحَباً، لَدَيَّ حَجْز|marḥaban, ladayya ḥajz|Bonjour, j\'ai une réservation', bad: ['الحِسَاب، مِنْ فَضْلِكَ|al-ḥisāb, min faḍlika|L\'addition, s\'il vous plaît', 'أُرِيد شَاي|urīd shāy|Je veux du thé'] },
+      { npc: 'مَا اسْمُكَ؟|mā smuka|Quel est votre nom ?', ok: 'اِسْمِي آنَّا|ismī ānnā|Je m\'appelle Anna', bad: ['أَنَا مِنْ فَرَنْسَا|ana min faransā|Je viens de France', 'شُكْراً|shukran|Merci'] },
+      { npc: 'هٰذَا مِفْتَاحُ غُرْفَتِكَ|hādhā miftāḥu ghurfatika|Voici la clé de votre chambre|img:key', img: 'key', ok: 'شُكْراً|shukran|Merci', bad: ['مَعَ السَّلَامَة|maʿa s-salāma|Au revoir', 'أَنَا مَرِيض|ana marīḍ|Je suis malade'] },
+      { npc: 'الفُطُورُ فِي الثَّامِنَة|al-futūru fī th-thāmina|Le petit-déjeuner est à huit heures', ok: 'مُمْتَاز، شُكْراً|mumtāz, shukran|C\'est parfait, merci', bad: ['ضَاعَتْ حَقِيبَتِي|ḍāʿat ḥaqībatī|J\'ai perdu mon sac', 'يَسَار|yasār|à gauche'] },
+      { npc: 'هَلْ تَحْتَاجُ شَيْئاً آخَر؟|hal taḥtāju shayʾan ākhar|Avez-vous besoin d\'autre chose ?', ok: 'لَا، شُكْراً، تُصْبِحُ عَلَى خَيْر|lā, shukran, tuṣbiḥu ʿalā khayr|Non, merci, bonne nuit', bad: ['اِسْمِي آنَّا|ismī ānnā|Je m\'appelle Anna', 'أَنَا مِنْ فَرَنْسَا|ana min faransā|Je viens de France'] },
+    ],
+  },
+  {
+    id: 'ar-C15', level: 'intermediate', title: 'Au téléphone', romanized: true, scene: 'phone', npcRole: 'un ami',
+    situation: 'Un ami t\'appelle. Réponds, donne des nouvelles et fixe un rendez-vous pour demain.',
+    key: ['هَاتِف|hātif|le téléphone|img:phone', 'رَقْم|raqm|le numéro', 'غَداً|ghadan|demain', 'إِلَى اللِّقَاء|ilā l-liqāʾ|À bientôt'],
+    turns: [
+      { npc: 'أَلُو؟|alū|Allô ?', ok: 'أَلُو، أَنَا آنَّا|alū, anā ānnā|Allô, c\'est Anna', bad: ['شُكْراً|shukran|Merci', 'نَعَم|naʿam|Oui'] },
+      { npc: 'كَيْفَ حَالُكَ؟|kayfa ḥāluka|Comment vas-tu ?', ok: 'بِخَيْر، الحَمْدُ لِلَّه|bi-khayr, al-ḥamdu lillāh|Je vais bien, merci', bad: ['اِسْمِي آنَّا|ismī ānnā|Je m\'appelle Anna', 'مَعَ السَّلَامَة|maʿa s-salāma|Au revoir'] },
+      { npc: 'هَلْ أَنْتَ حُرٌّ غَداً؟|hal anta ḥurrun ghadan|Tu es libre demain ?', ok: 'نَعَم، أَنَا حُرّ|naʿam, anā ḥurr|Oui, je suis libre', bad: ['أَنَا مَرِيض|ana marīḍ|Je suis malade', 'ضَاعَتْ حَقِيبَتِي|ḍāʿat ḥaqībatī|J\'ai perdu mon sac'] },
+      { npc: 'سَأُرْسِلُ العُنْوَانَ فِي رِسَالَةٍ|saʾursilu l-ʿunwān fī risālatin|Je t\'envoie l\'adresse par message', ok: 'حَسَناً، شُكْراً|ḥasanan, shukran|D\'accord, merci', bad: ['أَنَا طَالِب|ana ṭālib|Je suis étudiant', 'لَا أَفْهَم|lā afham|Je ne comprends pas'] },
+      { npc: 'إِلَى اللِّقَاء غَداً|ilā l-liqāʾ ghadan|À demain !', ok: 'إِلَى اللِّقَاء غَداً|ilā l-liqāʾ ghadan|À demain !', bad: ['مَرْحَباً|marḥaban|Bonjour', 'أُحِبُّ القَهْوَة|uḥibbu l-qahwa|J\'aime le café'] },
+    ],
+  },
+  {
+    id: 'ar-C16', level: 'intermediate', title: 'À l\'aéroport', romanized: true, scene: 'airport', npcRole: 'l\'agent d\'enregistrement',
+    situation: 'Tu enregistres ton vol. Montre ton passeport, dis où tu vas et demande ta porte.',
+    key: ['مَطَار|maṭār|l\'aéroport|img:airport', 'جَوَاز سَفَر|jawāz safar|le passeport', 'حَقِيبَة سَفَر|ḥaqībat safar|la valise|img:suitcase', 'طَائِرَة|ṭāʾira|l\'avion|img:airplane'],
+    turns: [
+      { npc: 'جَوَازُ سَفَرِكَ، مِنْ فَضْلِكَ|jawāzu safarika, min faḍlika|Votre passeport, s\'il vous plaît', ok: 'هٰذَا جَوَازُ سَفَرِي|hādhā jawāzu safarī|Voici mon passeport', bad: ['أَنَا طَالِب|ana ṭālib|Je suis étudiant', 'بِكَمْ هٰذَا؟|bikam hādhā|Combien ça coûte ?'] },
+      { npc: 'مَرْحَباً، إِلَى أَيْنَ تَذْهَب؟|marḥaban, ilā ayna tadhhab|Bonjour, où allez-vous ?', ok: 'أَذْهَبُ إِلَى فَرَنْسَا|adhhabu ilā faransā|Je vais en France', bad: ['شُكْراً|shukran|Merci', 'غَداً|ghadan|Demain'] },
+      { npc: 'هَلْ لَدَيْكَ حَقِيبَة؟|hal ladayka ḥaqība|Avez-vous une valise ?', img: 'suitcase', ok: 'نَعَم، لَدَيَّ حَقِيبَة|naʿam, ladayya ḥaqība|Oui, j\'ai une valise|img:suitcase', bad: ['أُحِبُّ القَهْوَة|uḥibbu l-qahwa|J\'aime le café', 'اِسْمِي آنَّا|ismī ānnā|Je m\'appelle Anna'] },
+      { npc: 'الطَّائِرَةُ تُقْلِعُ فِي العَاشِرَة|aṭ-ṭāʾiratu tuqliʿu fī l-ʿāshira|L\'avion part à dix heures', ok: 'شُكْراً، أَيْنَ بَوَّابَةُ الصُّعُود؟|shukran, ayna bawwābatu ṣ-ṣuʿūd|Merci, où est la porte d\'embarquement ?', bad: ['ضَاعَتْ حَقِيبَتِي|ḍāʿat ḥaqībatī|J\'ai perdu mon sac', 'أَنَا مَرِيض|ana marīḍ|Je suis malade'] },
+      { npc: 'رِحْلَة سَعِيدَة|riḥla saʿīda|Bon vol !', ok: 'شُكْراً، مَعَ السَّلَامَة|shukran, maʿa s-salāma|Merci, au revoir', bad: ['مَرْحَباً|marḥaban|Bonjour', 'لَا أَفْهَم|lā afham|Je ne comprends pas'] },
+    ],
+  },
 ];
