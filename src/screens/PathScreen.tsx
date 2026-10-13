@@ -1,5 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import ReAnimated, { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -8,6 +9,7 @@ import { usePathProgress } from '../lib/usePathProgress';
 import {
   LEVEL_LABEL, STEP_ICON, stepLabel, type PathLevel, type PathUnit,
 } from '../data/learningPath';
+import { Animated, FadeInDown } from '../components/anim';
 import { ILLUSTRATIONS } from '../theme/images';
 import { colors, spacing, borderRadius, fontSize } from '../theme';
 
@@ -18,6 +20,14 @@ export default function PathScreen() {
   const { language } = useProfile();
   const path = usePathProgress();
   const [open, setOpen] = useState<string | null>(null);
+  // Grand titre qui se replie en titre compact quand la liste défile.
+  const scrollY = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler(e => { scrollY.value = e.contentOffset.y; });
+  const compactStyle = useAnimatedStyle(() => ({ opacity: interpolate(scrollY.value, [30, 64], [0, 1], Extrapolation.CLAMP) }));
+  const largeStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollY.value, [0, 48], [1, 0], Extrapolation.CLAMP),
+    transform: [{ translateY: interpolate(scrollY.value, [0, 48], [0, -6], Extrapolation.CLAMP) }] as any,
+  }));
 
   useFocusEffect(useCallback(() => { path.reload(); }, [path.reload]));
 
@@ -31,16 +41,18 @@ export default function PathScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.title}>{language.flag} Parcours · {language.familiarName}</Text>
-          <Text style={styles.subtitle}>
-            {path.completedCount} / {path.units.length} unités · {pct} %
-          </Text>
-        </View>
+        <ReAnimated.Text style={[styles.compactTitle, compactStyle]} numberOfLines={1}>Parcours · {language.familiarName}</ReAnimated.Text>
+        <View style={styles.backBtn} />
       </View>
-      <View style={styles.barBg}><View style={[styles.barFill, { width: `${pct}%` as any }]} /></View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ReAnimated.ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} onScroll={onScroll} scrollEventThrottle={16}>
+        <ReAnimated.View style={[styles.largeBlock, largeStyle]}>
+          <Text style={styles.largeTitle}>Parcours</Text>
+          <Text style={styles.subtitle}>
+            {language.familiarName} · {path.completedCount} / {path.units.length} unités · {pct} %
+          </Text>
+          <View style={styles.barBg}><View style={[styles.barFill, { width: `${pct}%` as any }]} /></View>
+        </ReAnimated.View>
         {path.finished && (
           <View style={styles.finishedBanner}>
             <Image source={ILLUSTRATIONS.levelUnlocked} style={styles.finishedArt} resizeMode="contain" />
@@ -57,9 +69,9 @@ export default function PathScreen() {
                 <View style={styles.levelChip}><Text style={styles.levelChipText}>{meta.cefr}</Text></View>
                 <Text style={styles.levelName}>{meta.name}</Text>
               </View>
-              {units.map(unit => (
+              {units.map((unit, k) => (
+                <Animated.View key={unit.id} entering={FadeInDown.delay(Math.min(k, 8) * 35).springify().damping(20)}>
                 <UnitRow
-                  key={unit.id}
                   unit={unit}
                   index={path.units.indexOf(unit) + 1}
                   done={path.unitDone(unit)}
@@ -68,13 +80,16 @@ export default function PathScreen() {
                   onToggle={() => setOpen(expanded === unit.id ? '' : unit.id)}
                   isStepDone={i => path.isStepDone(unit.id, i)}
                   onStep={i => path.launch(navigation, unit, i)}
+                  boss={path.bossInfo(unit)}
+                  onBoss={() => path.launchBoss(navigation, unit)}
                   labelFor={i => stepLabel(unit.steps[i], language)}
                 />
+                </Animated.View>
               ))}
             </View>
           );
         })}
-      </ScrollView>
+      </ReAnimated.ScrollView>
     </SafeAreaView>
   );
 }
@@ -83,6 +98,7 @@ function UnitRow(props: {
   unit: PathUnit; index: number; done: boolean; current: boolean; expanded: boolean;
   onToggle: () => void; isStepDone: (i: number) => boolean;
   onStep: (i: number) => void; labelFor: (i: number) => string;
+  boss: { best: number; wins: number }; onBoss: () => void;
 }) {
   const { unit, index, done, current, expanded } = props;
   return (
@@ -102,7 +118,7 @@ function UnitRow(props: {
 
       {expanded && (
         <View style={styles.unitBody}>
-          <Text style={styles.unitGoalFull}>🎯 {unit.goal}</Text>
+          <Text style={styles.unitGoalFull}>{unit.goal}</Text>
           {unit.steps.map((step, i) => {
             const stepDone = props.isStepDone(i);
             return (
@@ -119,6 +135,25 @@ function UnitRow(props: {
               </TouchableOpacity>
             );
           })}
+          <TouchableOpacity
+            style={[styles.step, styles.bossRow, !done && { opacity: 0.5 }]}
+            onPress={props.onBoss}
+            disabled={!done}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.stepIcon, styles.bossIcon, props.boss.wins > 0 && styles.stepIconDone]}>
+              <Ionicons name={props.boss.wins > 0 ? 'shield-checkmark' : done ? 'flash' : 'lock-closed'} size={16} color={props.boss.wins > 0 ? colors.white : colors.destructive} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.stepLabel}>Boss de l'unité</Text>
+              <Text style={styles.bossSub}>
+                {!done ? 'Termine les étapes pour le défier'
+                  : props.boss.wins > 0 ? `Vaincu · meilleur score ${props.boss.best} %`
+                  : 'Tes mots de l\'unité et tes erreurs passées'}
+              </Text>
+            </View>
+            {done && <Ionicons name="play-circle" size={22} color={colors.destructive} />}
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -129,12 +164,15 @@ const styles = StyleSheet.create({
   finishedBanner: { alignItems: 'center', marginBottom: spacing.lg },
   finishedArt: { width: 120, height: 120 },
   finishedText: { fontSize: fontSize.base, fontWeight: '700', color: colors.text, marginTop: 4 },
+  compactTitle:{ flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '600', color: colors.text },
+  largeBlock:  { marginBottom: spacing.lg },
+  largeTitle:  { fontSize: 34, fontWeight: '700', lineHeight: 41, letterSpacing: 0.3, color: colors.text },
   safe:        { flex: 1, backgroundColor: colors.background },
   header:      { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
   backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: `${colors.textMuted}15`, justifyContent: 'center', alignItems: 'center' },
   title:       { fontSize: fontSize.lg, fontWeight: '800', color: colors.text },
   subtitle:    { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 2 },
-  barBg:       { height: 5, backgroundColor: colors.border, marginHorizontal: 16, borderRadius: 3, overflow: 'hidden' },
+  barBg:       { height: 5, backgroundColor: colors.border, marginTop: 10, borderRadius: 3, overflow: 'hidden' },
   barFill:     { height: '100%', backgroundColor: colors.accent, borderRadius: 3 },
   content:     { padding: 16, paddingBottom: 110 },
   levelRow:    { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, marginTop: 4 },
@@ -155,5 +193,8 @@ const styles = StyleSheet.create({
   step:        { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderRadius: borderRadius.lg, backgroundColor: `${colors.primary}08` },
   stepIcon:    { width: 30, height: 30, borderRadius: 15, backgroundColor: `${colors.primary}15`, justifyContent: 'center', alignItems: 'center' },
   stepIconDone:{ backgroundColor: colors.success },
+  bossRow:     { backgroundColor: `${colors.destructive}0D`, marginTop: 4 },
+  bossIcon:    { backgroundColor: `${colors.destructive}1A` },
+  bossSub:     { fontSize: fontSize.xs, color: colors.textMuted, marginTop: 1 },
   stepLabel:   { flex: 1, fontSize: fontSize.sm, fontWeight: '600', color: colors.text },
 });

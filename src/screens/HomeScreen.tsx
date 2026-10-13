@@ -11,6 +11,7 @@ import { usePathProgress } from '../lib/usePathProgress';
 import { getWordOfTheDay } from '../data/multilingualVocab';
 import { LEVEL_LABEL, STEP_ICON } from '../data/learningPath';
 import { AnimatedBar, CountUp, FlameFlicker, PulseHint } from '../components/motion';
+import { QuestsCard } from '../components/QuestsCard';
 import { LoadingSpinner } from '../components/RNComponents';
 import { PressableScale, Animated, FadeInDown } from '../components/anim';
 import { LANGUAGE_IMAGES, ILLUSTRATIONS } from '../theme/images';
@@ -56,7 +57,7 @@ export default function HomeScreen() {
           <View style={[styles.heroRow, { paddingTop: insets.top + 10 }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.greetingWord} numberOfLines={1}>{language.greetingWord}</Text>
-              <Text style={styles.greetingName} numberOfLines={1}>{activeProfile?.name ?? ''} 👋</Text>
+              <Text style={styles.greetingName} numberOfLines={1}>{activeProfile?.name ?? ''}</Text>
             </View>
             <View style={styles.heroRight}>
               <View style={styles.avatarBubble}>
@@ -81,6 +82,8 @@ export default function HomeScreen() {
             <View style={styles.statDivider} />
             <Stat icon="book" color={colors.secondary} value={progress?.vocab_learned ?? 0} label="mots" />
           </Animated.View>
+
+          <QuestsCard />
 
           {/* ── Parcours d'apprentissage ────────────────────────────── */}
           {unit && (
@@ -144,7 +147,7 @@ export default function HomeScreen() {
           {wordOfDay && (
             <Animated.View entering={FadeInDown.delay(180).springify().damping(16)} style={styles.wodCard}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.wodKicker}>💡 Mot du jour</Text>
+                <Text style={styles.wodKicker}>Mot du jour</Text>
                 <Text style={[styles.wodNative, language.rtl && styles.rtl]} numberOfLines={1}>
                   {wordOfDay.native_word}
                 </Text>

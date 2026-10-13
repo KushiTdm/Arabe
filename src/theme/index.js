@@ -1,7 +1,11 @@
-import { StyleSheet } from 'react-native';
+import { Appearance, StyleSheet } from 'react-native';
 
-// Colors matching the original Tailwind theme
-export const colors = {
+// Le thème suit le réglage du système, lu une fois au lancement : les styles de
+// l'app sont créés au chargement des écrans, un changement de thème en cours
+// d'utilisation s'applique donc à la prochaine ouverture.
+export const isDark = Appearance.getColorScheme() === 'dark';
+
+const lightColors = {
   primary: '#1a2e2a',
   primaryLight: '#2d4a44',
   primaryDark: '#0f1c1a',
@@ -9,12 +13,12 @@ export const colors = {
   secondaryLight: '#fbbf24',
   accent: '#10b981',
   accentLight: '#34d399',
-  background: '#f8faf9',
+  background: '#f4f6f5',
   card: '#ffffff',
   text: '#1a2e2a',
   textMuted: '#6b7280',
   textLight: '#9ca3af',
-  border: '#e5e7eb',
+  border: '#e8ebe9',
   destructive: '#ef4444',
   destructiveLight: '#fee2e2',
   success: '#10b981',
@@ -30,6 +34,33 @@ export const colors = {
   xpGradientStart: '#1a2e2a',
   xpGradientEnd: '#2d4a44',
 };
+
+// Mode sombre : surfaces à peine plus claires que le fond (pas de noir pur),
+// texte à fort contraste, vert d'accent éclairci pour rester lisible.
+const darkColors = {
+  ...lightColors,
+  primary: '#4f9d88',
+  primaryLight: '#8cc9b6',
+  primaryDark: '#0a1110',
+  secondaryLight: '#fcd34d',
+  accent: '#34d399',
+  accentLight: '#6ee7b7',
+  background: '#0e1514',
+  card: '#18211f',
+  text: '#e8efed',
+  textMuted: '#9fb0ab',
+  textLight: '#8a9b96',
+  border: '#27322f',
+  destructive: '#f87171',
+  destructiveLight: '#3a1c1c',
+  success: '#34d399',
+  successLight: '#12332a',
+  arabicText: '#f3f7f5',
+  xpGradientStart: '#4f9d88',
+  xpGradientEnd: '#2f6f5f',
+};
+
+export const colors = isDark ? darkColors : lightColors;
 
 export const spacing = {
   xs: 4,
@@ -67,6 +98,19 @@ export const fontSize = {
   '7xl': 72,
 };
 
+// Échelle typographique (style iOS) : un rôle = une taille, un poids, une hauteur de ligne.
+export const type = {
+  largeTitle: { fontSize: 34, fontWeight: '700', lineHeight: 41, letterSpacing: 0.3 },
+  title:      { fontSize: 22, fontWeight: '700', lineHeight: 28, letterSpacing: 0.2 },
+  headline:   { fontSize: 17, fontWeight: '600', lineHeight: 22 },
+  body:       { fontSize: 17, fontWeight: '400', lineHeight: 24 },
+  callout:    { fontSize: 15, fontWeight: '400', lineHeight: 21 },
+  footnote:   { fontSize: 13, fontWeight: '400', lineHeight: 18 },
+  caption:    { fontSize: 12, fontWeight: '500', lineHeight: 16, letterSpacing: 0.2 },
+  // Écriture arabe : hauteur de ligne généreuse pour ne pas écraser les voyelles brèves.
+  arabic:     { fontSize: 28, fontWeight: '600', lineHeight: 48 },
+};
+
 export const fontFamily = {
   regular: 'System',
   medium: 'System',
@@ -83,8 +127,8 @@ export const globalStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius['2xl'],
-    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     padding: spacing.lg,
   },
@@ -92,13 +136,14 @@ export const globalStyles = StyleSheet.create({
     fontFamily: 'System',
     textAlign: 'right',
     writingDirection: 'rtl',
+    lineHeight: 48,
   },
   shadow: {
     shadowColor: colors.black,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   row: {
     flexDirection: 'row',

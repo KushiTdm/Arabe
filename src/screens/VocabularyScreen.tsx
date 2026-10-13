@@ -328,11 +328,11 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
           </View>
 
           <ScrollView contentContainerStyle={styles.wordList} showsVerticalScrollIndicator={false}>
-            {filtered.map(word => {
+            {filtered.map((word, wi) => {
               const isMastered = masteredIds.has(word.id);
               const isAI = word.id.startsWith('ai_');
               return (
-                <View key={word.id} style={[styles.wordRow, isMastered && styles.wordRowMastered]}>
+                <Animated.View key={word.id} entering={FadeInDown.delay(Math.min(wi, 10) * 30).springify().damping(20)} style={[styles.wordRow, isMastered && styles.wordRowMastered]}>
                   {(!!word.img || !!word.emoji || !!word.color) && <WordPic img={word.img} emoji={word.emoji} color={word.color} size={52} />}
                   <View style={styles.wordLeft}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -375,7 +375,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                       color={isMastered ? colors.success : colors.textMuted}
                     />
                   </TouchableOpacity>
-                </View>
+                </Animated.View>
               );
             })}
 

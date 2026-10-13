@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { consumeFreeze } from './quests';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -235,7 +236,9 @@ export function useProfiles() {
     const now = new Date(today);
     const diffDays = Math.round((now.getTime() - last.getTime()) / 86400000);
 
-    const newStreak = diffDays === 1
+    // Un seul jour manqué est rattrapé si l'élève a gagné un gel de série.
+    const frozen = diffDays === 2 && (await consumeFreeze(activeProfileId ?? undefined));
+    const newStreak = diffDays === 1 || frozen
       ? progress.streak_days + 1
       : 1;
 

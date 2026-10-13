@@ -432,7 +432,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.headerTitle}>{language.flag} Conversation {language.familiarName}</Text>
-              <Text style={styles.headerSubtitle}>Choisis un thème — Bonjour {userName} !</Text>
+              <Text style={styles.headerSubtitle}>Choisis un thème, {userName}.</Text>
             </View>
             <View style={styles.creditsTag}>
               <Ionicons name="flash" size={14} color={colors.primary} />
@@ -442,7 +442,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
 
           <Card style={styles.tipCard}>
             <Text style={styles.tipText}>
-              💡 Pose des questions sur une règle ou un mot en {language.familiarName} — un cours sera créé automatiquement dans "Cours" 📚
+              Pose des questions sur une règle ou un mot en {language.familiarName} : un cours sera créé automatiquement dans "Cours".
             </Text>
           </Card>
 
@@ -532,7 +532,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
           <View style={styles.courseNotifBanner}>
             <Ionicons name="book" size={16} color={colors.white} />
             <Text style={styles.courseNotifText} numberOfLines={2}>
-              📚 Nouveau cours créé : "{courseNotif}" — va dans "Cours" !
+              Nouveau cours créé : "{courseNotif}". Il est dans "Cours".
             </Text>
           </View>
         )}
@@ -668,22 +668,22 @@ function MessageBubble({ message, onSpeak, rtl }: { message: Message; onSpeak: (
 
       {!!message.pronunciation_feedback && (
         <View style={styles.feedbackPill}>
-          <Text style={styles.feedbackPillText}>🗣️ {message.pronunciation_feedback}</Text>
+          <Text style={styles.feedbackPillText}>{message.pronunciation_feedback}</Text>
         </View>
       )}
       {!!message.correction && (
         <View style={styles.correctionPill}>
-          <Text style={styles.correctionPillText}>💡 {message.correction}</Text>
+          <Text style={styles.correctionPillText}>{message.correction}</Text>
         </View>
       )}
       {!!message.suggestion && (
         <View style={styles.suggestionPill}>
-          <Text style={styles.suggestionPillText}>✨ {message.suggestion}</Text>
+          <Text style={styles.suggestionPillText}>{message.suggestion}</Text>
         </View>
       )}
       {!!message.exercise && (
         <View style={styles.exercisePill}>
-          <Text style={styles.exercisePillTitle}>🎯 Exercice :</Text>
+          <Text style={styles.exercisePillTitle}>Exercice :</Text>
           <Text style={styles.exercisePillText}>{message.exercise}</Text>
         </View>
       )}
@@ -691,7 +691,7 @@ function MessageBubble({ message, onSpeak, rtl }: { message: Message; onSpeak: (
         <View style={styles.courseAddedPill}>
           <Ionicons name="book" size={14} color={colors.white} />
           <Text style={styles.courseAddedText}>
-            📚 Cours créé : "{message.course_topic}" — va dans "Cours" !
+            Cours créé : "{message.course_topic}". Il est dans "Cours".
           </Text>
         </View>
       )}

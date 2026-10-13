@@ -18,9 +18,11 @@ interface PathStore {
   steps: Record<string, number[]>;
   rewarded: string[];
   pending: { unitId: string; stepIdx: number } | null;
+  /** Boss de fin d'unité : meilleur score et victoires. Indépendant des étapes. */
+  boss: Record<string, { best: number; wins: number }>;
 }
 
-const EMPTY: PathStore = { steps: {}, rewarded: [], pending: null };
+const EMPTY: PathStore = { steps: {}, rewarded: [], pending: null, boss: {} };
 
 export function pathStorageKey(profileId: string | undefined, langCode: string): string {
   return `@maa_path_${profileId ?? 'default'}_${langCode}`;
@@ -47,6 +49,18 @@ export async function markStepDone(key: string, unitId: string, stepIdx: number)
   store.steps[unitId] = [...done].sort((a, b) => a - b);
   if (store.pending?.unitId === unitId && store.pending.stepIdx === stepIdx) store.pending = null;
   await writeStore(key, store);
+}
+
+/** Enregistre un combat contre le boss. `firstWin` : première victoire (bonus d'XP). */
+export async function recordBoss(
+  key: string, unitId: string, pct: number, passPct: number,
+): Promise<{ won: boolean; firstWin: boolean; best: number }> {
+  const store = await readStore(key);
+  const prev = store.boss[unitId] ?? { best: 0, wins: 0 };
+  const won = pct >= passPct;
+  store.boss[unitId] = { best: Math.max(prev.best, pct), wins: prev.wins + (won ? 1 : 0) };
+  await writeStore(key, store);
+  return { won, firstWin: won && prev.wins === 0, best: store.boss[unitId].best };
 }
 
 export interface StepRef { unitId: string; stepIdx: number }
@@ -161,12 +175,16 @@ export function usePathProgress() {
     }
   };
 
+  const bossInfo = (unit: PathUnit) => store.boss[unit.id] ?? { best: 0, wins: 0 };
+  const launchBoss = (navigation: any, unit: PathUnit) =>
+    navigation.navigate('Quiz', { launchId: Date.now(), boss: { unitId: unit.id } });
+
   const level: PathLevel = currentUnit?.level ?? 'beginner';
 
   return {
     units, loading, reload, key,
     currentUnit, currentIndex: finished ? units.length - 1 : currentIndex,
     finished, completedCount, level,
-    isStepDone, unitDone, nextStepIndex, launch,
+    isStepDone, unitDone, nextStepIndex, launch, bossInfo, launchBoss,
   };
 }

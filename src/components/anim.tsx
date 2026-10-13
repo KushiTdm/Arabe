@@ -23,7 +23,7 @@ export function PressableScale({
   children,
   style,
   onPress,
-  pressedScale = 0.96,
+  pressedScale = 0.97,
   ...rest
 }: PressableScaleProps) {
   const scale = useSharedValue(1);
@@ -34,10 +34,10 @@ export function PressableScale({
   return (
     <AnimatedPressable
       onPressIn={() => {
-        scale.value = withSpring(pressedScale, { damping: 18, stiffness: 260 });
+        scale.value = withSpring(pressedScale, { damping: 22, stiffness: 300 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 12, stiffness: 220 });
+        scale.value = withSpring(1, { damping: 20, stiffness: 240 });
       }}
       onPress={onPress}
       style={[style, animatedStyle]}

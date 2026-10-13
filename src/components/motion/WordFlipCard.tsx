@@ -12,6 +12,8 @@ import { DEFAULT_THEME, useMotionTiming, type MotionTheme } from './tokens';
 
 export interface WordFlipCardProps extends MotionTheme {
   native: string;
+  /** Mot affiché sur la face avant si différent (ex. voyelles retirées). */
+  frontNative?: string;
   translit?: string;
   meaning: string;
   img?: string;
@@ -26,7 +28,7 @@ export interface WordFlipCardProps extends MotionTheme {
 }
 
 export function WordFlipCard({
-  native, translit, meaning, img, emoji, color, rtl, flipped, onFlip, hint = 'Toucher pour voir la réponse', children, ...theme
+  native, frontNative, translit, meaning, img, emoji, color, rtl, flipped, onFlip, hint = 'Toucher pour voir la réponse', children, ...theme
 }: WordFlipCardProps) {
   const { speed } = { ...DEFAULT_THEME, ...theme };
   const t = useMotionTiming(speed);
@@ -60,7 +62,7 @@ export function WordFlipCard({
       <Animated.View style={[styles.face, StyleSheet.absoluteFill, front]} pointerEvents={flipped ? 'none' : 'auto'}>
         <Pressable style={styles.frontPress} onPress={onFlip}>
           {hasPic && <View style={{ marginBottom: 14 }}><WordPic img={img} emoji={emoji} color={color} size={150} /></View>}
-          <Text style={[styles.native, rtl && styles.rtl]}>{native}</Text>
+          <Text style={[styles.native, rtl && styles.rtl]}>{frontNative ?? native}</Text>
           <Text style={styles.hint}>{hint}</Text>
         </Pressable>
       </Animated.View>

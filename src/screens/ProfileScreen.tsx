@@ -4,6 +4,8 @@ import {
   TouchableOpacity, ActivityIndicator, Dimensions, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Animated, FadeIn } from '../components/anim';
+import { CollectionCard } from '../components/CollectionCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -162,7 +164,7 @@ export default function ProfileScreen() {
       await saveApiKey(apiKeyInput.trim());
       setApiKey(apiKeyInput.trim());
       setShowApiKeyInput(false);
-      Alert.alert('✅ Clé enregistrée', 'Votre clé API Gemini a été sauvegardée !');
+      Alert.alert('Clé enregistrée', 'Votre clé API Gemini a été sauvegardée.');
     } catch {
       Alert.alert('Erreur', 'Impossible de sauvegarder la clé.');
     } finally {
@@ -180,10 +182,10 @@ export default function ProfileScreen() {
       );
       if (res.ok) {
         setApiKey(apiKeyInput.trim());
-        Alert.alert('✅ Clé valide !', res.message || 'Votre clé API fonctionne.');
+        Alert.alert('Clé valide', res.message || 'Votre clé API fonctionne.');
       }
     } catch (err: any) {
-      Alert.alert('❌ Clé invalide', err?.message || 'Vérifiez sur console.cloud.google.com');
+      Alert.alert('Clé invalide', err?.message || 'Vérifiez sur console.cloud.google.com');
     } finally {
       setTestingKey(false);
     }
@@ -389,13 +391,16 @@ JSON: {
               onPress={() => setActiveSection(tab)}
               activeOpacity={0.7}
             >
-              <Text style={styles.tabText}>
-                {tab === 'stats' ? '📊' : tab === 'errors' ? '🎯' : tab === 'report' ? '📋' : '⚙️'}
-              </Text>
+              <Ionicons
+                name={tab === 'stats' ? 'stats-chart-outline' : tab === 'errors' ? 'alert-circle-outline' : tab === 'report' ? 'document-text-outline' : 'settings-outline'}
+                size={20}
+                color={activeSection === tab ? colors.white : colors.textMuted}
+              />
             </TouchableOpacity>
           ))}
         </View>
 
+        <Animated.View key={activeSection} entering={FadeIn.duration(180)}>
         {/* ── STATS ── */}
         {activeSection === 'stats' && (
           <View>
@@ -417,6 +422,8 @@ JSON: {
               <ProgressBar progress={(creditsUsed / MAX_AI_CREDITS) * 100} height={8} color={colors.primary} />
             </Card>
 
+            <CollectionCard />
+
             {activeProfile && (() => {
               const badges = computeBadges(activeProfile);
               const earnedCount = badges.filter(b => b.earned).length;
@@ -424,7 +431,7 @@ JSON: {
                 <Card style={styles.achievementsCard}>
                   <View style={styles.achievementsHeader}>
                     <Image source={ILLUSTRATIONS.achievement} style={styles.achievementsIcon} resizeMode="contain" />
-                    <Text style={styles.sectionTitle}>Succès · {earnedCount}/{badges.length}</Text>
+                    <Text style={styles.sectionTitle}>· {earnedCount}/{badges.length}</Text>
                   </View>
                   <View style={styles.badgeGrid}>
                     {badges.map(badge => (
@@ -445,7 +452,7 @@ JSON: {
 
             {/* Autres profils */}
             <Card style={styles.profilesCard}>
-              <Text style={styles.sectionTitle}>👥 Profils</Text>
+              <Text style={styles.sectionTitle}>Profils</Text>
               {profiles.map(p => (
                 <View key={p.id} style={styles.profileRow}>
                   <TouchableOpacity
@@ -497,7 +504,7 @@ JSON: {
             ) : (
               <View>
                 <Card style={styles.errorSummaryCard}>
-                  <Text style={styles.sectionTitle}>📊 Résumé</Text>
+                  <Text style={styles.sectionTitle}>Résumé</Text>
                   <View style={styles.errorStatsRow}>
                     <View style={styles.errorStatItem}>
                       <Text style={styles.errorStatValue}>{errorSummary.total_errors}</Text>
@@ -515,7 +522,7 @@ JSON: {
                 </Card>
                 {errorSummary.weak_categories?.length > 0 && (
                   <Card style={styles.weakCard}>
-                    <Text style={styles.sectionTitle}>📚 À revoir</Text>
+                    <Text style={styles.sectionTitle}>À revoir</Text>
                     <View style={styles.chipsRow}>
                       {errorSummary.weak_categories.map((cat: string, i: number) => (
                         <View key={i} style={styles.chip}>
@@ -526,7 +533,7 @@ JSON: {
                   </Card>
                 )}
                 <Card style={styles.recentErrorsCard}>
-                  <Text style={styles.sectionTitle}>🔍 Erreurs récentes</Text>
+                  <Text style={styles.sectionTitle}>Erreurs récentes</Text>
                   {errorSummary.recent_errors?.slice(0, 8).map((err: any, i: number) => (
                     <View key={err.id} style={[styles.errorRow, i < errorSummary.recent_errors.length - 1 && styles.errorRowBorder]}>
                       <View style={[styles.errTypeDot, { backgroundColor: errTypeColor(err.type) }]} />
@@ -569,7 +576,7 @@ JSON: {
             {!hasApiKey && (
               <Card style={styles.noKeyWarning}>
                 <Ionicons name="warning" size={16} color={colors.secondary} />
-                <Text style={styles.noKeyText}>Configurez votre clé API dans ⚙️ pour générer un rapport.</Text>
+                <Text style={styles.noKeyText}>Configurez votre clé API dans les réglages pour générer un rapport.</Text>
               </Card>
             )}
 
@@ -613,7 +620,7 @@ JSON: {
                         )}
                         {ex.tips.length > 0 && (
                           <View style={styles.exerciseTipsBox}>
-                            <Text style={styles.exerciseTipsTitle}>💡 Conseils</Text>
+                            <Text style={styles.exerciseTipsTitle}>Conseils</Text>
                             {ex.tips.map((t, ti) => <Text key={ti} style={styles.exerciseTipText}>{t}</Text>)}
                           </View>
                         )}
@@ -628,31 +635,31 @@ JSON: {
               <View>
                 <Card style={styles.reportCard}>
                   <View style={styles.reportHeader}>
-                    <Text style={styles.reportTitle}>📋 Rapport</Text>
+                    <Text style={styles.reportTitle}>Rapport</Text>
                     <Text style={styles.reportDate}>{new Date(aiReport.generated_at).toLocaleDateString('fr-FR')}</Text>
                   </View>
                   <Text style={styles.reportEncouragement}>{aiReport.encouragement}</Text>
                 </Card>
                 <Card style={styles.reportCard}>
-                  <Text style={styles.reportSectionTitle}>💪 Points forts</Text>
+                  <Text style={styles.reportSectionTitle}>Points forts</Text>
                   {aiReport.strengths.map((s, i) => (
                     <View key={i} style={styles.reportBullet}>
-                      <Text style={styles.reportBulletDot}>✅</Text>
+                      <Text style={styles.reportBulletDot}>•</Text>
                       <Text style={styles.reportBulletText}>{s}</Text>
                     </View>
                   ))}
                 </Card>
                 <Card style={styles.reportCard}>
-                  <Text style={styles.reportSectionTitle}>🎯 À améliorer</Text>
+                  <Text style={styles.reportSectionTitle}>À améliorer</Text>
                   {aiReport.weaknesses.map((w, i) => (
                     <View key={i} style={styles.reportBullet}>
-                      <Text style={styles.reportBulletDot}>📌</Text>
+                      <Text style={styles.reportBulletDot}>•</Text>
                       <Text style={styles.reportBulletText}>{w}</Text>
                     </View>
                   ))}
                 </Card>
                 <Card style={styles.reportCard}>
-                  <Text style={styles.reportSectionTitle}>📅 Plan 7 jours</Text>
+                  <Text style={styles.reportSectionTitle}>Plan 7 jours</Text>
                   {aiReport.recommended_plan.map((step, i) => (
                     <View key={i} style={styles.planStep}>
                       <View style={styles.planStepNum}><Text style={styles.planStepNumText}>{i + 1}</Text></View>
@@ -677,7 +684,7 @@ JSON: {
               <Text style={styles.apiDescription}>Change de langue pour ce profil. Tes cours et progression sont séparés par langue.</Text>
               <TouchableOpacity style={styles.langSelectBtn} onPress={() => setShowLangPicker(true)} activeOpacity={0.8}>
                 <Text style={styles.langSelectFlag}>{language.flag}</Text>
-                <Text style={styles.langSelectName}>{language.name} — {language.nativeName}</Text>
+                <Text style={styles.langSelectName}>{language.name} · {language.nativeName}</Text>
                 <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             </Card>
@@ -769,17 +776,18 @@ JSON: {
             </Card>
 
             <Card style={styles.howToCard}>
-              <Text style={styles.howToTitle}>🔑 Obtenir une clé API gratuite</Text>
+              <Text style={styles.howToTitle}>Obtenir une clé API gratuite</Text>
               {['Allez sur aistudio.google.com','Connectez-vous avec Google','Cliquez "Get API key" → "Create API key"','Copiez la clé (AIza...) et collez-la ci-dessus'].map((step, i) => (
                 <View key={i} style={styles.howToStep}>
                   <View style={styles.howToNumContainer}><Text style={styles.howToNum}>{i + 1}</Text></View>
                   <Text style={styles.howToText}>{step}</Text>
                 </View>
               ))}
-              <Text style={styles.howToNote}>💡 Plan gratuit : 1500 requêtes/jour !</Text>
+              <Text style={styles.howToNote}>Plan gratuit : 1500 requêtes par jour.</Text>
             </Card>
           </View>
         )}
+        </Animated.View>
       </ScrollView>
 
       {/* ── Modal sélecteur de langue ── */}

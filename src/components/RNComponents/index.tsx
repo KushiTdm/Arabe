@@ -266,8 +266,8 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius['2xl'],
-    borderWidth: 1,
+    borderRadius: borderRadius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
   },
   progressContainer: {

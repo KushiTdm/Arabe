@@ -5,12 +5,13 @@ import Animated, {
 } from 'react-native-reanimated';
 import { WordPic } from '../WordPic';
 import { colors, fontSize } from '../../theme';
+import { success } from '../../lib/haptics';
 import { CONFETTI_COLORS, DEFAULT_THEME, useMotionTiming, type MotionTheme } from './tokens';
 
 // ─── Célébration de fin de leçon ─────────────────────────────────────────────
 // L'image de la leçon fait un bond au centre, des confettis retombent, la note
 // monte jusqu'à son score et l'XP gagnée s'affiche. `passed = false` : pas de
-// confettis, une secousse douce et un ton encourageant.
+// confettis, un ton encourageant.
 
 export interface CelebrationProps extends MotionTheme {
   /** Titre de la leçon. */
@@ -35,15 +36,11 @@ export function CelebrationMotion({
   const pop = useSharedValue(0);
   const text = useSharedValue(0);
   const badge = useSharedValue(0);
-  const shake = useSharedValue(0);
   const [shown, setShown] = useState(0);
 
   useEffect(() => {
-    if (passed) pop.value = withSpring(1, { damping: 6, stiffness: 120 });
-    else {
-      pop.value = withSpring(1, { damping: 14 });
-      shake.value = withDelay(t(300), withSequence(withTiming(8, { duration: t(70) }), withTiming(-8, { duration: t(70) }), withTiming(5, { duration: t(70) }), withTiming(0, { duration: t(70) })));
-    }
+    if (passed) { pop.value = withSpring(1, { damping: 10, stiffness: 120 }); success(); }
+    else pop.value = withSpring(1, { damping: 18 });
     text.value = withDelay(t(350), withTiming(1, { duration: t(400) }));
     badge.value = withDelay(t(1100), withSpring(1, { damping: 8 }));
 
@@ -61,7 +58,7 @@ export function CelebrationMotion({
 
   const picStyle = useAnimatedStyle(() => ({
     opacity: pop.value,
-    transform: [{ scale: 0.3 + pop.value * 0.7 }, { translateX: shake.value }] as any,
+    transform: [{ scale: 0.3 + pop.value * 0.7 }, { translateX: 0 }] as any,
   }));
   const textStyle = useAnimatedStyle(() => ({ opacity: text.value, transform: [{ translateY: (1 - text.value) * 16 }] as any }));
   const badgeStyle = useAnimatedStyle(() => ({ opacity: badge.value, transform: [{ scale: 0.5 + badge.value * 0.5 }] as any }));

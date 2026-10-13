@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useProfile } from '../lib/ProfileContext';
 import { useSpeaker } from '../lib/useSpeaker';
 import { markStepDone, pathStorageKey } from '../lib/usePathProgress';
+import { trackQuest } from '../lib/quests';
 import { getLesson } from '../content';
 import { getLexiconForUnit, getLessonCover } from '../content/lexicon';
 import { LEVEL_LABEL } from '../data/learningPath';
@@ -47,13 +48,13 @@ interface Verdict { ok: boolean; answer?: string }
 
 /** « mot  ·  translittération » (la translittération manque pour les langues latines). */
 const gloss = (w: Word) => [w.ar, w.tr].filter(Boolean).join('  ·  ');
-const glossFr = (w: Word) => [w.tr, w.fr].filter(Boolean).join(' — ');
+const glossFr = (w: Word) => [w.tr, w.fr].filter(Boolean).join(' · ');
 
 export default function LessonScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const insets = useSafeAreaInsets();
-  const { language, activeProfile } = useProfile();
+  const { language, activeProfile, updateStreak } = useProfile();
   const speaker = useSpeaker();
   const deck = useReviewDeck(reviewStorageKey(activeProfile?.id, language.code));
 
@@ -91,6 +92,8 @@ export default function LessonScreen() {
     // Les mots de l'unité entrent dans la révision espacée dès la 1re partie réussie.
     if (partIdx === 0) deck.addWords(getLexiconForUnit(language.code, lessonId));
     markStepDone(pathStorageKey(activeProfile?.id, language.code), pathStep.unitId, pathStep.stepIdx);
+    trackQuest(activeProfile?.id, language.code, 'lesson');
+    updateStreak();
   }, [done, passed]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!lesson || !part) {
@@ -196,7 +199,7 @@ export default function LessonScreen() {
 
       {verdict?.ok && (
         <View pointerEvents="none" style={styles.comboLayer}>
-          <FloatingXP trigger={comboTick} label={combo >= 3 ? `🔥 ×${combo}` : combo === 2 ? '✨ ×2' : '✓'} color={colors.success} fontSize={combo >= 3 ? 30 : 24} rise={90} />
+          <FloatingXP trigger={comboTick} label={combo >= 3 ? `×${combo}` : combo === 2 ? '×2' : '✓'} color={colors.success} fontSize={combo >= 3 ? 30 : 24} rise={90} />
         </View>
       )}
 
@@ -398,7 +401,7 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
           <Text style={styles.ask}>Quelle est la bonne lecture ?</Text>
           <View style={styles.stage}>
             <Text style={styles.arabicBig}>{act.target.show}</Text>
-            <Text style={styles.hint}>Voyelles retirées — retrouve le mot.</Text>
+            <Text style={styles.hint}>Voyelles retirées : retrouve le mot.</Text>
           </View>
           {opts.map((o, i) => {
             const right = o.ar === act.target.ar;
@@ -647,7 +650,7 @@ const styles = StyleSheet.create({
   matchCols: { flexDirection: 'row', gap: 12 },
   matchCol: { flex: 1, gap: 10 },
   matchCell: { minHeight: 58, backgroundColor: colors.card, borderRadius: borderRadius.lg, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 8 },
-  matchSel: { borderColor: colors.secondary, backgroundColor: '#fffbeb' },
+  matchSel: { borderColor: colors.secondary, backgroundColor: `${colors.secondary}1A` },
   matchDone: { opacity: 0.35, borderColor: colors.success },
   matchText: { fontSize: fontSize.sm, color: colors.text, textAlign: 'center', fontWeight: '600' },
   answerRow: { minHeight: 76, flexDirection: 'row-reverse', flexWrap: 'wrap', gap: 8, padding: 10, borderRadius: borderRadius.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: colors.border, marginBottom: 16, alignItems: 'center' },

@@ -2,12 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors } from './src/theme';
+import { colors, isDark } from './src/theme';
+
+const navTheme = {
+  ...DefaultTheme,
+  dark: isDark,
+  colors: { ...DefaultTheme.colors, background: colors.background, card: colors.card, text: colors.text, border: colors.border, primary: colors.primary },
+};
 import { ProfileProvider, useProfile } from './src/lib/ProfileContext';
 import { useCourses } from './src/lib/useCourses';
 import { configureAudioForPlayback } from './src/lib/speech';
@@ -18,6 +24,9 @@ import VocabularyScreen from './src/screens/VocabularyScreen';
 import CoursScreen      from './src/screens/Coursscreen';
 import AlphabetScreen   from './src/screens/AlphabetScreen';
 import ReadingScreen    from './src/screens/ReadingScreen';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PopIn } from './src/components/motion/PopIn';
+import { tap } from './src/lib/haptics';
 import { IntroOverlay } from './src/components/IntroOverlay';
 import ProfileScreen    from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
@@ -53,6 +62,7 @@ function HomeTabs() {
 
   return (
     <Tab.Navigator
+      screenListeners={{ tabPress: () => tap() }}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           if (route.name === 'Cours') {
@@ -66,14 +76,15 @@ function HomeTabs() {
             case 'Profile':      iconName = focused ? 'person'      : 'person-outline';      break;
             default:             iconName = 'help-outline';
           }
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <PopIn triggerKey={focused ? 1 : 0} peak={focused ? 1.12 : 1}><Ionicons name={iconName} size={size} color={color} /></PopIn>;
         },
         tabBarActiveTintColor:   colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
-          borderTopWidth: 1,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          elevation: 0,
           paddingTop: 6,
           paddingBottom: 8,
           height: 68,
@@ -98,7 +109,7 @@ function RootStack() {
   if (loading && profiles.length === 0) {
     return (
       <View style={styles.splash}>
-        <Text style={styles.splashLogo}>🌍</Text>
+        <Ionicons name="globe-outline" size={64} color={colors.primary} />
         <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 24 }} />
       </View>
     );
@@ -144,14 +155,21 @@ export default function App() {
   // toute la synthèse vocale est muette quand l'interrupteur latéral de
   // l'iPhone est sur silencieux — et l'utilisateur croit l'app cassée.
   React.useEffect(() => { configureAudioForPlayback(); }, []);
-  const [intro, setIntro] = React.useState(true);
+  // L'intro ne se joue qu'à la première ouverture du jour : ensuite, accès direct.
+  const [intro, setIntro] = React.useState(false);
+  React.useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    AsyncStorage.getItem('intro:lastShown').then(last => {
+      if (last !== today) { setIntro(true); AsyncStorage.setItem('intro:lastShown', today).catch(() => {}); }
+    }).catch(() => {});
+  }, []);
 
   return (
     <SafeAreaProvider>
       <ProfileProvider>
         <AppShell>
-          <NavigationContainer>
-            <StatusBar style="dark" />
+          <NavigationContainer theme={navTheme}>
+            <StatusBar style={isDark ? 'light' : 'dark'} />
             <RootStack />
           </NavigationContainer>
           {intro && <IntroOverlay onDone={() => setIntro(false)} />}

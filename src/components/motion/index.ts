@@ -16,3 +16,4 @@ export { PulseHint } from './PulseHint';
 export { PopIn } from './PopIn';
 export { FlameFlicker } from './FlameFlicker';
 export type { MotionTheme } from './tokens';
+export { SkeletonLines } from './Skeleton';

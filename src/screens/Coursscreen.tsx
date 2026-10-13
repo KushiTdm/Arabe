@@ -20,6 +20,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useCourses, CourseLesson, CourseType } from '../lib/useCourses';
 import { useProfile } from '../lib/ProfileContext';
 import { useErrorTracker } from '../lib/useErrorTracker';
+import { SkeletonLines } from '../components/motion/Skeleton';
 import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
 import { invokeAI } from '../api/aiClient';
@@ -29,11 +30,11 @@ const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 const TYPE_META: Record<CourseType, { label: string; emoji: string; color: string }> = {
-  grammar:       { label: 'Grammaire',     emoji: '📐', color: '#6366f1' },
-  pronunciation: { label: 'Prononciation', emoji: '🗣️', color: '#f59e0b' },
-  vocabulary:    { label: 'Vocabulaire',   emoji: '📚', color: '#10b981' },
-  writing:       { label: 'Écriture',      emoji: '✍️', color: '#3b82f6' },
-  culture:       { label: 'Culture',       emoji: '🌙', color: '#ec4899' },
+  grammar:       { label: 'Grammaire',     emoji: '📐', color: '#2d4a44' },
+  pronunciation: { label: 'Prononciation', emoji: '🗣️', color: '#b45309' },
+  vocabulary:    { label: 'Vocabulaire',   emoji: '📚', color: '#047857' },
+  writing:       { label: 'Écriture',      emoji: '✍️', color: '#0f766e' },
+  culture:       { label: 'Culture',       emoji: '🌙', color: '#92400e' },
 };
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -68,7 +69,7 @@ export default function CoursScreen() {
   const [chatInput, setChatInput] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
-    { role: 'ai', text: `👋 Bonjour ${userName} ! Demande-moi de créer un cours sur n'importe quel sujet en ${language.familiarName.toLowerCase()}. Par exemple : "Explique-moi comment former le pluriel" ou "Crée un cours sur les salutations formelles".` }
+    { role: 'ai', text: `Bonjour ${userName} ! Demande-moi de créer un cours sur n'importe quel sujet en ${language.familiarName.toLowerCase()}. Par exemple : "Explique-moi comment former le pluriel" ou "Crée un cours sur les salutations formelles".` }
   ]);
 
   useFocusEffect(useCallback(() => { reload(); }, []));
@@ -166,7 +167,7 @@ JSON (compact):
           ...prev,
           {
             role: 'ai',
-            text: `✅ Cours créé : "${res.title}" ! Il est maintenant disponible dans ta liste. Tu veux que j'approfondisse un autre point ?`,
+            text: `Cours créé : "${res.title}". Il est maintenant disponible dans ta liste. Tu veux que j'approfondisse un autre point ?`,
           },
         ]);
         reload();
@@ -179,7 +180,7 @@ JSON (compact):
     } catch (err: any) {
       setChatMessages(prev => [
         ...prev,
-        { role: 'ai', text: `❌ Erreur : ${err?.message || 'Impossible de générer le cours. Vérifiez votre clé API dans Profil.'}`},
+        { role: 'ai', text: `Erreur : ${err?.message || 'Impossible de générer le cours. Vérifiez votre clé API dans Profil.'}`},
       ]);
     } finally {
       setIsGenerating(false);
@@ -196,7 +197,7 @@ JSON (compact):
 
     setIsGenerating(true);
     setChatMessages(prev => [...prev,
-      { role: 'user', text: '🎯 Génère un cours basé sur mes erreurs récentes' },
+      { role: 'user', text: 'Génère un cours basé sur mes erreurs récentes' },
     ]);
 
     try {
@@ -245,12 +246,12 @@ JSON:
 
       await addCourse(courseData);
       setChatMessages(prev => [...prev,
-        { role: 'ai', text: `✅ Cours créé : "${res.title}" — basé sur tes ${summary.total_errors} erreurs. Va le consulter dans la liste !` },
+        { role: 'ai', text: `Cours créé : "${res.title}", basé sur tes ${summary.total_errors} erreurs. Il est dans la liste.` },
       ]);
       reload();
     } catch (err: any) {
       setChatMessages(prev => [...prev,
-        { role: 'ai', text: `❌ Erreur : ${err?.message || 'Impossible. Vérifiez votre clé API.'}` },
+        { role: 'ai', text: `Erreur : ${err?.message || 'Impossible. Vérifiez votre clé API.'}` },
       ]);
     } finally {
       setIsGenerating(false);
@@ -324,9 +325,9 @@ JSON:
               </View>
             ))}
             {isGenerating && (
-              <View style={styles.generatingRow}>
-                <LoadingSpinner size="sm" />
-                <Text style={styles.generatingText}>Génération du cours en cours...</Text>
+              <View>
+                <Text style={styles.generatingText}>Génération du cours</Text>
+                <SkeletonLines lines={4} />
               </View>
             )}
           </ScrollView>
@@ -385,7 +386,7 @@ JSON:
               <Ionicons
                 name={selectedCourse.starred ? 'star' : 'star-outline'}
                 size={22}
-                color={selectedCourse.starred ? '#f59e0b' : colors.textMuted}
+                color={selectedCourse.starred ? '#b45309' : colors.textMuted}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -406,7 +407,7 @@ JSON:
 
           {/* Summary */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>📋 En résumé</Text>
+            <Text style={styles.sectionTitle}>En résumé</Text>
             <Text style={styles.bodyText}>{selectedCourse.summary}</Text>
           </Card>
 
@@ -414,7 +415,7 @@ JSON:
               repli sur le paragraphe unique pour les cours générés avant
               l'introduction de "sections" (déjà en storage). */}
           <Card style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>📖 Explication</Text>
+            <Text style={styles.sectionTitle}>Explication</Text>
             {selectedCourse.sections && selectedCourse.sections.length > 0 ? (
               selectedCourse.sections.map((sec, i) => (
                 <View key={i} style={i > 0 ? styles.explSection : undefined}>
@@ -430,7 +431,7 @@ JSON:
           {/* Key words */}
           {selectedCourse.arabic_words?.length > 0 && (
             <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>🔑 Mots clés</Text>
+              <Text style={styles.sectionTitle}>Mots clés</Text>
               {selectedCourse.arabic_words.map((w, i) => (
                 <TouchableOpacity key={i} style={styles.wordRow} onPress={() => speakNative(w.arabic)}>
                   <Text style={styles.wordArabic}>{w.arabic}</Text>
@@ -449,14 +450,14 @@ JSON:
           {/* Examples */}
           {selectedCourse.examples?.length > 0 && (
             <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>💬 Exemples</Text>
+              <Text style={styles.sectionTitle}>Exemples</Text>
               {selectedCourse.examples.map((ex, i) => (
                 <TouchableOpacity key={i} style={styles.exampleItem} onPress={() => speakNative(ex.arabic)}>
                   <View style={styles.exampleContent}>
                     <Text style={styles.exampleArabic}>{ex.arabic}</Text>
                     <Text style={styles.exampleTranslit}>{ex.transliteration}</Text>
                     <Text style={styles.exampleFrench}>{ex.french}</Text>
-                    {ex.note ? <Text style={styles.exampleNote}>💡 {ex.note}</Text> : null}
+                    {ex.note ? <Text style={styles.exampleNote}>{ex.note}</Text> : null}
                   </View>
                   <Ionicons name="volume-medium" size={18} color={colors.primary} style={{ marginLeft: 8, marginTop: 4 }} />
                 </TouchableOpacity>
@@ -467,7 +468,7 @@ JSON:
           {/* Tips */}
           {selectedCourse.tips?.length > 0 && (
             <Card style={[styles.sectionCard, { backgroundColor: `${meta.color}08` }]}>
-              <Text style={styles.sectionTitle}>✨ Conseils pour {activeProfile?.name ?? 'toi'}</Text>
+              <Text style={styles.sectionTitle}>Conseils pour {activeProfile?.name ?? 'toi'}</Text>
               {selectedCourse.tips.map((tip, i) => (
                 <View key={i} style={styles.tipRow}>
                   <Text style={[styles.tipDot, { color: meta.color }]}>•</Text>
@@ -480,7 +481,7 @@ JSON:
           {/* Exercises */}
           {selectedCourse.exercises?.length > 0 && (
             <Card style={styles.sectionCard}>
-              <Text style={styles.sectionTitle}>🎯 Exercices</Text>
+              <Text style={styles.sectionTitle}>Exercices</Text>
               {selectedCourse.exercises.map((ex, i) => (
                 <View key={i} style={styles.exerciseBlock}>
                   <Text style={styles.exerciseInstruction}>{i + 1}. {ex.instruction}</Text>
@@ -583,7 +584,7 @@ JSON:
             <Text style={styles.emptyTitle}>Aucun cours encore</Text>
             <Text style={styles.emptyBody}>
               {filter === 'all'
-                ? "Pratique la conversation — l'IA créera des cours automatiquement. Ou clique sur \"Créer\" pour en demander un !"
+                ? "Pratique la conversation — l'IA créera des cours automatiquement, ou clique sur \"Créer\" pour en demander un !"
                 : `Pas de cours de ce type pour l'instant.`}
             </Text>
             <TouchableOpacity style={styles.emptyCreateBtn} onPress={() => setView('chat')}>
@@ -636,7 +637,7 @@ JSON:
                   <Ionicons
                     name={course.starred ? 'star' : 'star-outline'}
                     size={16}
-                    color={course.starred ? '#f59e0b' : colors.textMuted}
+                    color={course.starred ? '#b45309' : colors.textMuted}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity

@@ -100,7 +100,7 @@ export default function AlphabetScreen() {
 
           {!!selectedLetter.tips && (
             <View style={styles.tipsBox}>
-              <Text style={styles.tipsText}>💡 {selectedLetter.tips}</Text>
+              <Text style={styles.tipsText}>{selectedLetter.tips}</Text>
             </View>
           )}
 
@@ -141,7 +141,7 @@ export default function AlphabetScreen() {
           {unitTitle ?? `${language.flag} ${language.script}`}
         </Text>
         <Text style={styles.headerSubtitle}>
-          {alphabet.length} {filtered.length > 0 ? 'signes de l\'unité — touche pour écouter' : 'lettres / sons à découvrir'}
+          {alphabet.length} {filtered.length > 0 ? 'signes de l\'unité, touche pour écouter' : 'lettres / sons à découvrir'}
         </Text>
       </View>
 

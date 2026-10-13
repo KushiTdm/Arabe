@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { colors } from '../theme';
 import { ImageSourcePropType, Platform, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,7 +43,7 @@ export function ParallaxScreen({
   children,
   contentStyle,
   tint = 'rgba(15,28,26,0.62)',
-  background = '#f8faf9',
+  background = colors.background,
 }: ParallaxScreenProps) {
   const ref = useAnimatedRef<Animated.ScrollView>();
   const offset = useScrollViewOffset(ref);

@@ -12,7 +12,7 @@ import {
 import { ILLUSTRATIONS } from '../theme/images';
 import { Ionicons } from '@expo/vector-icons';
 import { useSpeaker } from '../lib/useSpeaker';
-import * as Haptics from 'expo-haptics';
+import { tap } from '../lib/haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
@@ -39,18 +39,19 @@ import { WordPic } from '../components/WordPic';
 import { useReviewDeck, reviewStorageKey } from '../lib/useReviewDeck';
 import { getLexicon } from '../content/lexicon';
 import type { VocabWord } from '../data/multilingualVocab';
-import { markStepDone, pathStorageKey } from '../lib/usePathProgress';
-import { QUIZ_PASS_PCT, READQUIZ_PASS_PCT } from '../data/learningPath';
+import { markStepDone, pathStorageKey, recordBoss } from '../lib/usePathProgress';
+import { QUIZ_PASS_PCT, READQUIZ_PASS_PCT, getPath, type PathUnit } from '../data/learningPath';
+import { buildBossQuiz, BOSS_PASS_PCT, BOSS_XP } from '../lib/boss';
+import { missedStorageKey, readMissed, recordMiss, recordRecovered } from '../lib/missedWords';
+import { AnimatedBar } from '../components/motion/AnimatedBar';
+import { SkeletonLines } from '../components/motion/Skeleton';
+import { success } from '../lib/haptics';
+import { trackQuest } from '../lib/quests';
 
 type Phase = 'setup' | 'playing' | 'done';
 
 function haptic(type: 'success' | 'error') {
-  if (Platform.OS === 'web') return;
-  Haptics.notificationAsync(
-    type === 'success'
-      ? Haptics.NotificationFeedbackType.Success
-      : Haptics.NotificationFeedbackType.Error,
-  ).catch(() => {});
+  if (type === 'success') tap();
 }
 
 export default function QuizScreen() {
@@ -74,6 +75,10 @@ export default function QuizScreen() {
   const [letterSet, setLetterSet] = useState<string[] | null>(null);
   const [stepResult, setStepResult] = useState<'passed' | 'failed' | null>(null);
   const pathStep: { unitId: string; stepIdx: number } | undefined = route.params?.pathStep;
+  // Boss de fin d'unité : quiz mêlant les mots de l'unité et les mots déjà ratés
+  const [bossUnit, setBossUnit] = useState<PathUnit | null>(null);
+  const [bossOutcome, setBossOutcome] = useState<{ won: boolean; firstWin: boolean } | null>(null);
+  const missedKey = missedStorageKey(activeProfile?.id, language.code);
 
   const bestScore = currentProgress?.quiz_best_score ?? 0;
 
@@ -91,7 +96,7 @@ export default function QuizScreen() {
   const speak = (text: string) => say(text);
 
   const startQuiz = async (cat: VocabCategory) => {
-    setGenError(null);
+    setGenError(null); setBossUnit(null);
     setCategory(cat);
 
     if (hasLocalQuiz(language.code, cat.id)) {
@@ -106,7 +111,7 @@ export default function QuizScreen() {
 
     // No static vocab for this language → generate with AI
     if (!canUseAI()) {
-      setGenError('Crédits IA épuisés pour cette langue — impossible de générer un quiz.');
+      setGenError('Crédits IA épuisés pour cette langue : impossible de générer un quiz.');
       return;
     }
     setIsGenerating(true);
@@ -132,7 +137,7 @@ export default function QuizScreen() {
       setGenError('Aucun signe à tester pour cette unité.');
       return;
     }
-    setGenError(null);
+    setGenError(null); setBossUnit(null);
     setLetterSet(letters);
     setCategory(LETTERS_CATEGORY);
     setQuestions(qs);
@@ -149,9 +154,20 @@ export default function QuizScreen() {
     const qs = generateWordsQuiz(words, getLexicon(language.code));
     if (qs.length === 0) { setGenError('Pas assez de mots pour ce quiz.'); return; }
     setGenError(null);
-    setLetterSet(null); setStepResult(null);
+    setLetterSet(null); setStepResult(null); setBossUnit(null);
     setThemeSel(theme);
     setCategory({ id: theme.id, label: theme.label, emoji: theme.emoji });
+    setQuestions(qs); setCurrent(0); setSelected(null); setCorrectCount(0);
+    setPhase('playing');
+  };
+
+  const startBoss = async (unit: PathUnit) => {
+    const qs = buildBossQuiz(language, unit, await readMissed(missedKey));
+    if (qs.length === 0) { setGenError('Pas assez de mots pour ce boss.'); return; }
+    setGenError(null);
+    setLetterSet(null); setStepResult(null); setThemeSel(null); setBossOutcome(null);
+    setBossUnit(unit);
+    setCategory({ id: `boss:${unit.id}`, label: unit.title, emoji: '' });
     setQuestions(qs); setCurrent(0); setSelected(null); setCorrectCount(0);
     setPhase('playing');
   };
@@ -160,11 +176,14 @@ export default function QuizScreen() {
     if (selected !== null) return;
     setSelected(index);
     const isCorrect = index === questions[current].correctIndex;
+    const word = questions[current].word;
     if (isCorrect) {
       setCorrectCount(c => c + 1);
       haptic('success');
+      if (word && bossUnit) recordRecovered(missedKey, word).then(ok => { if (ok) trackQuest(activeProfile?.id, language.code, 'recover'); });
     } else {
       haptic('error');
+      if (word) recordMiss(missedKey, word);
     }
   };
 
@@ -174,10 +193,19 @@ export default function QuizScreen() {
       quizzes_completed: (currentProgress?.quizzes_completed ?? 0) + 1,
       quiz_best_score: Math.max(bestScore, pct),
     });
+    if (pct >= QUIZ_PASS_PCT) trackQuest(activeProfile?.id, language.code, 'quiz');
+    let bonus = 0;
+    if (bossUnit) {
+      const res = await recordBoss(pathStorageKey(activeProfile?.id, language.code), bossUnit.id, pct, BOSS_PASS_PCT);
+      setBossOutcome({ won: res.won, firstWin: res.firstWin });
+      if (res.firstWin) bonus = BOSS_XP;
+      if (res.won) success();
+    }
     const xp = finalCorrect * XP_PER_CORRECT
-      + (finalCorrect === questions.length ? XP_PERFECT_BONUS : 0);
+      + (finalCorrect === questions.length ? XP_PERFECT_BONUS : 0) + bonus;
     if (xp > 0) await addXP(xp);
-    await updateStreak();
+    // La série compte un vrai rappel réussi, pas un quiz survolé.
+    if (pct >= QUIZ_PASS_PCT) await updateStreak();
 
     // Étape du parcours : validée au-dessus du seuil de réussite
     if (pathStep) {
@@ -214,6 +242,13 @@ export default function QuizScreen() {
   const launchId = route.params?.launchId;
   useEffect(() => {
     if (!launchId) return;
+    const bossId: string | undefined = route.params?.boss?.unitId;
+    if (bossId) {
+      const unit = getPath(language.code).find(u => u.id === bossId);
+      if (unit) startBoss(unit);
+      return;
+    }
+    setBossUnit(null);
     const letters: string[] | undefined = route.params?.letters;
     const categoryId: string | undefined = route.params?.categoryId;
     if (letters?.length) {
@@ -230,7 +265,8 @@ export default function QuizScreen() {
     const total = questions.length;
     const pct = Math.round((correctCount / total) * 100);
     const perfect = correctCount === total;
-    const xpEarned = correctCount * XP_PER_CORRECT + (perfect ? XP_PERFECT_BONUS : 0);
+    const xpEarned = correctCount * XP_PER_CORRECT + (perfect ? XP_PERFECT_BONUS : 0)
+      + (bossOutcome?.firstWin ? BOSS_XP : 0);
     return (
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.doneContainer}>
@@ -238,10 +274,22 @@ export default function QuizScreen() {
             ? <Image source={perfect ? ILLUSTRATIONS.achievement : ILLUSTRATIONS.success} style={styles.doneArt} resizeMode="contain" />
             : <Image source={ILLUSTRATIONS.path} style={styles.doneArt} resizeMode="contain" />}
           <Text style={styles.doneTitle}>
-            {perfect ? 'Parfait !' : pct >= 50 ? 'Bien joué !' : 'Continue à t\'entraîner !'}
+            {bossUnit
+              ? (bossOutcome?.won ? 'Boss vaincu' : 'Le boss tient bon')
+              : perfect ? 'Parfait !' : pct >= 50 ? 'Bien joué !' : 'Continue à t\'entraîner !'}
           </Text>
           <Text style={styles.doneScore}>{correctCount} / {total}</Text>
           <Text style={styles.doneXp}>+{xpEarned} XP</Text>
+          {bossUnit && (
+            <View style={[styles.bestBadge, { backgroundColor: bossOutcome?.won ? colors.successLight : `${colors.textMuted}15` }]}>
+              <Ionicons name={bossOutcome?.won ? 'shield-checkmark' : 'refresh-circle'} size={14} color={bossOutcome?.won ? colors.success : colors.textMuted} />
+              <Text style={[styles.bestBadgeText, { color: bossOutcome?.won ? colors.success : colors.textMuted }]}>
+                {bossOutcome?.won
+                  ? (bossOutcome.firstWin ? `Première victoire, +${BOSS_XP} XP` : 'Victoire')
+                  : `${BOSS_PASS_PCT} % pour le vaincre. Les mots ratés reviendront, rejoue quand tu veux.`}
+              </Text>
+            </View>
+          )}
           {stepResult === 'passed' && (
             <View style={[styles.bestBadge, { backgroundColor: colors.successLight }]}>
               <Ionicons name="checkmark-circle" size={14} color={colors.success} />
@@ -252,11 +300,11 @@ export default function QuizScreen() {
             <View style={[styles.bestBadge, { backgroundColor: colors.destructiveLight }]}>
               <Ionicons name="refresh-circle" size={14} color={colors.destructive} />
               <Text style={[styles.bestBadgeText, { color: colors.destructive }]}>
-                {letterSet ? READQUIZ_PASS_PCT : QUIZ_PASS_PCT} % requis pour valider l'étape — réessaie !
+                {letterSet ? READQUIZ_PASS_PCT : QUIZ_PASS_PCT} % requis pour valider l'étape. Réessaie !
               </Text>
             </View>
           )}
-          {!stepResult && pct >= (currentProgress?.quiz_best_score ?? 0) && pct > 0 && (
+          {!stepResult && !bossUnit && pct >= (currentProgress?.quiz_best_score ?? 0) && pct > 0 && (
             <View style={styles.bestBadge}>
               <Ionicons name="trophy" size={14} color={colors.secondary} />
               <Text style={styles.bestBadgeText}>Nouveau record !</Text>
@@ -265,13 +313,13 @@ export default function QuizScreen() {
           <View style={styles.doneActions}>
             <TouchableOpacity
               style={styles.doneBtnSecondary}
-              onPress={() => { setPhase('setup'); setCategory(null); setThemeSel(null); setLetterSet(null); setStepResult(null); }}
+              onPress={() => { setPhase('setup'); setCategory(null); setThemeSel(null); setLetterSet(null); setStepResult(null); setBossUnit(null); }}
             >
               <Text style={styles.doneBtnSecondaryText}>Autre catégorie</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.doneBtnPrimary}
-              onPress={() => { if (letterSet) startLetterQuiz(letterSet); else if (themeSel) startTheme(themeSel); else if (category) startQuiz(category); }}
+              onPress={() => { if (bossUnit) startBoss(bossUnit); else if (letterSet) startLetterQuiz(letterSet); else if (themeSel) startTheme(themeSel); else if (category) startQuiz(category); }}
             >
               <Ionicons name="refresh" size={16} color={colors.white} />
               <Text style={styles.doneBtnPrimaryText}>Rejouer</Text>
@@ -297,16 +345,23 @@ export default function QuizScreen() {
               <Ionicons name="arrow-back" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>Quiz · {category?.label}</Text>
+              <Text style={styles.headerTitle}>{bossUnit ? 'Boss' : 'Quiz'} · {category?.label}</Text>
               <Text style={styles.headerSubtitle}>
-                Question {current + 1} / {questions.length} · {correctCount} ✓
+                Question {current + 1} / {questions.length} · {correctCount} correctes
               </Text>
             </View>
           </View>
 
-          <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: `${((current + 1) / questions.length) * 100}%` as any }]} />
-          </View>
+          {bossUnit ? (
+            <View style={styles.bossBar}>
+              <Text style={styles.bossBarLabel}>Boss</Text>
+              <AnimatedBar value={1 - correctCount / questions.length} height={8} accent={colors.destructive} style={{ flex: 1 }} />
+            </View>
+          ) : (
+            <View style={styles.progressBg}>
+              <View style={[styles.progressFill, { width: `${((current + 1) / questions.length) * 100}%` as any }]} />
+            </View>
+          )}
 
           <ScrollView contentContainerStyle={styles.playContent} showsVerticalScrollIndicator={false}>
             <View style={styles.questionCard}>
@@ -394,9 +449,9 @@ export default function QuizScreen() {
 
         {genError && <Text style={styles.genErrorText}>{genError}</Text>}
         {isGenerating && (
-          <View style={styles.generatingRow}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.generatingText}>Génération du quiz par l'IA...</Text>
+          <View>
+            <Text style={styles.generatingText}>Génération du quiz par l'IA</Text>
+            <SkeletonLines lines={4} />
           </View>
         )}
 
@@ -554,6 +609,8 @@ const styles = StyleSheet.create({
   generatingText: { fontSize: fontSize.sm, color: colors.textMuted },
 
   // playing
+  bossBar:       { flexDirection: 'row', alignItems: 'center', gap: 10, marginHorizontal: 16, marginBottom: 4 },
+  bossBarLabel:  { fontSize: fontSize.xs, fontWeight: '700', color: colors.destructive, textTransform: 'uppercase', letterSpacing: 0.6 },
   progressBg: {
     height: 4, backgroundColor: `${colors.textMuted}20`,
     marginHorizontal: 16, borderRadius: 2, overflow: 'hidden', marginBottom: 16,

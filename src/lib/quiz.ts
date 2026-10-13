@@ -24,6 +24,8 @@ export interface QuizQuestion {
   color?: string;
   /** Question à l'oreille : lire `speakText` automatiquement. */
   listen?: boolean;
+  /** Mot testé (forme native) : sert à retenir les mots ratés. */
+  word?: string;
 }
 
 export const QUIZ_SIZE = 8;
@@ -96,7 +98,7 @@ export function generateLocalQuiz(
         speakText: word.native_word,
         choices,
         correctIndex: choices.indexOf(word.french_translation),
-        explanation: explanationFor(word),
+        explanation: explanationFor(word), word: word.native_word,
       };
     }
 
@@ -106,7 +108,7 @@ export function generateLocalQuiz(
       question: `Comment dit-on « ${word.french_translation} » ?`,
       choices,
       correctIndex: choices.indexOf(word.native_word),
-      explanation: explanationFor(word),
+      explanation: explanationFor(word), word: word.native_word,
     };
   });
 }
@@ -284,21 +286,21 @@ export function generateWordsQuiz(words: VocabWord[], pool: VocabWord[], size: n
     if (kind === 'img') {
       return {
         question: word.color ? 'Comment dit-on cette couleur ?' : 'Comment dit-on ceci ?',
-        image: word.img, emoji: word.emoji, color: word.color, ...toNative(), explanation: explanationFor(word),
+        image: word.img, emoji: word.emoji, color: word.color, ...toNative(), explanation: explanationFor(word), word: word.native_word,
       };
     }
     if (kind === 'listen') {
       return {
         question: 'Que signifie ce que tu entends ?',
-        speakText: word.native_word, listen: true, ...toFrench(), explanation: explanationFor(word),
+        speakText: word.native_word, listen: true, ...toFrench(), explanation: explanationFor(word), word: word.native_word,
       };
     }
     if (kind === 'nf') {
       return {
         question: `Que signifie « ${word.native_word} » ?`,
-        speakText: word.native_word, ...toFrench(), explanation: explanationFor(word),
+        speakText: word.native_word, ...toFrench(), explanation: explanationFor(word), word: word.native_word,
       };
     }
-    return { question: `Comment dit-on « ${word.french_translation} » ?`, ...toNative(), explanation: explanationFor(word) };
+    return { question: `Comment dit-on « ${word.french_translation} » ?`, ...toNative(), explanation: explanationFor(word), word: word.native_word };
   });
 }

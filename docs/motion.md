@@ -20,6 +20,7 @@ le contenu (titre de leçon, mot, image…) vient des données, jamais du compos
 | `BubbleIn` | bulles des conversations guidées | `from` (`left`/`right`), `delay` | la bulle glisse de son côté en grossissant |
 | `PulseHint` | bouton « Continuer » de l'accueil, prochain palier de lecture | `active`, `radius`, `color` | halo qui pulse autour d'un élément |
 | `PopIn` | coche d'un palier réussi | `triggerKey`, `peak` | petit rebond quand la clé change |
+| `SkeletonLines` | génération du quiz et des cours par l'IA | `lines`, `label` | lignes grises qui respirent à la place d'un spinner |
 | `FlameFlicker` | flamme de la série (accueil) | `intensity` (0-1, grandit avec la série) | la flamme vacille, plus vivement quand la série est longue |
 
 Toutes acceptent aussi `accent`, `surface`, `speed` (`MotionTheme`). `IntroOverlay` (`src/components/IntroOverlay.tsx`) joue l'intro au lancement : voir `docs/intro/README.md`.
@@ -35,3 +36,12 @@ première lettre, sinon la première photo d'un mot de l'unité, sinon un emoji.
 ## Limites
 - Écrites et compilées, **jamais vues tourner** sur appareil : à régler (durées, ressorts) en réel.
 - Le mot arabe est animé d'un bloc (pas lettre à lettre) pour ne pas casser les liaisons.
+
+## Transitions du quotidien (lot 2)
+- Apparition décalée (35 ms par ligne, plafonnée) : unités du Parcours, mots du Vocabulaire, dialogues, carte des quêtes.
+- Profil : fondu de 180 ms au changement d'onglet.
+- Barre d'onglets : légère pulsation de l'icône active et haptique légère à chaque appui.
+
+## Mode sombre et grand titre (lot 3)
+- `theme/index.js` choisit la palette claire ou sombre selon le réglage du système, lu au lancement : un changement de thème en cours d'utilisation s'applique à la prochaine ouverture.
+- Grand titre qui se replie en titre compact au défilement : écran Parcours.

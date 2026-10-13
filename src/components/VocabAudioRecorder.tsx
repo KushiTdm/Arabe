@@ -253,7 +253,7 @@ export function VocabAudioRecorder({ wordId, audio, onSave, onDelete, target, on
 
           {!result.matches_target && (
             <Text style={styles.mismatch}>
-              Ce n'est pas le mot attendu — vise « {target?.native} ».
+              Ce n'est pas le mot attendu : vise « {target?.native} ».
             </Text>
           )}
 
@@ -269,7 +269,7 @@ export function VocabAudioRecorder({ wordId, audio, onSave, onDelete, target, on
             </View>
           ))}
 
-          <Text style={styles.tip}>💡 {result.tip}</Text>
+          <Text style={styles.tip}>{result.tip}</Text>
         </View>
       )}
     </View>

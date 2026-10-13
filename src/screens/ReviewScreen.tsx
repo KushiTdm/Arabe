@@ -10,6 +10,8 @@ import {
 import { ILLUSTRATIONS } from '../theme/images';
 import { WordPic } from '../components/WordPic';
 import { WordFlipCard } from '../components/motion';
+import { applyHarakat, tierForBox, TIER_LABEL } from '../lib/harakat';
+import { trackQuest } from '../lib/quests';
 import { Ionicons } from '@expo/vector-icons';
 import { useSpeaker } from '../lib/useSpeaker';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -86,6 +88,7 @@ export default function ReviewScreen() {
   const answerCard = async (card: ReviewCard, known: boolean) => {
     await deck.answer(card.id, known);
     if (known) setKnownCount(c => c + 1);
+    trackQuest(activeProfile?.id, language.code, 'review');
     setShowAnswer(false);
     if (pos < sessionIds.length - 1) {
       setPos(p => p + 1);
@@ -140,7 +143,7 @@ export default function ReviewScreen() {
               <Ionicons name="arrow-back" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>🔁 Révision</Text>
+              <Text style={styles.headerTitle}>Révision</Text>
               <Text style={styles.headerSubtitle}>{pos + 1} / {sessionIds.length} · boîte {card.box}/{MAX_BOX}</Text>
             </View>
           </View>
@@ -151,6 +154,7 @@ export default function ReviewScreen() {
 
           <WordFlipCard
             native={card.native_word}
+            frontNative={language.code === 'ar' ? applyHarakat(card.native_word, tierForBox(card.box)) : undefined}
             translit={card.transliteration}
             meaning={card.french_translation}
             img={card.img}
@@ -159,6 +163,7 @@ export default function ReviewScreen() {
             rtl={language.rtl}
             flipped={showAnswer}
             onFlip={() => setShowAnswer(true)}
+            hint={language.code === 'ar' ? `${TIER_LABEL[tierForBox(card.box)]} · toucher pour la réponse` : undefined}
           >
             <View style={styles.speakRow}>
               <TouchableOpacity onPress={() => speak(card.native_word)} style={styles.speakBtn}>
@@ -242,7 +247,7 @@ export default function ReviewScreen() {
             <Image source={deck.cards.length > 0 ? ILLUSTRATIONS.success : ILLUSTRATIONS.empty} style={styles.emptyDueArt} resizeMode="contain" />
             <Text style={styles.emptyDueText}>
               {deck.cards.length > 0
-                ? 'Rien à réviser aujourd\'hui — reviens demain !'
+                ? 'Rien à réviser aujourd\'hui. Reviens demain !'
                 : 'Ton paquet est vide. Ajoute des mots pour commencer.'}
             </Text>
           </View>
@@ -255,7 +260,7 @@ export default function ReviewScreen() {
           </TouchableOpacity>
         ) : (
           <Text style={styles.noVocabHint}>
-            Pas de vocabulaire intégré pour cette langue : ajoute des mots depuis l'onglet Vocab (bouton 🔖).
+            Pas de vocabulaire intégré pour cette langue : ajoute des mots depuis l'onglet Vocab (bouton marque-page).
           </Text>
         )}
 
