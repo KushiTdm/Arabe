@@ -24,6 +24,10 @@ import { Card, LoadingSpinner } from '../components/RNComponents';
 import { colors, borderRadius, fontSize, spacing } from '../theme';
 import { invokeAI } from '../api/aiClient';
 
+const TYPE_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
+  grammar: 'git-branch-outline', pronunciation: 'mic-outline', vocabulary: 'book-outline', writing: 'create-outline', culture: 'globe-outline',
+};
+
 const TYPE_META: Record<CourseType, { label: string; emoji: string; color: string }> = {
   grammar:       { label: 'Grammaire',     emoji: '📐', color: '#6366f1' },
   pronunciation: { label: 'Prononciation', emoji: '🗣️', color: '#f59e0b' },
@@ -373,7 +377,7 @@ JSON:
               </Text>
               <View style={[styles.typeBadge, { backgroundColor: `${meta.color}18` }]}>
                 <Text style={[styles.typeBadgeText, { color: meta.color }]}>
-                  {meta.emoji} {meta.label}
+                  {meta.label}
                 </Text>
               </View>
             </View>
@@ -565,7 +569,7 @@ JSON:
           {Object.entries(TYPE_META).map(([type, meta]) => (
             <FilterChip
               key={type}
-              label={`${meta.emoji} ${meta.label}`}
+              label={meta.label}
               active={filter === type}
               onPress={() => setFilter(type as FilterType)}
             />
@@ -606,7 +610,7 @@ JSON:
               activeOpacity={0.8}
             >
               <View style={[styles.courseIcon, { backgroundColor: `${meta.color}18` }]}>
-                <Text style={{ fontSize: 22 }}>{meta.emoji}</Text>
+                <Ionicons name={TYPE_ICON[course.type] ?? 'school-outline'} size={22} color={meta.color} />
               </View>
               <View style={styles.courseBody}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>

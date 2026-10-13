@@ -297,7 +297,7 @@ export default function QuizScreen() {
               <Ionicons name="arrow-back" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>{category?.emoji} Quiz · {category?.label}</Text>
+              <Text style={styles.headerTitle}>Quiz · {category?.label}</Text>
               <Text style={styles.headerSubtitle}>
                 Question {current + 1} / {questions.length} · {correctCount} ✓
               </Text>
@@ -424,7 +424,6 @@ export default function QuizScreen() {
               {quizThemes.themes.map((t, i) => (
                 <Animated.View key={t.id} entering={FadeInDown.delay(i * 35).springify().damping(16)} style={styles.catCardWrap}>
                   <PressableScale style={styles.catCard} onPress={() => startTheme(t)} disabled={isGenerating}>
-                    <Text style={styles.catEmoji}>{t.emoji}</Text>
                     <Text style={styles.catLabel}>{t.label}</Text>
                     <Text style={styles.themeSub}>{t.count} mots</Text>
                   </PressableScale>
@@ -433,7 +432,6 @@ export default function QuizScreen() {
               {quizThemes.mix && (
                 <View style={styles.catCardWrap}>
                   <PressableScale style={[styles.catCard, { borderColor: colors.secondary }]} onPress={() => startTheme(quizThemes.mix!)} disabled={isGenerating}>
-                    <Text style={styles.catEmoji}>{quizThemes.mix.emoji}</Text>
                     <Text style={styles.catLabel}>{quizThemes.mix.label}</Text>
                     <Text style={styles.themeSub}>{quizThemes.mix.count} mots</Text>
                   </PressableScale>
@@ -447,7 +445,6 @@ export default function QuizScreen() {
                 <View style={styles.themeList}>
                   {quizThemes.units.map(u => (
                     <PressableScale key={u.id} style={styles.themeRow} onPress={() => startTheme(u)} disabled={isGenerating}>
-                      <Text style={styles.themeEmoji}>{u.emoji}</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.themeLabel} numberOfLines={1}>{u.label}</Text>
                         <Text style={styles.themeSub}>{u.subtitle} · {u.count} mots</Text>
@@ -474,7 +471,6 @@ export default function QuizScreen() {
                 onPress={() => startQuiz(cat)}
                 disabled={isGenerating}
               >
-                <Text style={styles.catEmoji}>{cat.emoji}</Text>
                 <Text style={styles.catLabel}>{cat.label}</Text>
                 {!hasLocalQuiz(language.code, cat.id) && (
                   <View style={styles.aiTag}>

@@ -148,6 +148,30 @@ export async function configureAudioForPlayback(): Promise<void> {
   }
 }
 
+// ─── Préparation du texte lu ─────────────────────────────────────────────────
+
+const AR_MARKS = /[\u064B-\u0652\u0670]/;           // voyelles brèves, tanwin, shadda, sukun, alef suscrit
+const AR_LETTER = /[\u0621-\u064A]/;
+const SUKUN = '\u0652';
+
+/**
+ * Arabe : un mot isolé dont la dernière consonne n'a aucune marque est lu par le
+ * moteur avec une terminaison inventée (« dūd » devient « doudoun »). On pose un
+ * soukoun sur cette dernière consonne pour imposer la pause. Les lettres qui
+ * prolongent une voyelle (ا ى و ي sans marque) et le ة restent intacts.
+ */
+export function prepareForSpeech(text: string, langCode: string): string {
+  // Russe : l'accent combinant (молоко́) trouble certaines voix ; l'accent est connu du moteur.
+  if (langCode === 'ru') return text.replace(/\u0301/g, '');
+  if (langCode !== 'ar') return text;
+  return text.replace(/([\u0621-\u064A][\u064B-\u0652\u0670]*)(?=$|[\s،؛؟!.,?:;…])/g, (m) => {
+    const last = m[0];
+    if (!AR_LETTER.test(last) || AR_MARKS.test(m.slice(1))) return m;
+    if ('اىةآ'.includes(last) || 'وي'.includes(last)) return m;
+    return m + SUKUN;
+  });
+}
+
 // ─── API de lecture ──────────────────────────────────────────────────────────
 
 export interface SpeakOptions {
@@ -188,7 +212,7 @@ export async function speak(
     return;
   }
 
-  Speech.speak(clean, {
+  Speech.speak(prepareForSpeech(clean, langCode), {
     language: ttsLang,
     voice: resolution.identifier,
     rate: rateFor(langCode, speed),

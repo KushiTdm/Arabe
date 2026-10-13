@@ -127,7 +127,7 @@ export default function DialogueScreen() {
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={styles.hero}>
-            {sceneSrc ? <Image source={sceneSrc} style={styles.heroImg} /> : <Text style={styles.heroEmoji}>{conv.scene.emoji}</Text>}
+            {sceneSrc ? <Image source={sceneSrc} style={styles.heroImg} /> : null}
           </View>
           <Text style={styles.title}>{conv.title}</Text>
           <Text style={styles.situation}>{conv.situation}</Text>
@@ -183,7 +183,7 @@ export default function DialogueScreen() {
 
         {turn && (
           <>
-            {(!!turn.img || !!turn.emoji) && (
+            {!!turn.img && VOCAB_IMAGES[turn.img] && (
               <View style={styles.qPic}>
                 {turn.img && VOCAB_IMAGES[turn.img] ? <Image source={VOCAB_IMAGES[turn.img]} style={styles.qPicImg} /> : <WordPic emoji={turn.emoji} size={110} />}
               </View>

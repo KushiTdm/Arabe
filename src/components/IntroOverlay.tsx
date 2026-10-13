@@ -46,7 +46,7 @@ export function IntroOverlay({ onDone, video = INTRO_VIDEO, agencyVideo = AGENCY
   return (
     <Animated.View style={[styles.root, stage === 'agency' && { backgroundColor: NEURAWEB_BG }, fade]}>
       {stage === 'agency' ? (
-        agencyVideo ? <VideoStage key="agency" source={agencyVideo} onEnd={close} /> : <NeuraWebIntro />
+        agencyVideo ? <VideoStage key="agency" source={agencyVideo} onEnd={close} fit={ResizeMode.CONTAIN} /> : <NeuraWebIntro />
       ) : video ? (
         <VideoStage key="app" source={video} onEnd={endApp} />
       ) : <BrandIntro title={title} tagline={tagline} />}
@@ -55,12 +55,12 @@ export function IntroOverlay({ onDone, video = INTRO_VIDEO, agencyVideo = AGENCY
   );
 }
 
-function VideoStage({ source, onEnd }: { source: number; onEnd: () => void }) {
+function VideoStage({ source, onEnd, fit = ResizeMode.COVER }: { source: number; onEnd: () => void; fit?: ResizeMode }) {
   return (
     <Video
       source={source}
       style={StyleSheet.absoluteFill}
-      resizeMode={ResizeMode.COVER}
+      resizeMode={fit}
       shouldPlay
       isLooping={false}
       isMuted

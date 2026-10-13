@@ -484,7 +484,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
                     )}
                     {CATEGORY_ICONS[topic.id]
                       ? <Image source={CATEGORY_ICONS[topic.id]} style={styles.topicIcon} resizeMode="contain" />
-                      : <Text style={styles.topicEmoji}>{topic.emoji}</Text>}
+                      : null}
                     <Text style={[
                       styles.topicNative,
                       !isExercise && styles.topicNativeOnImage,
@@ -518,7 +518,7 @@ JSON: {"native_text":"...","transliteration":"...","french_translation":"...","s
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
-            <Text style={styles.chatTitle}>{selectedTopic.emoji} {selectedTopic.fr}</Text>
+            <Text style={styles.chatTitle}>{selectedTopic.fr}</Text>
             <Text style={styles.chatSubtitle}>{selectedTopic.label}</Text>
           </View>
           <View style={styles.creditsTag}>

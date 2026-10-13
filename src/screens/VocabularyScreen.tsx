@@ -212,7 +212,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
               <Text style={styles.headerTitle}>
-                {CATEGORY_META[selectedCategory]?.emoji} Flashcards
+                Flashcards
               </Text>
               <Text style={styles.headerSubtitle}>{flashcardIndex + 1} / {words.length}</Text>
             </View>
@@ -299,7 +299,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
               <Ionicons name="arrow-back" size={22} color={colors.text} />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>{meta?.emoji} {meta?.label}</Text>
+              <Text style={styles.headerTitle}>{meta?.label}</Text>
               <Text style={styles.headerSubtitle}>{allWords.length} mots · {masteredCount} maîtrisés</Text>
             </View>
             <TouchableOpacity
@@ -445,7 +445,7 @@ JSON: {"words":[{"native_word":"...","transliteration":"...","french_translation
                   <View style={styles.catBadge}>
                     {CATEGORY_ICONS[cat]
                       ? <Image source={CATEGORY_ICONS[cat]} style={styles.catIcon} resizeMode="contain" />
-                      : <Text style={styles.catEmoji}>{meta.emoji}</Text>}
+                      : <Ionicons name="book-outline" size={22} color="#fff" />}
                   </View>
                   <View style={styles.catCardContent}>
                     <Text style={styles.catLabel}>{meta.label}</Text>
