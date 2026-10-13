@@ -75,3 +75,8 @@ Métiers et objets (cuisinier, policier, chauffeur, billet, riz, lampe) et diver
 ## Planches 22 à 24 : faites (14 oct.)
 
 Maison (lit, canapé, cuisine, tasse, assiette, verre), lieux (gare, réception d'hôtel, aéroport, plage, parc, supermarché) et objets (téléphone, ordinateur, cahier, sac à dos, parapluie, valise) : 140 photos au total. Packs 7 à 9 (`packData2.ts`) et conversations C13 à C16 (gare, hôtel, téléphone, aéroport) dans les 11 langues.
+
+
+## Planches 25 à 30 : faites (14 oct.)
+
+Fruits (datte, pastèque, poire, cerise, pêche, mangue), animaux (vache, lapin, canard, singe, ours, tortue), plats (fromage, gâteau, soupe, glace, miel, olives), légumes (carotte, concombre, poivron, aubergine, ail, salade), loisirs (ballon, guitare, piscine, tente, appareil photo, feu de camp) et ville (pont, fontaine, château, tour, restaurant, boulangerie) : 176 photos au total. Packs 10 à 15 dans `packData3.ts` et `packData4.ts`. La première planche « ville » (noir et blanc, verres à vin) a été régénérée en couleur. La « tour » est reconnaissable (Big Ben).

@@ -1,16 +1,27 @@
 import type { Lesson, Word, Conversation } from './types';
 import { buildConversation, type ConvSpec } from './conversations';
 import { AR_CONVERSATIONS } from './ar/conversations';
+import { AR_CONVERSATIONS2 } from './ar/conversations2';
 import { ES_CONVERSATIONS } from './es/conversations';
+import { ES_CONVERSATIONS2 } from './es/conversations2';
 import { IT_CONVERSATIONS } from './it/conversations';
+import { IT_CONVERSATIONS2 } from './it/conversations2';
 import { PT_CONVERSATIONS } from './pt/conversations';
+import { PT_CONVERSATIONS2 } from './pt/conversations2';
 import { DE_CONVERSATIONS } from './de/conversations';
+import { DE_CONVERSATIONS2 } from './de/conversations2';
 import { EN_CONVERSATIONS } from './en/conversations';
+import { EN_CONVERSATIONS2 } from './en/conversations2';
 import { RU_CONVERSATIONS } from './ru/conversations';
+import { RU_CONVERSATIONS2 } from './ru/conversations2';
 import { KO_CONVERSATIONS } from './ko/conversations';
+import { KO_CONVERSATIONS2 } from './ko/conversations2';
 import { JA_CONVERSATIONS } from './ja/conversations';
+import { JA_CONVERSATIONS2 } from './ja/conversations2';
 import { ZH_CONVERSATIONS } from './zh/conversations';
+import { ZH_CONVERSATIONS2 } from './zh/conversations2';
 import { VI_CONVERSATIONS } from './vi/conversations';
+import { VI_CONVERSATIONS2 } from './vi/conversations2';
 import { readingLesson, oralLesson, fadingLesson, type ReadingSpec } from './builders';
 import { AR_READING } from './ar/reading';
 import { AR_ORAL } from './ar/oral';
@@ -38,6 +49,8 @@ import { ZH_A2, ZH_B1 } from './zh/units2';
 import { VI_READING, VI_UNITS } from './vi/units';
 import { VI_A2, VI_B1 } from './vi/units2';
 import { AR_SIGNS, AR_FADING } from './ar/signs';
+import { AR_PHONETICS } from './ar/phonetics';
+import { EXTRA_UNITS } from './pronunciation';
 
 // ─── Catalogue des leçons intégrées, par langue ──────────────────────────────
 // Seules les langues listées ici ont un parcours entièrement intégré ; les
@@ -47,8 +60,8 @@ import { AR_SIGNS, AR_FADING } from './ar/signs';
 /** Ordre de présentation : l'oral précède la fin de la lecture (programmes/arabe.md § 6.3). */
 const AR_ORDER = [
   'ar-L1', 'ar-L2', 'ar-O1', 'ar-L3', 'ar-L4', 'ar-O2', 'ar-L5', 'ar-L6', 'ar-O3',
-  'ar-L7', 'ar-L8', 'ar-O4', 'ar-L9', 'ar-L10', 'ar-O5', 'ar-O6',
-  'ar-L11', 'ar-L12', 'ar-L13', 'ar-L14',
+  'ar-L7', 'ar-L8', 'ar-O4', 'ar-L9', 'ar-L10', 'ar-P1', 'ar-P2', 'ar-P3', 'ar-O5', 'ar-O6',
+  'ar-L11', 'ar-P4', 'ar-L12', 'ar-L13', 'ar-L14',
   'ar-L15', 'ar-O7', 'ar-L16', 'ar-O8', 'ar-L17', 'ar-O9', 'ar-L18', 'ar-O10', 'ar-O11',
   'ar-O12', 'ar-O13', 'ar-O14', 'ar-O15',
 ];
@@ -68,6 +81,8 @@ function buildArabic(): Lesson[] {
     byId.set(lesson.id, lesson);
     known.push(...spec.words.filter(x => !x.fake));
   }
+  // Phonétique P1-P4 : paires minimales sur des lettres déjà toutes connues.
+  for (const spec of AR_PHONETICS) byId.set(spec.id, readingLesson({ ...spec, known: [...known] }));
   for (const spec of AR_FADING) byId.set(spec.id, fadingLesson(spec));
   return AR_ORDER.map(id => byId.get(id)).filter((l): l is Lesson => !!l);
 }
@@ -102,6 +117,11 @@ export function getLessons(code: string): Lesson[] {
   const hit = cache.get(code);
   if (hit) return hit;
   const built = BUILDERS[code]?.() ?? [];
+  // Prononciation et faux amis des programmes (hors arabe, dont les unités P1-P4 sont déjà dans l'ordre).
+  for (const { after, spec } of EXTRA_UNITS[code] ?? []) {
+    const at = built.findIndex(l => l.id === after);
+    if (at >= 0) built.splice(at + 1, 0, readingLesson({ ...spec, letters: [], skipTr: true, known: [] }));
+  }
   cache.set(code, built);
   return built;
 }
@@ -116,17 +136,17 @@ export function getLesson(code: string, id: string): Lesson | undefined {
 // ─── Conversations guidées ───────────────────────────────────────────────────
 
 const CONVERSATIONS: Record<string, ConvSpec[]> = {
-  ar: AR_CONVERSATIONS,
-  es: ES_CONVERSATIONS,
-  it: IT_CONVERSATIONS,
-  pt: PT_CONVERSATIONS,
-  de: DE_CONVERSATIONS,
-  en: EN_CONVERSATIONS,
-  ru: RU_CONVERSATIONS,
-  ko: KO_CONVERSATIONS,
-  ja: JA_CONVERSATIONS,
-  zh: ZH_CONVERSATIONS,
-  vi: VI_CONVERSATIONS,
+  ar: [...AR_CONVERSATIONS, ...AR_CONVERSATIONS2],
+  es: [...ES_CONVERSATIONS, ...ES_CONVERSATIONS2],
+  it: [...IT_CONVERSATIONS, ...IT_CONVERSATIONS2],
+  pt: [...PT_CONVERSATIONS, ...PT_CONVERSATIONS2],
+  de: [...DE_CONVERSATIONS, ...DE_CONVERSATIONS2],
+  en: [...EN_CONVERSATIONS, ...EN_CONVERSATIONS2],
+  ru: [...RU_CONVERSATIONS, ...RU_CONVERSATIONS2],
+  ko: [...KO_CONVERSATIONS, ...KO_CONVERSATIONS2],
+  ja: [...JA_CONVERSATIONS, ...JA_CONVERSATIONS2],
+  zh: [...ZH_CONVERSATIONS, ...ZH_CONVERSATIONS2],
+  vi: [...VI_CONVERSATIONS, ...VI_CONVERSATIONS2],
 };
 
 const convCache = new Map<string, Conversation[]>();

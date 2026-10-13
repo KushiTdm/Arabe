@@ -70,6 +70,12 @@ export const IMG_KEY_BY_FR: Record<string, string> = {
   'lit': 'bed', 'canapé': 'sofa', 'cuisine': 'kitchen', 'tasse': 'cup', 'assiette': 'plate', 'verre': 'glass',
   'gare': 'station', 'hôtel': 'hotel', 'réception': 'hotel', 'aéroport': 'airport', 'plage': 'beach', 'parc': 'park', 'jardin': 'park', 'supermarché': 'supermarket',
   'téléphone': 'phone', 'portable': 'phone', 'ordinateur': 'laptop', 'cahier': 'notebook', 'sac à dos': 'backpack', 'parapluie': 'umbrella', 'valise': 'suitcase',
+  'datte': 'dates', 'dattes': 'dates', 'pastèque': 'watermelon', 'poire': 'pear', 'cerise': 'cherry', 'pêche': 'peach', 'mangue': 'mango',
+  'vache': 'cow', 'lapin': 'rabbit', 'canard': 'duck', 'singe': 'monkey', 'ours': 'bear', 'tortue': 'tortoise',
+  'fromage': 'cheese', 'gâteau': 'cake', 'soupe': 'soup', 'glace': 'icecream', 'miel': 'honey', 'olive': 'olives', 'olives': 'olives',
+  'carotte': 'carrot', 'concombre': 'cucumber', 'poivron': 'pepper', 'aubergine': 'eggplant', 'ail': 'garlic', 'salade': 'lettuce', 'laitue': 'lettuce',
+  'ballon': 'ball', 'guitare': 'guitar', 'piscine': 'pool', 'tente': 'tent', 'appareil photo': 'camera', 'feu de camp': 'campfire',
+  'pont': 'bridge', 'fontaine': 'fountain', 'château': 'castle', 'tour': 'tower', 'restaurant': 'restaurant', 'boulangerie': 'bakery',
   'gazelle': 'gazelle', 'épée': 'sword', 'baleine': 'whale', 'or': 'gold', 'robe': 'robe',
 };
 
