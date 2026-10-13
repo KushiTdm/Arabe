@@ -23,7 +23,7 @@ export const IMG_KEY_BY_AR: Record<string, string> = {
   // Photos ajoutées pour les mots concrets du lexique
   'بَيْض': 'eggs', 'مِلْح': 'salt', 'خَرُوف': 'sheep', 'ظَبْي': 'gazelle', 'سَيْف': 'sword', 'شَعْر': 'hair',
   'قَدَم': 'foot', 'فَم': 'mouth', 'بَحْر': 'sea', 'سَاعَة': 'clock', 'مَكْتَبَة': 'library',
-  'جَامِعَة': 'university', 'حِبْر': 'ink', 'مُعَلِّم': 'teacher', 'أُسْتَاذ': 'teacher', 'مُدَرِّس': 'teacher',
+  'جَامِعَة': 'university', 'دُود': 'caterpillar', 'حِبْر': 'ink', 'مُعَلِّم': 'teacher', 'أُسْتَاذ': 'teacher', 'مُدَرِّس': 'teacher',
   'طَالِب': 'student', 'أَنَا طَالِب': 'student', 'مَدِينَة': 'city',
   'طَمَاطِم': 'tomato', 'عِنَب': 'grapes', 'فَرَاوِلَة': 'strawberry', 'بُرْتُقَال': 'orange', 'بَطَاطَا': 'potato', 'بَصَل': 'onion',
   'مَطَار': 'airplane',
@@ -65,6 +65,11 @@ export const IMG_KEY_BY_FR: Record<string, string> = {
   'chat': 'cat', 'oreille': 'ear', 'nez': 'nose', 'pluie': 'rain', 'neige': 'snow', 'montagne': 'mountain',
   'chemise': 'shirt', 'pantalon': 'trousers', 'chaussure': 'shoes', 'chaussures': 'shoes', 'casquette': 'cap', 'chapeau': 'cap',
   'manteau': 'coat', 'lunettes': 'glasses',
+  'cuisinier': 'cook', 'policier': 'police', 'chauffeur': 'driver', 'billet': 'ticket', 'riz': 'rice', 'lumière': 'lamp', 'lampe': 'lamp',
+  'ambulance': 'ambulance', 'vallée': 'valley', 'chenille': 'caterpillar', 'nuit': 'night', 'dormir': 'sleep', 'fête': 'party',
+  'lit': 'bed', 'canapé': 'sofa', 'cuisine': 'kitchen', 'tasse': 'cup', 'assiette': 'plate', 'verre': 'glass',
+  'gare': 'station', 'hôtel': 'hotel', 'réception': 'hotel', 'aéroport': 'airport', 'plage': 'beach', 'parc': 'park', 'jardin': 'park', 'supermarché': 'supermarket',
+  'téléphone': 'phone', 'portable': 'phone', 'ordinateur': 'laptop', 'cahier': 'notebook', 'sac à dos': 'backpack', 'parapluie': 'umbrella', 'valise': 'suitcase',
   'gazelle': 'gazelle', 'épée': 'sword', 'baleine': 'whale', 'or': 'gold', 'robe': 'robe',
 };
 

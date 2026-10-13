@@ -1,6 +1,7 @@
 import type { VocabPack, Word } from './types';
 import { w } from './builders';
 import { PACK_WORDS } from './packData';
+import { PACK_WORDS2 } from './packData2';
 
 // ─── Packs de vocabulaire thématiques ────────────────────────────────────────
 // Lots de mots indépendants des leçons : couleurs, jours, vêtements, transports,
@@ -23,6 +24,10 @@ const JOBS: Concept[] = [
   { fr: 'le cuisinier', emoji: '🧑‍🍳' }, { fr: 'le policier', emoji: '👮' }, { fr: 'le chauffeur', emoji: '🧑‍✈️' },
 ];
 
+const HOME: Concept[] = ['le lit', 'le canapé', 'la cuisine', 'la tasse', 'l\'assiette', 'le verre'].map(fr => ({ fr }));
+const TRAVEL: Concept[] = ['la gare', 'l\'hôtel', 'l\'aéroport', 'la plage', 'le parc', 'le supermarché'].map(fr => ({ fr }));
+const OBJECTS: Concept[] = ['le téléphone', 'l\'ordinateur', 'le cahier', 'le sac à dos', 'le parapluie', 'la valise'].map(fr => ({ fr }));
+
 const PACKS_META: { id: string; theme: string; label: string; concepts: Concept[] }[] = [
   { id: 'colors', theme: 'colors', label: 'Couleurs', concepts: COLORS },
   { id: 'days', theme: 'time', label: 'Jours de la semaine', concepts: DAYS },
@@ -30,6 +35,9 @@ const PACKS_META: { id: string; theme: string; label: string; concepts: Concept[
   { id: 'transport', theme: 'transport', label: 'Transports', concepts: TRANSPORT },
   { id: 'nature', theme: 'nature', label: 'Nature et météo', concepts: NATURE },
   { id: 'jobs', theme: 'jobs', label: 'Métiers', concepts: JOBS },
+  { id: 'home', theme: 'home', label: 'La maison', concepts: HOME },
+  { id: 'travel', theme: 'travel', label: 'Voyage et lieux', concepts: TRAVEL },
+  { id: 'objects', theme: 'objects', label: 'Objets du quotidien', concepts: OBJECTS },
 ];
 
 export const PACK_LABELS: Record<string, string> = Object.fromEntries(PACKS_META.map(p => [p.id, p.label]));
@@ -40,7 +48,8 @@ const cache = new Map<string, VocabPack[]>();
 export function getPacks(code: string): VocabPack[] {
   const hit = cache.get(code);
   if (hit) return hit;
-  const data = PACK_WORDS[code];
+  const base = PACK_WORDS[code];
+  const data = base && PACK_WORDS2[code] ? [...base, ...PACK_WORDS2[code]] : base;
   if (!data) { cache.set(code, []); return []; }
   let i = 0;
   const packs = PACKS_META.map<VocabPack>(meta => ({

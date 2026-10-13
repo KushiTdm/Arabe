@@ -66,3 +66,12 @@ Personnes (grand-père, grand-mère, médecin, femme, homme, amis), objets et li
 | 15 Fruits et légumes | `ar_sheet15_produce` | tomates mûres sur la grappe · grappe de raisin sombre · fraises | orange entière et demi-orange · pommes de terre · deux oignons rouges | `tomato`, `grapes`, `strawberry`, `orange`, `potato`, `onion` |
 
 Mots à relier ensuite (`img:clé` dans les phrases, ou `IMG_KEY_BY_AR` pour l'arabe) : es-13 el tren / el avión ; en-13 bus, train ; ru-12 автобус, поезде ; zh-12 出租车, 自行车 ; vi-11 xe buýt, taxi, tàu hỏa ; ja ふね ; ko 토마토, 포도, 딸기 ; ja みかん.
+
+
+## Planches 20 et 21 : faites (13 oct.)
+
+Métiers et objets (cuisinier, policier, chauffeur, billet, riz, lampe) et divers (ambulance, vallée, chenille, nuit, fête, dormir) : 122 photos au total, reliées par `IMG_KEY_BY_FR` (cuisinier, policier, chauffeur, billet, riz, lumière, ambulance, vallée, nuit, fête, dormir) et `IMG_KEY_BY_AR` (دُود). La pharmacie reste sans photo (enseigne avec du texte).
+
+## Planches 22 à 24 : faites (14 oct.)
+
+Maison (lit, canapé, cuisine, tasse, assiette, verre), lieux (gare, réception d'hôtel, aéroport, plage, parc, supermarché) et objets (téléphone, ordinateur, cahier, sac à dos, parapluie, valise) : 140 photos au total. Packs 7 à 9 (`packData2.ts`) et conversations C13 à C16 (gare, hôtel, téléphone, aéroport) dans les 11 langues.

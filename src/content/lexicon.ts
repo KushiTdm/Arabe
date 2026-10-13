@@ -55,6 +55,8 @@ export const LEXICON_THEMES: Record<string, { label: string; emoji: string }> = 
   colors:     { label: 'Couleurs',         emoji: '🎨' },
   time:       { label: 'Jours et temps',   emoji: '📅' },
   jobs:       { label: 'Métiers',          emoji: '💼' },
+  home:       { label: 'Maison',           emoji: '🏠' },
+  travel:     { label: 'Voyage et lieux',  emoji: '✈️' },
   discourse:  { label: 'Discours et avis', emoji: '💬' },
   reading:    { label: 'Mots de lecture',  emoji: '📖' },
 };
