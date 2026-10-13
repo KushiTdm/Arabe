@@ -16,6 +16,7 @@ import { PART_PASS_RATIO, type Activity, type Word } from '../content/types';
 import { VOCAB_IMAGES } from '../content/images';
 import { LETTER_IMG } from '../content/imageKeys';
 import { WordPic } from '../components/WordPic';
+import { ScriptText } from '../components/ScriptText';
 import { PressableScale } from '../components/anim';
 import { colors, borderRadius, fontSize } from '../theme';
 
@@ -317,17 +318,17 @@ function ActivityView({ act, speaker, locked, onResolve, onNext }: ViewProps) {
               const right = it.k === act.heard;
               const state = picked === null ? 0 : right ? 1 : picked === i ? 2 : 0;
               return (
-                <AnswerMotion key={it.k} status={state === 1 ? 'correct' : state === 2 ? 'wrong' : null}>
+                <AnswerMotion key={it.k} style={{ flex: 1 }} status={state === 1 ? 'correct' : state === 2 ? 'wrong' : null}>
 <PressableScale disabled={locked} style={[styles.pairCard, state === 1 && styles.optOk, state === 2 && styles.optKo]}
                   onPress={() => { setPicked(i); onResolve(right, gloss(heardWord)); }}>
-                  <Text style={styles.arabicBig}>{it.w.ar}</Text>
+                  <Text style={styles.arabicBig}>{it.w.show ?? it.w.ar}</Text>
                   {picked !== null && !!it.w.tr && <Text style={styles.optSub}>{it.w.tr}</Text>}
                 </PressableScale>
 </AnswerMotion>
               );
             })}
           </View>
-          {!!act.note && picked !== null && <Text style={styles.note}>{act.note}</Text>}
+          {!!act.note && picked !== null && <ScriptText style={styles.noteRich} size={16}>{act.note}</ScriptText>}
         </View>
       );
     }
@@ -446,7 +447,7 @@ function Teach({ act, speaker, onNext }: { act: Extract<Activity, { type: 'teach
             keyword={example ? letter.example : undefined}
             replayKey={letter.letter}
           />
-          {!!letter.tips && <Text style={styles.note}>{letter.tips}</Text>}
+          {!!letter.tips && <ScriptText style={styles.noteRich} size={15}>{letter.tips}</ScriptText>}
           {!!example && (
             <TouchableOpacity style={styles.exampleBtn} onPress={() => speaker.say(example, { id: example })}>
               <Ionicons name="volume-high" size={20} color={colors.white} />
@@ -457,7 +458,7 @@ function Teach({ act, speaker, onNext }: { act: Extract<Activity, { type: 'teach
       ) : (
         <View>
           <Text style={styles.teachTitle}>{act.title}</Text>
-          {!!act.body && <Text style={styles.teachBody}>{act.body}</Text>}
+          {!!act.body && <ScriptText style={styles.teachBody} size={18}>{act.body}</ScriptText>}
           {act.words?.map(wd => (
             <TouchableOpacity key={wd.ar} style={styles.wordCard} onPress={() => speaker.say(wd.ar, { id: wd.ar })}>
               <Pic word={wd} size={64} />
@@ -598,6 +599,7 @@ const styles = StyleSheet.create({
   frBig: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text, textAlign: 'center' },
   trLine: { color: colors.primaryLight, fontStyle: 'italic', fontSize: fontSize.base },
   frLine: { color: colors.textMuted, fontSize: fontSize.sm },
+  noteRich: { color: colors.textMuted, textAlign: 'center', marginTop: 10 },
   note: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center', marginTop: 10, lineHeight: 20 },
   hint: { color: colors.textLight, fontSize: fontSize.xs, textAlign: 'center', marginBottom: 6 },
   listenRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, marginBottom: 18 },
@@ -613,7 +615,7 @@ const styles = StyleSheet.create({
   optArabic: { fontSize: 30, color: colors.arabicText, fontWeight: '600' },
   optSub: { color: colors.textMuted, fontSize: fontSize.xs, marginTop: 2, textAlign: 'center' },
   pairRow: { flexDirection: 'row', gap: 12 },
-  pairCard: { flex: 1, backgroundColor: colors.card, borderRadius: borderRadius.xl, borderWidth: 2, borderColor: colors.border, paddingVertical: 28, alignItems: 'center' },
+  pairCard: { backgroundColor: colors.card, borderRadius: borderRadius.xl, borderWidth: 2, borderColor: colors.border, paddingVertical: 34, minHeight: 150, alignItems: 'center', justifyContent: 'center' },
   bubble: { backgroundColor: colors.card, borderRadius: borderRadius.xl, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: colors.border },
   bubbleLine: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   kicker: { color: colors.accent, fontWeight: '700', marginBottom: 4 },
@@ -627,7 +629,7 @@ const styles = StyleSheet.create({
   exampleBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22, marginTop: 14 },
   exampleText: { color: colors.white, fontWeight: '600' },
   teachTitle: { fontSize: fontSize.xl, fontWeight: '800', color: colors.text, marginBottom: 8 },
-  teachBody: { fontSize: fontSize.base, color: colors.text, lineHeight: 24, marginBottom: 14 },
+  teachBody: { marginBottom: 16 },
   wordCard: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.card, borderRadius: borderRadius.lg, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border },
   wordEmoji: { fontSize: 34 },
   matchCols: { flexDirection: 'row', gap: 12 },

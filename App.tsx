@@ -17,6 +17,7 @@ import ConversationScreen from './src/screens/ConversationScreen';
 import VocabularyScreen from './src/screens/VocabularyScreen';
 import CoursScreen      from './src/screens/Coursscreen';
 import AlphabetScreen   from './src/screens/AlphabetScreen';
+import ReadingScreen    from './src/screens/ReadingScreen';
 import ProfileScreen    from './src/screens/ProfileScreen';
 import OnboardingScreen from './src/screens/OnboardingScreen';
 import QuizScreen       from './src/screens/QuizScreen';
@@ -110,6 +111,7 @@ function RootStack() {
         <>
           <Stack.Screen name="MainTabs" component={HomeTabs} />
           <Stack.Screen name="Alphabet" component={AlphabetScreen} />
+          <Stack.Screen name="Reading" component={ReadingScreen} />
           <Stack.Screen name="Quiz"     component={QuizScreen} />
           <Stack.Screen name="Review"   component={ReviewScreen} />
           <Stack.Screen name="Path"     component={PathScreen} />
